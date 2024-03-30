@@ -1,21 +1,25 @@
-import React, { useEffect, useState, useCallback,useLayoutEffect } from 'react';
-import { SearchBar } from '@rneui/themed';
+import React, {
+  useState,
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useMemo,
+  useEffect,
+} from 'react';
+import {SearchBar} from '@rneui/themed';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-
 import {
-  ActivityIndicator,
   FlatList,
-  Pressable,
   SafeAreaView,
-  PixelRatio,
   Text,
+  PixelRatio,
   StyleSheet,
   TouchableOpacity,
+  Pressable,
   View,
-  ToastAndroid,
   RefreshControl,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 
 const phoneFontScale = PixelRatio.getFontScale();
 
@@ -27,7 +31,7 @@ const sampleLyrics = [
     artist: 'Sample Artist 1',
     content: 'Sample content for song 1...',
     publishDate: new Date(),
-    newFlag: true,
+    newFlag: false,
     tags: ['Pop', 'Rock'],
     youtube: 'hey',
   },
@@ -58,7 +62,7 @@ const sampleLyrics = [
     artist: 'Sample Artist 4',
     content: 'Sample content for song 4...',
     publishDate: new Date(),
-    newFlag: true,
+    newFlag: false,
     tags: ['Hip-hop', 'Rap'],
   },
   {
@@ -78,7 +82,7 @@ const sampleLyrics = [
     artist: 'Sample Artist 6',
     content: 'Sample content for song 6...',
     publishDate: new Date(),
-    newFlag: true,
+    newFlag: false,
     tags: ['Blues', 'Jazz'],
   },
   {
@@ -98,7 +102,7 @@ const sampleLyrics = [
     artist: 'Sample Artist 8',
     content: 'Sample content for song 8...',
     publishDate: new Date(),
-    newFlag: true,
+    newFlag: false,
     tags: ['Reggae', 'Ska'],
   },
   {
@@ -118,7 +122,7 @@ const sampleLyrics = [
     artist: 'Sample Artist 10',
     content: 'Sample content for song 10...',
     publishDate: new Date(),
-    newFlag: true,
+    newFlag: false,
     tags: ['Metal', 'Punk'],
   },
   {
@@ -129,7 +133,7 @@ const sampleLyrics = [
     content: 'Sample content for song 11...',
     publishDate: new Date(),
     newFlag: false,
-    tags: ['Indie', 'Alternative','Rock'],
+    tags: ['Indie', 'Alternative', 'Rock'],
   },
   {
     id: '12',
@@ -138,7 +142,7 @@ const sampleLyrics = [
     artist: 'Sample Artist 12',
     content: 'Sample content for song 12...',
     publishDate: new Date(),
-    newFlag: true,
+    newFlag: false,
     tags: ['Funk', 'Disco'],
   },
 ];
@@ -170,105 +174,75 @@ const sampleTags = [
   {id: '24', name: 'Disco'},
 ];
 
-
-
 const List = () => {
   const [searchText, setSearchText] = useState('');
-  const searchHeaderRef = React.useRef(null);
-
+  const searchRef = useRef(null);
   const navigation = useNavigation();
   const [header, setHeader] = useState(true);
   const [lyrics, setLyrics] = useState(sampleLyrics);
   const [tags, setTags] = useState(sampleTags);
-  const [filteredLyrics, setFilteredLyrics] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [selectedTags, setSelectedTags] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  useLayoutEffect(() => {
-    const showSearchBox = () => {
-      searchHeaderRef.current.isHidden ? searchHeaderRef.current.show() : null;
-    };
-  
-    navigation.setOptions({
-      headerRight: () => (
-        <Icon
-          name="magnify"
-          color="#fff"
-          onPress={() => {
-            // showSearchBox();
-            setHeader(false);
-          }}
-          size={26}
-        />
-      ),
-      headerShown: header,
-    });
-  }, [navigation, header]);
+  // Added setFilteredLyrics state
+  const [filteredLyrics, setFilteredLyrics] = useState([]);
 
-  const debounce = (func, delay) => {
-    let timeoutId;
-    return (...args) => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
+  const filterData = useCallback(
+    text => {
+      if (text) {
+        return lyrics.filter(
+          item =>
+            item.title.toLowerCase().includes(text.toLowerCase()) ||
+            item.artist.toLowerCase().includes(text.toLowerCase()) ||
+            item.numbering.toString().includes(text.toString()) ||
+            item.tags.some(tag =>
+              tag.toLowerCase().includes(text.toLowerCase()),
+            ) ||
+            item.content.toLowerCase().includes(text.toLowerCase()),
+        );
       }
-      timeoutId = setTimeout(() => {
-        func.apply(null, args);
-      }, delay);
-    };
-  };
+      return lyrics;
+    },
+    [lyrics],
+  );
 
   const handleSearch = useCallback(
-    debounce(text => {
+    text => {
       setSearchText(text);
       const filteredItems = filterData(text);
       setFilteredLyrics(filteredItems);
-    }, 300),
-    [],
+    },
+    [filterData],
   );
 
-  const handleTagPress = tag => {
-    let newSelectedTags = [];
+  const handleTagPress = useCallback(
+    tag => {
+      const newSelectedTags = selectedTags.includes(tag)
+        ? selectedTags.filter(selectedTag => selectedTag !== tag)
+        : [...selectedTags, tag];
+      setSelectedTags(newSelectedTags);
 
-    if (selectedTags.includes(tag)) {
-      newSelectedTags = selectedTags.filter(selectedTag => selectedTag !== tag);
-    } else {
-      newSelectedTags = [...selectedTags, tag];
-    }
+      const filteredItems = lyrics.filter(item => {
+        return (
+          newSelectedTags.every(selectedTag =>
+            item.tags.includes(selectedTag),
+          ) && item.title.toLowerCase().includes(searchText.toLowerCase())
+        );
+      });
 
-    setSelectedTags(newSelectedTags);
+      setFilteredLyrics(filteredItems);
+    },
+    [selectedTags, lyrics, searchText],
+  );
 
-    const filteredItems = lyrics.filter(item => {
-      return (
-        newSelectedTags.every(selectedTag => item.tags.includes(selectedTag)) &&
-        item.title.toLowerCase().includes(searchText.toLowerCase())
-      );
-    });
-
-    setFilteredLyrics(filteredItems);
-  };
-
-  const filterData = text => {
-    if (text) {
-      const filteredItems = lyrics.filter(
-        item =>
-          item.title.toLowerCase().includes(text.toLowerCase()) ||
-          item.artist.toLowerCase().includes(text.toLowerCase()) ||
-          item.numbering.toString().includes(text.toString()) ||
-          item.tags.some(tag => tag.toLowerCase().includes(text.toLowerCase())) ||
-          item.content.toLowerCase().includes(text.toLowerCase()),
-      );
-      return filteredItems;
-    }
-    return lyrics;
-  };
-
-  const renderTags = ({ item }) => (
+  const renderTags = ({item}) => (
     <TouchableOpacity
       style={[
         styles.container,
         {
-          backgroundColor: selectedTags.includes(item.name) ? '#FFC107' : '#fff',
+          backgroundColor: selectedTags.includes(item.name)
+            ? '#FFC107'
+            : '#fff',
           height: 40,
         },
       ]}
@@ -277,26 +251,31 @@ const List = () => {
     </TouchableOpacity>
   );
 
-  const renderListItem = ({ item }) => {
-    const { id, numbering, title, content, publishDate, newFlag } = item;
+  const renderListItem = ({item}) => {
+    const {id, numbering, title, content, publishDate, newFlag} = item;
 
     const currentDate = new Date();
-    const publishDateTime = publishDate; // assuming publishDate is a Date object
+    const publishDateTime = publishDate;
     const timeDiff = Math.ceil(
       (currentDate - publishDateTime) / (1000 * 60 * 60 * 24),
     );
 
-    let numberingText =
-      newFlag && timeDiff >= 0 && timeDiff < 7 ? 'NEW' : numbering;
+    const numberingText =
+      newFlag && timeDiff >= 0 && timeDiff < 7 ? 'NEW' : numbering.toString();
 
     return (
       <Pressable
         onPress={() => {
-          navigation.navigate('Details', { item });
+          navigation.navigate('Details', {
+            item: {
+              ...item,
+              publishDate: publishDate.toISOString(), // Convert Date to string
+            },
+          });
           setSearchText('');
           setHeader(true);
         }}
-        style={{ marginHorizontal: 5 }}>
+        style={{marginHorizontal: 5}}>
         <View
           key={id}
           style={{
@@ -307,7 +286,7 @@ const List = () => {
             flexDirection: 'row',
             alignItems: 'center',
           }}>
-          <View style={{ height: 40 }}>
+          <View style={{height: 40}}>
             <Text
               style={{
                 marginRight: 20,
@@ -332,11 +311,11 @@ const List = () => {
               {numberingText}
             </Text>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontWeight: 'bold', fontSize: 16 * phoneFontScale }}>
+          <View style={{flex: 1}}>
+            <Text style={{fontWeight: 'bold', fontSize: 16 * phoneFontScale}}>
               {title}
             </Text>
-            <Text style={{ fontSize: 14 * phoneFontScale }} numberOfLines={1}>
+            <Text style={{fontSize: 14 * phoneFontScale}} numberOfLines={1}>
               {content.split('\n')[0]}
             </Text>
           </View>
@@ -345,65 +324,86 @@ const List = () => {
     );
   };
 
-  const renderEmptyList = () => {
-    if (isLoading) {
-      return (
-        <View style={styles.emptyListContainer}>
-          <View style={styles.emptyListText}>
-            <ActivityIndicator size={'large'} color={'#673AB7'} />
-          </View>
-        </View>
-      );
-    } else if (filteredLyrics.length === 0) {
-      return (
-        <View style={styles.emptyListContainer}>
-          <Text style={styles.emptyListText}>No results found</Text>
-        </View>
-      );
-    } else {
-      return (
-        <View style={styles.emptyListContainer}>
-          <Text style={styles.emptyListText}>No data available</Text>
-        </View>
-      );
-    }
-  };
+  const renderEmptyList = () => (
+    <View style={styles.emptyListContainer}>
+      <Text style={styles.emptyListText}>
+        {filteredLyrics.length === 0 ? 'No results found' : 'No data available'}
+      </Text>
+    </View>
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
     setLyrics(sampleLyrics);
     setTags(sampleTags);
-    setFilteredLyrics([]);
     setRefreshing(false);
   };
 
+  useEffect(() => {
+    if (selectedTags.length > 0) {
+      const initialFilteredItems = lyrics.filter(item => {
+        return (
+          selectedTags.every(selectedTag => item.tags.includes(selectedTag)) &&
+          item.title.toLowerCase().includes(searchText.toLowerCase())
+        );
+      });
+      setFilteredLyrics(initialFilteredItems);
+    } else {
+      setFilteredLyrics(lyrics);
+    }
+  }, [selectedTags, lyrics, searchText]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Icon
+          name="search"
+          color="#fff"
+          onPress={() => {
+            setHeader(prevState => !prevState);
+            if (searchRef.current) {
+              searchRef.current.focus();
+            }
+          }}
+          size={26}
+        />
+      ),
+      headerShown: header,
+    });
+  }, [navigation, header]);
+
   return (
     <SafeAreaView>
-      <SearchBar
-      ref={searchHeaderRef}
-        placeholder="Type Here..."
-        onChangeText={handleSearch}
-        platform={Platform.OS}
-        onCancel={() => {setHeader(true);}}
-        onClear={() => {setHeader(true);}}
-        showCancel={true}
-        searchIcon={true}
-        autoFocus={false}
-        dropShadowed={true}
-        visibleInitially={false}
-        persistent={false}
-        enableSuggestion={false}
-        entryAnimation="from-right-side"
-        topOffset={1}
-        iconColor="#673AB7"
-        onEnteringSearch={event => {
-          handleSearch(event.nativeEvent.text);
-        }}
-        onSearch={event => {
-          handleSearch(event.nativeEvent.text);
-        }}
-        style={styles.searchHeader}
-      />
+      {header ? null : (
+        <SearchBar
+          ref={searchRef}
+          placeholder="Type Here..."
+          onChangeText={handleSearch}
+          platform={Platform.OS}
+          autoFocus={true}
+          onCancel={() => {
+            setHeader(true);
+            if (searchRef.current) {
+              searchRef.current.blur();
+            }
+          }}
+          onClear={() => {
+            setHeader(true);
+            if (searchRef.current) {
+              searchRef.current.blur();
+            }
+          }}
+          showCancel={true}
+          searchIcon={true}
+          dropShadowed={true}
+          visibleInitially={false}
+          persistent={false}
+          enableSuggestion={false}
+          entryAnimation="from-right-side"
+          topOffset={1}
+          iconColor="#673AB7"
+        />
+      )}
       <FlatList
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -413,13 +413,9 @@ const List = () => {
       />
       <FlatList
         scrollEnabled={true}
-        data={
-          searchText === '' && selectedTags.length === 0
-            ? lyrics
-            : filteredLyrics
-        }
+        data={filteredLyrics}
         renderItem={renderListItem}
-        keyExtractor={item => item.id.toString()}
+        keyExtractor={item => item.id}
         ListEmptyComponent={renderEmptyList}
         refreshControl={
           <RefreshControl
@@ -446,12 +442,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#673AB7',
   },
-  searchHeader: {
-    header: {
-      height: 55,
-      backgroundColor: '#fdfdfd',
-    },
-  },
   chipText: {
     padding: 8,
     fontSize: 13,
@@ -472,4 +462,3 @@ const styles = StyleSheet.create({
 });
 
 export default List;
-

@@ -1,21 +1,18 @@
-import React, {useEffect, useRef} from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
-  SafeAreaView,
   Text,
   View,
   StyleSheet,
   Image,
   FlatList,
-  Dimensions,
-  ScrollView,
   TouchableOpacity,
   Animated,
 } from 'react-native';
-import {Card} from 'react-native-elements';
-import {NavigationContainer} from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import { Card } from 'react-native-elements';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-const SingleRow = ({navigation, title, data, redirect, collection}) => {
+const SingleRow = ({ navigation, title, data, redirect, collection }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -30,109 +27,68 @@ const SingleRow = ({navigation, title, data, redirect, collection}) => {
     }).start();
   };
 
-  const onPressLearnMore = () => {
-    alert('Hello');
-  };
-
   return (
-    <Card containerStyle={[styles.cardStyle]}>
-      <View style={[styles.cardHeadingStyle]}>
+    <Card containerStyle={styles.cardStyle}>
+      <View style={styles.cardHeadingStyle}>
         <Text style={styles.cardHeadingTextStyle}>{title}</Text>
-        <Text
-          style={{color: '#228B22'}}
+        <TouchableOpacity
           onPress={() =>
             navigation.navigate('Double', {
               data: data,
               title: title,
               redirect: redirect,
             })
-          }>
-          MORE
-        </Text>
+          }
+        >
+          <Text style={styles.moreLink}>MORE</Text>
+        </TouchableOpacity>
       </View>
-      <View style={{flexDirection: 'row', marginVertical: 15, width: '100%'}}>
-        <FlatList
-          style={{marginHorizontal: -10}}
-          showsHorizontalScrollIndicator={false}
-          horizontal
-          data={data}
-          renderItem={({item}) => (
-            <Animated.View style={[styles.container, {opacity: fadeAnim}]}>
-              <TouchableOpacity
-                onPress={() => {
-                  navigation.navigate(redirect, {
-                    artist: item.name,
-                    bhagwan: item.name,
-                    bhagwanDisplay: item.displayName,
-                    collection: item.name,
-                    collectionDisplayName: item.displayName,
-                  });
-                }}
-                style={{margin: 5}}>
-                {item.picture ? (
-                  <Image
-                    source={{uri: item.picture}}
-                    style={{
-                      width: 90,
-                      height: 90,
-                      marginBottom: 10,
-                      marginLeft: 5,
-                      borderRadius: 100,
-                    }}
-                  />
-                ) : (
-                  <View
-                    style={{
-                      width: 90,
-                      height: 90,
-                      marginBottom: 10,
-                      marginLeft: 5,
-                      borderRadius: 100,
-                      backgroundColor: '#ECECEC',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}>
-                    <Text style={{color: '#494949', fontWeight: '200'}}>
-                      {item.name.charAt(0)}
-                    </Text>
-                  </View>
-                )}
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}>
-                  <Text
-                    style={{color: '#494949', fontWeight: '200'}}
-                    onPress={() => {
-                      alert('Title ' + item.title + ' Clicked');
-                    }}>
-                    {item.displayName ? item.displayName : item.name}
+      <FlatList
+        style={styles.flatListStyle}
+        showsHorizontalScrollIndicator={false}
+        horizontal
+        data={data}
+        renderItem={({ item }) => (
+          <Animated.View style={[styles.itemContainer, { opacity: fadeAnim }]}>
+            <TouchableOpacity
+              onPress={() => {
+                navigation.navigate(redirect, {
+                  artist: item.name,
+                  bhagwan: item.name,
+                  bhagwanDisplay: item.displayName,
+                  collection: item.name,
+                  collectionDisplayName: item.displayName,
+                });
+              }}
+              style={styles.touchableItem}
+            >
+              {item.picture ? (
+                <Image
+                  source={{ uri: item.picture }}
+                  style={styles.imageStyle}
+                />
+              ) : (
+                <View style={styles.placeholderImage}>
+                  <Text style={styles.placeholderText}>
+                    {item.name.charAt(0)}
                   </Text>
                 </View>
-              </TouchableOpacity>
-            </Animated.View>
-          )}
-          keyExtractor={(item, index) => index}
-        />
-        {/* <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
-          {data.map((item, key) => (
-            
-          ))}
-        </ScrollView> */}
-      </View>
+              )}
+              <Text style={styles.itemText}>
+                {item.displayName ? item.displayName : item.name}
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
+        keyExtractor={(item, index) => index.toString()}
+      />
     </Card>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   cardStyle: {
     paddingHorizontal: 12,
-    borderCurve: 'continuous',
     borderColor: '#fff',
     marginLeft: 0,
     marginRight: 0,
@@ -141,15 +97,52 @@ const styles = StyleSheet.create({
   cardHeadingStyle: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 10,
   },
   cardHeadingTextStyle: {
     paddingLeft: 10,
     color: '#606070',
     fontWeight: 'bold',
+    fontSize: 18,
   },
-  childViewTextStyle: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  moreLink: {
+    color: '#228B22',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  flatListStyle: {
+    marginHorizontal: -10,
+  },
+  itemContainer: {
+    flex: 1,
+    margin: 5,
+  },
+  touchableItem: {
+    alignItems: 'center',
+  },
+  imageStyle: {
+    width: 90,
+    height: 90,
+    marginBottom: 10,
+    borderRadius: 100,
+  },
+  placeholderImage: {
+    width: 90,
+    height: 90,
+    marginBottom: 10,
+    borderRadius: 100,
+    backgroundColor: '#ECECEC',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    color: '#494949',
+    fontWeight: '200',
+  },
+  itemText: {
+    color: '#494949',
+    fontWeight: '200',
+    textAlign: 'center',
   },
 });
 
