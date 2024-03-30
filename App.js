@@ -2,7 +2,7 @@ import React, {useState, useEffect} from 'react';
 import {Text, View} from 'react-native';
 import {StatusBar} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import {createMaterialBottomTabNavigator} from '@react-navigation/material-bottom-tabs';
 import SplashScreen from './componet/common/SplashScreen';
 import HomeStack from './componet/Home/HomeStack';
@@ -45,11 +45,7 @@ const App = () => {
                 options={{
                   tabBarLabel: 'Home',
                   tabBarIcon: ({color}) => (
-                    <MaterialCommunityIcons
-                      name="home"
-                      color={color}
-                      size={26}
-                    />
+                    <Icon name="home" size={26} color={color} />
                   ),
                 }}
               />
@@ -59,11 +55,7 @@ const App = () => {
                 options={{
                   tabBarLabel: 'Category',
                   tabBarIcon: ({color}) => (
-                    <MaterialCommunityIcons
-                      name="menu"
-                      color={color}
-                      size={26}
-                    />
+                    <Icon name="menu" size={26} color={color} />
                   ),
                 }}
               />
@@ -74,11 +66,7 @@ const App = () => {
                   title: 'Jain Dhun',
                   tabBarLabel: 'Profile',
                   tabBarIcon: ({color}) => (
-                    <MaterialCommunityIcons
-                      name="account"
-                      color={color}
-                      size={26}
-                    />
+                    <Icon name="person" size={26} color={color} />
                   ),
                 }}
               />

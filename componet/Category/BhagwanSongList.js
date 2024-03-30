@@ -25,7 +25,6 @@ const sampleLyrics = [
     publishDate: new Date(),
     newFlag: true,
     tags: ['Pop', 'Rock'],
-    youtube: 'hey'
   },
   {
     id: '2',

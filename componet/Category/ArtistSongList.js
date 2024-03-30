@@ -1,4 +1,7 @@
-import React, {useEffect, useState} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, {useEffect, useState, useLayoutEffect} from 'react';
+import {useNavigation} from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import {
   ActivityIndicator,
   FlatList,
@@ -11,177 +14,91 @@ import {
   View,
   RefreshControl,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import LyricItem from '../common/LyricItem';
+import TagChip from '../common/TagChip';
+
 
 const phoneFontScale = PixelRatio.getFontScale();
 
-const sampleLyrics = [
-  {
-    id: '1',
-    numbering: 1,
-    title: 'Sample Title 1',
-    artist: 'Sample Artist 1',
-    content: 'Sample content for song 1...',
-    publishDate: new Date(),
-    newFlag: true,
-    tags: ['Pop', 'Rock'],
-    youtube: 'hey'
-  },
-  {
-    id: '2',
-    numbering: 2,
-    title: 'Sample Title 2',
-    artist: 'Sample Artist 2',
-    content: 'Sample content for song 2...',
-    publishDate: new Date(),
-    newFlag: false,
-    tags: ['R&B', 'Soul'],
-  },
-  {
-    id: '3',
-    numbering: 3,
-    title: 'Sample Title 3',
-    artist: 'Sample Artist 3',
-    content: 'Sample content for song 3...',
-    publishDate: new Date(),
-    newFlag: false,
-    tags: ['Country', 'Folk'],
-  },
-  {
-    id: '4',
-    numbering: 4,
-    title: 'Sample Title 4',
-    artist: 'Sample Artist 4',
-    content: 'Sample content for song 4...',
-    publishDate: new Date(),
-    newFlag: true,
-    tags: ['Hip-hop', 'Rap'],
-  },
-  {
-    id: '5',
-    numbering: 5,
-    title: 'Sample Title 5',
-    artist: 'Sample Artist 5',
-    content: 'Sample content for song 5...',
-    publishDate: new Date(),
-    newFlag: false,
-    tags: ['Electronic', 'Dance'],
-  },
-  {
-    id: '6',
-    numbering: 6,
-    title: 'Sample Title 6',
-    artist: 'Sample Artist 6',
-    content: 'Sample content for song 6...',
-    publishDate: new Date(),
-    newFlag: true,
-    tags: ['Blues', 'Jazz'],
-  },
-  {
-    id: '7',
-    numbering: 7,
-    title: 'Sample Title 7',
-    artist: 'Sample Artist 7',
-    content: 'Sample content for song 7...',
-    publishDate: new Date(),
-    newFlag: false,
-    tags: ['Classical', 'Opera'],
-  },
-  {
-    id: '8',
-    numbering: 8,
-    title: 'Sample Title 8',
-    artist: 'Sample Artist 8',
-    content: 'Sample content for song 8...',
-    publishDate: new Date(),
-    newFlag: true,
-    tags: ['Reggae', 'Ska'],
-  },
-  {
-    id: '9',
-    numbering: 9,
-    title: 'Sample Title 9',
-    artist: 'Sample Artist 9',
-    content: 'Sample content for song 9...',
-    publishDate: new Date(),
-    newFlag: false,
-    tags: ['Gospel', 'Spiritual'],
-  },
-  {
-    id: '10',
-    numbering: 10,
-    title: 'Sample Title 10',
-    artist: 'Sample Artist 10',
-    content: 'Sample content for song 10...',
-    publishDate: new Date(),
-    newFlag: true,
-    tags: ['Metal', 'Punk'],
-  },
-  {
-    id: '11',
-    numbering: 11,
-    title: 'Sample Title 11',
-    artist: 'Sample Artist 11',
-    content: 'Sample content for song 11...',
-    publishDate: new Date(),
-    newFlag: false,
-    tags: ['Indie', 'Alternative'],
-  },
-  {
-    id: '12',
-    numbering: 12,
-    title: 'Sample Title 12',
-    artist: 'Sample Artist 12',
-    content: 'Sample content for song 12...',
-    publishDate: new Date(),
-    newFlag: true,
-    tags: ['Funk', 'Disco'],
-  },
-];
-
-const sampleTags = [
-  {id: '1', name: 'Pop'},
-  {id: '2', name: 'Rock'},
-  {id: '3', name: 'R&B'},
-  {id: '4', name: 'Soul'},
-  {id: '5', name: 'Country'},
-  {id: '6', name: 'Folk'},
-  {id: '7', name: 'Hip-hop'},
-  {id: '8', name: 'Rap'},
-  {id: '9', name: 'Electronic'},
-  {id: '10', name: 'Dance'},
-  {id: '11', name: 'Blues'},
-  {id: '12', name: 'Jazz'},
-  {id: '13', name: 'Classical'},
-  {id: '14', name: 'Opera'},
-  {id: '15', name: 'Reggae'},
-  {id: '16', name: 'Ska'},
-  {id: '17', name: 'Gospel'},
-  {id: '18', name: 'Spiritual'},
-  {id: '19', name: 'Metal'},
-  {id: '20', name: 'Punk'},
-  {id: '21', name: 'Indie'},
-  {id: '22', name: 'Alternative'},
-  {id: '23', name: 'Funk'},
-  {id: '24', name: 'Disco'},
-];
-
-const List = () => {
-  const navigation = useNavigation();
+const ArtistSongList = ({route, navigation}) => {
+  const {artist} = route.params;
+  const searchHeaderRef = React.useRef(null);
   const [header, setHeader] = useState(true);
-  const [lyrics, setLyrics] = useState(sampleLyrics);
-  const [tags, setTags] = useState(sampleTags);
-  const [filteredLyrics, setFilteredLyrics] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchText, setSearchText] = useState('');
+  const [lyrics, setLyrics] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [filteredLyrics, setFilteredLyrics] = React.useState([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [searchText, setSearchText] = React.useState('');
   const [selectedTags, setSelectedTags] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+
+  const fetchStoredData = async () => {
+    try {
+      const storedData = await AsyncStorage.getItem('saved');
+      const storedTags = await AsyncStorage.getItem('tags');
+      return storedData !== null ? JSON.parse(storedData) : [];
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const [storedData, storedTags] = await Promise.all([
+          fetchStoredData(),
+          fetchStoredTags(),
+        ]);
+        setLyrics(storedData);
+        setTags(storedTags);
+        setIsLoading(false);
+      } catch (error) {
+        console.error(error);
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const fetchStoredTags = async () => {
+    try {
+      const storedTags = await AsyncStorage.getItem('tags');
+      return storedTags !== null ? JSON.parse(storedTags) : [];
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  };
 
   const handleSearch = text => {
     setSearchText(text);
     const filteredItems = filterData(text);
     setFilteredLyrics(filteredItems);
   };
+
+  useLayoutEffect(() => {
+    const showSearchBox = () => {
+      searchHeaderRef.current.isHidden ? searchHeaderRef.current.show() : null;
+    };
+
+    navigation.setOptions({
+      headerRight: () => (
+        <Icon
+          name="magnify"
+          color="#fff"
+          onPress={() => {
+            showSearchBox();
+            setHeader(false);
+          }}
+          size={26}
+        />
+      ),
+      headerShown: header,
+    });
+  }, [navigation, header]);
 
   const handleTagPress = tag => {
     let newSelectedTags = [];
@@ -224,28 +141,30 @@ const List = () => {
   };
 
   const renderTags = ({item}) => (
-    <TouchableOpacity
-      style={[
-        styles.container,
-        {
-          backgroundColor: selectedTags.includes(item.name)
-            ? '#FFC107'
-            : '#fff',
-          height: 40,
-        },
-      ]}
-      onPress={() => handleTagPress(item.name)}>
-      <Text style={styles.chipText}>{item.name}</Text>
-    </TouchableOpacity>
+    <TagChip
+      item={item}
+      isSelected={selectedTags.includes(item.name)}
+      onPress={() => handleTagPress(item.name)}
+    />
   );
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    setLyrics(sampleLyrics);
-    setTags(sampleTags);
+    const [storedData, storedTags] = await Promise.all([
+      fetchStoredData(),
+      fetchStoredTags(),
+    ]);
+    setLyrics(storedData);
+    setTags(storedTags);
     setFilteredLyrics([]);
     setRefreshing(false);
   };
+
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      title: artist,
+    });
+  }, [navigation, artist]);
 
   const renderListItem = ({item}) => {
     const {id, numbering, title, content, publishDate, newFlag} = item;
@@ -317,6 +236,7 @@ const List = () => {
 
   const renderEmptyList = () => {
     if (isLoading) {
+      // Render the activity indicator while data is being fetched
       return (
         <View style={styles.emptyListContainer}>
           <View style={styles.emptyListText}>
@@ -325,6 +245,7 @@ const List = () => {
         </View>
       );
     } else {
+      // Render the message when there is no data available
       return (
         <View style={styles.emptyListContainer}>
           <Text style={styles.emptyListText}>No data available</Text>
@@ -332,6 +253,27 @@ const List = () => {
       );
     }
   };
+
+  // const currentDate = new Date();
+  const sortedLyrics = lyrics.sort((a, b) => a.numbering - b.numbering); // Sort by numbering
+
+  // // Filter the lyrics based on publish date within 7 days and numbering
+  // const filteredLyric = sortedLyrics.filter(item => {
+  //   const publishDateTime = item.publishDate.toDate(); // assuming publishDate is a Firebase Timestamp
+  //   const timeDiff = Math.ceil(
+  //     (currentDate - publishDateTime) / (1000 * 60 * 60 * 24),
+  //   );
+  //   const newFlag = item.newFlag;
+  //   return newFlag && timeDiff >= 0 && timeDiff < 7;
+  // });
+
+  // // Filter the remaining lyrics based on numbering
+  const remainingLyrics = sortedLyrics.filter(
+    item => !filteredLyrics.includes(item),
+  );
+
+  // // Concatenate the filtered lyrics with the remaining lyrics
+  const mergedLyrics = [...filteredLyrics, ...remainingLyrics];
 
   return (
     <SafeAreaView>
@@ -344,11 +286,11 @@ const List = () => {
         keyExtractor={item => item.id.toString()}
       />
       <FlatList
-        scrollEnabled={true}
+        scrollEnabled={false}
         data={
           searchText === '' && selectedTags.length === 0
-            ? lyrics
-            : filteredLyrics
+            ? mergedLyrics
+            : filteredLyrics.sort((a, b) => a.numbering - b.numbering)
         }
         renderItem={renderListItem}
         keyExtractor={item => item.id.toString()}
@@ -366,6 +308,19 @@ const List = () => {
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  searchHeader: {
+    header: {
+      height: 55,
+      backgroundColor: '#fdfdfd',
+    },
+  },
+  tagsContainer: {
+    marginTop: 0,
+  },
   container: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -397,4 +352,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default List;
+export default ArtistSongList;
