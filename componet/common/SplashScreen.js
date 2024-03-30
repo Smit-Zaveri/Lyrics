@@ -1,14 +1,12 @@
-import React, {useState, useEffect, useRef} from 'react';
-import {View, Text, Image, StyleSheet, Animated} from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, Image, StyleSheet, Animated } from 'react-native';
 
 const SplashScreen = () => {
-  const [align, setAlign] = useState('center');
   const [alignsecond, setAlignsecond] = useState(false);
   const fadeInAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     let myTimeout = setTimeout(() => {
-      setAlign('flex-start');
       setAlignsecond(true);
       fadeIn();
     }, 200);
@@ -24,25 +22,16 @@ const SplashScreen = () => {
   };
 
   return (
-    <View style={[styles.container, {justifyContent: align}]}>
-      <Image
+    <View style={styles.container}>
+      <Animated.Image
         source={{
           uri: 'https://raw.githubusercontent.com/AboutReact/sampleresource/master/react_logo.png',
         }}
-        style={{marginLeft: 10, width: 140, height: 140}}
+        style={[styles.logo, { opacity: fadeInAnimation }]}
       />
       {!alignsecond ? null : (
-        <Animated.View
-          style={{
-            margin: 15,
-            opacity: fadeInAnimation,
-          }}>
-          <Text
-            style={{
-              color: '#114998',
-              fontSize: 30,
-              fontWeight: 'bold',
-            }}>
+        <Animated.View style={{ opacity: fadeInAnimation }}>
+          <Text style={styles.text}>
             Jain Dhun
           </Text>
         </Animated.View>
@@ -57,7 +46,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    flexDirection: 'row',
-    marginHorizontal: 40,
+    justifyContent: 'center',
+  },
+  logo: {
+    width: 200,
+    height: 200,
+  },
+  text: {
+    marginTop: 20,
+    color: '#114998',
+    fontSize: 30,
+    fontWeight: 'bold',
   },
 });

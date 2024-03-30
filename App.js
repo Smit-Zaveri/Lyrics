@@ -5,9 +5,9 @@ import {NavigationContainer} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {createMaterialBottomTabNavigator} from '@react-navigation/material-bottom-tabs';
 import SplashScreen from './componet/common/SplashScreen';
-import HomeStack from './componet/Home/HomeStack';
-import Profile from './componet/Profile/Profile';
-import Category from './componet/Category/Category';
+import HomeStack from './componet/home/HomeStack';
+import Profile from './componet/profile/Profile';
+import Category from './componet/category/Category';
 
 const Tab = createMaterialBottomTabNavigator();
 // const Stack = createNativeStackNavigator();

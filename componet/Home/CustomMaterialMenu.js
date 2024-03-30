@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
-  Button,
+  Pressable,
   ToastAndroid,
   ScrollView,
   Animated,
@@ -61,20 +61,31 @@ const CustomMaterialMenu = ({
   };
 
   const submitReport = () => {
+    // Validate if the report text is empty
+    if (!reportText.trim()) {
+      ToastAndroid.showWithGravity(
+        'Please enter a report before submitting!',
+        ToastAndroid.SHORT,
+        ToastAndroid.BOTTOM
+      );
+      return;  // Exit the function if validation fails
+    }
+  
     // Logic to submit the report to Firestore with the post ID
     const { id, title } = item;
-
+  
     // Perform the necessary code to send the report to Firestore using the 'reportText', 'id', and 'title'
     // For example, you can use the Firebase SDK to interact with Firestore
-
+  
     ToastAndroid.showWithGravity(
       'Report submitted successfully!',
       ToastAndroid.SHORT,
       ToastAndroid.BOTTOM
     );
-
+  
     hideSlideAnimation();
   };
+  
 
   const modalAnimation = slideAnimation.interpolate({
     inputRange: [0, 1],
@@ -100,13 +111,15 @@ const CustomMaterialMenu = ({
               />
             </TouchableOpacity>
           ) : (
-            <Text onPress={showMenu} style={textStyle}>
+            <Text onPress={showMenu} style={[textStyle, { color: '#333' }]}>
               {menuText}
             </Text>
           )
         }
         onRequestClose={hideMenu}>
-        <MenuItem onPress={openReportPopup}>Report</MenuItem>
+        <MenuItem onPress={openReportPopup} style={{ color: '#333' }}>
+          Report
+        </MenuItem>
       </Menu>
 
       {/* Report Modal */}
@@ -129,10 +142,10 @@ const CustomMaterialMenu = ({
                 width: '80%',
                 maxWidth: 300,
                 backgroundColor: '#fff',
-                borderRadius: 10,
+                borderRadius: 20,
                 padding: 20,
                 transform: [
-                  { translateX: -150 }, 
+                  { translateX: -150 },
                   { translateY: -100 },
                   { translateY: modalAnimation },
                 ],
@@ -142,7 +155,7 @@ const CustomMaterialMenu = ({
               style={{
                 marginBottom: 13,
                 fontSize: 20,
-                color: 'black',
+                color: '#333',
                 fontWeight: 'bold',
               }}>
               Report Lyrics :-
@@ -150,10 +163,10 @@ const CustomMaterialMenu = ({
             <ScrollView
               style={{ height: 90, marginBottom: 10 }}
               contentContainerStyle={{
-                borderColor: 'gray',
-                backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                borderRadius: 5,
-                color: 'rgba(0, 0, 0, 0.7)',
+                borderColor: '#ccc',
+                backgroundColor: '#f5f5f5',
+                borderRadius: 10,
+                color: '#333',
                 fontWeight: '800',
                 paddingBottom: 30,
                 paddingHorizontal: 10,
@@ -168,7 +181,20 @@ const CustomMaterialMenu = ({
                 }}
               />
             </ScrollView>
-            <Button title="Submit" onPress={submitReport} />
+            <Pressable
+              style={({ pressed }) => [
+                {
+                  backgroundColor: pressed ? '#673ae2' : '#673ab7',
+                  borderRadius: 10,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: 10,
+                  paddingHorizontal: 20,
+                },
+              ]}
+              onPress={submitReport}>
+              <Text style={{ color: '#fff', fontWeight: 'bold' }}>Submit</Text>
+            </Pressable>
           </Animated.View>
         </TouchableOpacity>
       </Modal>

@@ -3,7 +3,7 @@ import { ScrollView, Text, View, Linking, ToastAndroid } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FAB } from '@rneui/themed';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import CustomMaterialMenu from '../Home/CustomMaterialMenu';
+import CustomMaterialMenu from '../home/CustomMaterialMenu';
 
 const sampleLyrics = [
   {
