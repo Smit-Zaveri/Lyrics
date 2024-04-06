@@ -3,19 +3,17 @@ import { StatusBar, useColorScheme } from 'react-native';
 import { NavigationContainer, useTheme } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
-import SplashScreen from './Src/componet/SplashScreen';
-import HomeStack from './Src/Screen/home/HomeStack';
-import Profile from './Src/Screen/profile/Profile';
-import Category from './Src/Screen/category/Category';
-import { colors } from './Src/config/theme';
+import HomeStack from './src/screen/home/HomeStack';
+import Profile from './src/screen/profile/Profile';
+import Category from './src/screen/category/Category';
+import { colors } from './src/config/theme';
+import SplashScreen from './src/componet/SplashScreen';
 
 const Tab = createMaterialBottomTabNavigator();
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
-  // const colorScheme = "dark"; 
   const colorScheme = useColorScheme(); 
-
   const { colors: themeColors } = useTheme();
 
   let activecolors = colors[colorScheme] || colors.light;

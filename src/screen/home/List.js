@@ -26,7 +26,7 @@ const phoneFontScale = PixelRatio.getFontScale();
 const sampleLyrics = [
   {
     id: '1',
-    numbering: 1,
+    numbering: 100,
     title: 'Sample Title 1',
     artist: 'Sample Artist 1',
     content: 'Sample content for song 1...',
