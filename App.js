@@ -1,19 +1,24 @@
-import React, {useState, useEffect} from 'react';
-import {Text, View} from 'react-native';
-import {StatusBar} from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
+import React, { useState, useEffect } from 'react';
+import { StatusBar, useColorScheme } from 'react-native';
+import { NavigationContainer, useTheme } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {createMaterialBottomTabNavigator} from '@react-navigation/material-bottom-tabs';
-import SplashScreen from './componet/common/SplashScreen';
-import HomeStack from './componet/home/HomeStack';
-import Profile from './componet/profile/Profile';
-import Category from './componet/category/Category';
+import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
+import SplashScreen from './Src/componet/SplashScreen';
+import HomeStack from './Src/Screen/home/HomeStack';
+import Profile from './Src/Screen/profile/Profile';
+import Category from './Src/Screen/category/Category';
+import { colors } from './Src/config/theme';
 
 const Tab = createMaterialBottomTabNavigator();
-// const Stack = createNativeStackNavigator();
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
+  // const colorScheme = "dark"; 
+  const colorScheme = useColorScheme(); 
+
+  const { colors: themeColors } = useTheme();
+
+  let activecolors = colors[colorScheme] || colors.light;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -22,29 +27,26 @@ const App = () => {
 
     return () => clearTimeout(timer);
   }, []);
+
   return (
     <>
       {showSplash ? (
         <SplashScreen />
       ) : (
-        // <View
-        //   style={{
-        //     flex: 1,
-        //     justifyContent: 'center',
-        //     alignItems: 'center',
-        //   }}>
-        //   <Text>Hello, world!</Text>
-        // </View>
         <>
-          <NavigationContainer>
-            <StatusBar backgroundColor="#673AB7" />
-            <Tab.Navigator>
+          <NavigationContainer theme={{ colors: themeColors }}>
+            <StatusBar backgroundColor={activecolors.primary} />
+            <Tab.Navigator
+              barStyle={{ backgroundColor: activecolors.surface }}
+              activeColor={activecolors.primary}
+              inactiveColor={activecolors.text}  // Set inactive color to text color
+            >
               <Tab.Screen
                 name="Home"
                 component={HomeStack}
                 options={{
                   tabBarLabel: 'Home',
-                  tabBarIcon: ({color}) => (
+                  tabBarIcon: ({ color }) => (
                     <Icon name="home" size={26} color={color} />
                   ),
                 }}
@@ -54,7 +56,7 @@ const App = () => {
                 component={Category}
                 options={{
                   tabBarLabel: 'Category',
-                  tabBarIcon: ({color}) => (
+                  tabBarIcon: ({ color }) => (
                     <Icon name="menu" size={26} color={color} />
                   ),
                 }}
@@ -65,7 +67,7 @@ const App = () => {
                 options={{
                   title: 'Jain Dhun',
                   tabBarLabel: 'Profile',
-                  tabBarIcon: ({color}) => (
+                  tabBarIcon: ({ color }) => (
                     <Icon name="person" size={26} color={color} />
                   ),
                 }}
@@ -77,4 +79,5 @@ const App = () => {
     </>
   );
 };
+
 export default App;

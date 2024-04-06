@@ -22,7 +22,7 @@ import SingleRow from './SingleRow';
 import DoubleColum from './DoubleColum';
 import CategoryDisplay from './CategoryDisplay';
 import ArtistSongList from './ArtistSongList';
-import DetailPage from '../common/DetailPage';
+import DetailPage from '../../componet/DetailPage';
 import CatagoryList from './CatagoryList';
 import BhagwanSongList from './BhagwanSongList';
 

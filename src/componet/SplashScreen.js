@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Image, StyleSheet, Animated } from 'react-native';
+import { View, Text, Image, useColorScheme, StyleSheet, Animated } from 'react-native';
+import { colors } from '../config/theme';
 
 const SplashScreen = () => {
   const [alignsecond, setAlignsecond] = useState(false);
   const fadeInAnimation = useRef(new Animated.Value(0)).current;
+  const colorScheme = useColorScheme(); 
+  // const colorScheme = "dark"; 
+
+  let activecolors = colors[colorScheme];
 
   useEffect(() => {
     let myTimeout = setTimeout(() => {
@@ -22,7 +27,7 @@ const SplashScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: activecolors.background }]}>
       <Animated.Image
         source={{
           uri: 'https://raw.githubusercontent.com/AboutReact/sampleresource/master/react_logo.png',
@@ -31,7 +36,7 @@ const SplashScreen = () => {
       />
       {!alignsecond ? null : (
         <Animated.View style={{ opacity: fadeInAnimation }}>
-          <Text style={styles.text}>
+          <Text style={[styles.text, { color: activecolors.text }]}>
             Jain Dhun
           </Text>
         </Animated.View>
@@ -54,7 +59,6 @@ const styles = StyleSheet.create({
   },
   text: {
     marginTop: 20,
-    color: '#114998',
     fontSize: 30,
     fontWeight: 'bold',
   },

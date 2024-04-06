@@ -1,9 +1,8 @@
 
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import React from 'react';
-
-import DetailPage from '../common/DetailPage';
 import List from './List';
+import DetailPage from '../../componet/DetailPage';
 const Stack = createNativeStackNavigator();
 
 const HomeStack = () => {

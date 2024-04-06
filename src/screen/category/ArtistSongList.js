@@ -14,8 +14,8 @@ import {
   View,
   RefreshControl,
 } from 'react-native';
-import LyricItem from '../common/LyricItem';
-import TagChip from '../common/TagChip';
+import LyricItem from '../../componet/LyricItem';
+import TagChip from '../../componet/TagChip';
 
 
 const phoneFontScale = PixelRatio.getFontScale();

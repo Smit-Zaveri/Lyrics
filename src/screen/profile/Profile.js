@@ -5,7 +5,7 @@ import {Text, TouchableOpacity, View} from 'react-native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import SavedLyrics from './SavedLyrics';
-import DetailPage from '../common/DetailPage';
+import DetailPage from '../../componet/DetailPage';
 const Stack = createNativeStackNavigator();
 const ProfileDisplay = ({navigation}) => {
   return (
