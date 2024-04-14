@@ -1,24 +1,7 @@
-import React, {
-  useState,
-  useCallback,
-  useLayoutEffect,
-  useRef,
-  useMemo,
-  useEffect,
-} from 'react';
+import React, { useState, useCallback, useLayoutEffect, useRef, useMemo, useEffect,} from 'react';
 import {SearchBar} from '@rneui/themed';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {
-  FlatList,
-  SafeAreaView,
-  Text,
-  PixelRatio,
-  StyleSheet,
-  TouchableOpacity,
-  Pressable,
-  View,
-  RefreshControl,
-} from 'react-native';
+import { FlatList, SafeAreaView, Text, PixelRatio, StyleSheet, TouchableOpacity, Pressable, View, RefreshControl,} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 
 const phoneFontScale = PixelRatio.getFontScale();
@@ -26,7 +9,7 @@ const phoneFontScale = PixelRatio.getFontScale();
 const sampleLyrics = [
   {
     id: '1',
-    numbering: 100,
+    numbering: 1,
     title: 'Sample Title 1',
     artist: 'Sample Artist 1',
     content: 'Sample content for song 1...',
@@ -146,7 +129,6 @@ const sampleLyrics = [
     tags: ['Funk', 'Disco'],
   },
 ];
-
 const sampleTags = [
   {id: '1', name: 'Pop'},
   {id: '2', name: 'Rock'},

@@ -1,7 +1,7 @@
 // config/theme.js
 export const colors = {
   light: {
-    primary: "#6A1B9A",   // Deep Purple
+    primary: "#4527A0",   // Deep Purple
     text: "#333333",      // Dark Gray
     background: "#FAFAFA",  // Light Gray
     surface: "#EDE7F6",   // Light Purple
@@ -13,3 +13,4 @@ export const colors = {
     surface: "#4527A0",   // Dark Purple
   },
 };
+

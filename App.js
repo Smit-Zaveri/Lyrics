@@ -6,8 +6,8 @@ import { createMaterialBottomTabNavigator } from '@react-navigation/material-bot
 import HomeStack from './src/screen/home/HomeStack';
 import Profile from './src/screen/profile/Profile';
 import Category from './src/screen/category/Category';
-import { colors } from './src/config/theme';
 import SplashScreen from './src/componet/SplashScreen';
+import { colors } from './src/theme/theme';
 
 const Tab = createMaterialBottomTabNavigator();
 

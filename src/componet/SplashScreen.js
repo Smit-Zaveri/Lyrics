@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Image, useColorScheme, StyleSheet, Animated } from 'react-native';
-import { colors } from '../config/theme';
+import { colors } from '../theme/theme';
 
 const SplashScreen = () => {
   const [alignsecond, setAlignsecond] = useState(false);

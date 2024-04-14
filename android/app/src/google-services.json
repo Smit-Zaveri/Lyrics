@@ -15,7 +15,7 @@
       },
       "oauth_client": [
         {
-          "client_id": "285813640279-kesrte26ndv7dqk2umb0sgjmn3t7sqr7.apps.googleusercontent.com",
+          "client_id": "285813640279-retus0brocgjkluceceal6reuicmh66p.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
@@ -44,7 +44,15 @@
       },
       "oauth_client": [
         {
-          "client_id": "285813640279-kesrte26ndv7dqk2umb0sgjmn3t7sqr7.apps.googleusercontent.com",
+          "client_id": "285813640279-tln1ebnj0r2nh8h5r00cglb9s3h9ee1n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.lyrics",
+            "certificate_hash": "df25b1feccc9a6e0fbfdbe869abcf7d2212f719b"
+          }
+        },
+        {
+          "client_id": "285813640279-retus0brocgjkluceceal6reuicmh66p.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
