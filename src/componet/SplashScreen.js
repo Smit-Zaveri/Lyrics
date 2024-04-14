@@ -29,11 +29,10 @@ const SplashScreen = () => {
   return (
     <View style={[styles.container, { backgroundColor: activecolors.background }]}>
       <Animated.Image
-        source={{
-          uri: 'https://raw.githubusercontent.com/AboutReact/sampleresource/master/react_logo.png',
-        }}
-        style={[styles.logo, { opacity: fadeInAnimation }]}
-      />
+    source={require('../assets/logo.png')}
+    style={[styles.logo, { opacity: fadeInAnimation }]}
+/>
+
       {!alignsecond ? null : (
         <Animated.View style={{ opacity: fadeInAnimation }}>
           <Text style={[styles.text, { color: activecolors.text }]}>
