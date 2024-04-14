@@ -7,6 +7,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import auth from '@react-native-firebase/auth';
 import SavedLyrics from './SavedLyrics';
 import DetailPage from '../../componet/DetailPage';
+import Suggestion from './Suggestion';
+
 const Stack = createNativeStackNavigator();
 
 const ProfileDisplay = ({ navigation }) => {
@@ -122,6 +124,12 @@ const ProfileDisplay = ({ navigation }) => {
           <Text style={styles.text}>Saved</Text>
         </View>
       </TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.navigate('Suggestion')}>
+        <View style={styles.item}>
+          <Icon name="info" color="#673AB7" size={25} />
+          <Text style={styles.text}>Suggestion</Text>
+        </View>
+      </TouchableOpacity>
       {isLoggedIn ? (
         userInfo && (
           <TouchableOpacity onPress={handleGoogleLogout}>
@@ -164,6 +172,21 @@ const Profile = () => {
         component={SavedLyrics}
         options={{
           headerTitle: 'Saved Lyrics',
+          headerStyle: {
+            backgroundColor: '#673AB7',
+          },
+          headerTintColor: '#fff',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+            fontSize: 20,
+          },
+        }}
+      />
+      <Stack.Screen
+        name="Suggestion"
+        component={Suggestion}
+        options={{
+          headerTitle: 'Suggestion',
           headerStyle: {
             backgroundColor: '#673AB7',
           },
