@@ -19,7 +19,7 @@ const sampleLyrics = [
   },
   {
     id: '2',
-    numbering: 2000000,
+    numbering: 2,
     title: 'Sample Title 2',
     artist: 'Sample Artist 2',
     content: 'Sample content for song 2...',
@@ -414,15 +414,13 @@ const List = () => {
 
     return (
       <Pressable
-        onPress={() => {
-          navigation.navigate('Details', {
-            item: {
-              ...item,
-              publishDate: publishDate.toISOString(), // Convert Date to string
-            },
-          });
-          setHeader(true);
-        }}
+      onPress={() => {
+        navigation.navigate('Details', {
+          itemNumbering: item.numbering.toString(),
+          publishDate: publishDate.toISOString(), // Convert Date to string
+        });
+        setHeader(true);
+      }}
         style={{ marginHorizontal: 5 }}>
         <View
           key={id}
