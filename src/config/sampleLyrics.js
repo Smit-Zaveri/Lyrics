@@ -1,15 +1,15 @@
 export const sampleLyrics = [
-    {
-      id: '1',
-      numbering: 1,
-      title: 'Sample Title 1',
-      artist: 'Sample Artist 1',
-      content: 'Sample content for song 1...',
-      publishDate: new Date(),
-      newFlag: true,
-      tags: ['Pop', 'Rock'],
-      youtube: 'https://youtu.be/PhSQnIrQIOg?si=xNmhPEWjcSVvdVzF',
-    },
+  {
+    id: '1',
+    numbering: 1,
+    title: 'Ude 6 Dhaja',
+    artist: 'Sample Artist 1',
+    content: 'દાદા ના દેરાસર પર ઉડે રે ધજા.. (૨ વાર)\nઉડે રે ધજા…ઉડે રે ધજા, એને જોવાની મજા..\nફરકે છે ધજા, એને જોવાની મજા..\nદાદા ના.. દાદા ના દેરાસર પર ઉડે રે ધજા.. \n\nલહરાતી-લહરાતી કહેતી, આવો ભક્તો આમ,\nઅહીંયા બેઠા જગના ઠાકુર, કરતા કામ તમામ,\nઆવે છે અહીંયા તેની.. (૨ વાર) તૂટે છે સજા..\nઉડે રે ધજા.. (૧)\n\nશ્વેત-લાલ છે એમાં રંગો, અરિહંત-સિદ્ધ ને નામ,\nચડતી ધજા જોવા માટે, ઉમટે આખુ ગામ,\nજુવો જો ધજા તો.. (૨ વાર) સંસારથી રજા..\nઉડે રે ધજા.. (૨)\n\nનિત-નવા રૂપે ને રંગે, લાગે ખૂબ પ્યારા,\nમોહ ઉપર પામ્યા છે વિજય, આ દાદા મારા,\nનીરખી-નીરખી અમને જુવે.. (૨ વાર) હરખાતી પ્રજા..\nઉડે રે ધજા.. (૩)',
+    publishDate: new Date(),
+    newFlag: true,
+    tags: ['Pop', 'Rock'],
+    youtube: 'https://youtu.be/PhSQnIrQIOg?si=xNmhPEWjcSVvdVzF',
+  },
     {
       id: '2',
       numbering: 2,
