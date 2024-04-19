@@ -89,7 +89,7 @@ const Profile = () => {
         }}
       />
       <Stack.Screen
-        name="SavedDetails"
+        name="Details"
         component={DetailPage}
         options={{
           headerStyle: {
