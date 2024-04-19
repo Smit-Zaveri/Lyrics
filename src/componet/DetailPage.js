@@ -29,6 +29,7 @@ const DetailPage = ({route, navigation}) => {
   const [itemNumbering, setItemNumbering] = useState(itemNumberingparas);
   const [song, setSong] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
+  const [lastItemNumber, setLastItemNumber] = useState(itemNumberingparas);
   const [slideAnim] = useState(new Animated.Value(0));
 
   // Memoized functions and values
@@ -37,9 +38,9 @@ const DetailPage = ({route, navigation}) => {
       const song = sampleLyrics.find(
         song => song.numbering === parseInt(numbering),
       );
-      return song || setItemNumbering(1);
+      return song || setItemNumbering(lastItemNumber);
     },
-    [sampleLyrics],
+    [sampleLyrics, lastItemNumber],
   );
 
   const headerOptions = useMemo(
@@ -97,7 +98,15 @@ const DetailPage = ({route, navigation}) => {
       easing: Easing.bezier(0.25, 0.1, 0.25, 1), // Smoother easing function
       useNativeDriver: false,
     }).start(() => {
-      setItemNumbering(prev => parseInt(prev, 10) + toValue);
+      setItemNumbering(prev => {
+        const newNumber = parseInt(prev, 10) + toValue;
+        if (newNumber > 0 && newNumber <= sampleLyrics.length) {
+          setLastItemNumber(newNumber);
+          return newNumber;
+        } else {
+          return prev;
+        }
+      });
       slideAnim.setValue(0);
     });
   };
@@ -140,15 +149,11 @@ const DetailPage = ({route, navigation}) => {
   };
 
   const openYouTubeApp = () => {
-    Linking.openURL(videoUrl);
+    Linking.openURL(song?.youtube);
   };
 
   // Render
   if (!song) {
-    if (itemNumbering == 0) {
-      setItemNumbering(1);
-    }
-
     return (
       <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
         <Text>Loading...</Text>
@@ -166,9 +171,6 @@ const DetailPage = ({route, navigation}) => {
       },
     ],
   };
-
-  const number = song?.numbering;
-  const videoUrl = song?.youtube;
 
   return (
     <View style={{height: '100%'}} {...panResponder.panHandlers}>
