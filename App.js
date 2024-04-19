@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { StatusBar, useColorScheme, Animated, Easing } from 'react-native';
-import { NavigationContainer, useTheme } from '@react-navigation/native';
+import { StatusBar} from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { enableScreens } from 'react-native-screens';
@@ -16,21 +16,13 @@ const Tab = createMaterialBottomTabNavigator();
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
-  const colorScheme = useColorScheme(); 
-  const { colors: themeColors } = useTheme();
-  const fadeAnim = new Animated.Value(1);
 
-  let activecolors = colors[colorScheme] || colors.light;
+  const activeColors = colors.light; // Assuming light is the default color scheme
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 500,
-        easing: Easing.inOut(Easing.ease),
-        useNativeDriver: true,
-      }).start();
+      
     }, 1300);
 
     return () => clearTimeout(timer);
@@ -41,13 +33,12 @@ const App = () => {
   }
 
   return (
-    <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
-      <NavigationContainer theme={{ colors: themeColors }}>
-        <StatusBar backgroundColor={activecolors.primary} />
+      <NavigationContainer>
+        <StatusBar backgroundColor={activeColors.primary} />
         <Tab.Navigator
-          barStyle={{ backgroundColor: activecolors.surface }}
-          activeColor={activecolors.primary}
-          inactiveColor={activecolors.text}
+          barStyle={{ backgroundColor: activeColors.surface }}
+          activeColor={activeColors.primary}
+          inactiveColor={activeColors.text}
         >
           <Tab.Screen
             name="Home"
@@ -82,7 +73,6 @@ const App = () => {
           />
         </Tab.Navigator>
       </NavigationContainer>
-    </Animated.View>
   );
 };
 

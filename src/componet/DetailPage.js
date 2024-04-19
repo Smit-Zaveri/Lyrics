@@ -20,10 +20,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {FAB} from '@rneui/themed';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import CustomMaterialMenu from './CustomMaterialMenu';
-import {sampleLyrics} from '../config/sampleLyrics';
 
 const DetailPage = ({route, navigation}) => {
-  const {itemNumberingparas} = route.params;
+  const {itemNumberingparas, Lyrics} = route.params; // Destructure Lyrics here
 
   // State variables
   const [itemNumbering, setItemNumbering] = useState(itemNumberingparas);
@@ -35,12 +34,12 @@ const DetailPage = ({route, navigation}) => {
   // Memoized functions and values
   const setSongByNumbering = useCallback(
     numbering => {
-      const song = sampleLyrics.find(
+      const foundSong = Lyrics.find(
         song => song.numbering === parseInt(numbering),
       );
-      return song || setItemNumbering(lastItemNumber);
+      return foundSong || setItemNumbering(lastItemNumber);
     },
-    [sampleLyrics, lastItemNumber],
+    [Lyrics, lastItemNumber],
   );
 
   const headerOptions = useMemo(
@@ -94,13 +93,13 @@ const DetailPage = ({route, navigation}) => {
     const toValue = direction === 'next' ? 1 : -1;
     Animated.timing(slideAnim, {
       toValue: toValue,
-      duration: 300, // Increased duration to make it slower
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1), // Smoother easing function
+      duration: 300,
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
       useNativeDriver: false,
     }).start(() => {
       setItemNumbering(prev => {
         const newNumber = parseInt(prev, 10) + toValue;
-        if (newNumber > 0 && newNumber <= sampleLyrics.length) {
+        if (newNumber > 0 && newNumber <= Lyrics.length) {
           setLastItemNumber(newNumber);
           return newNumber;
         } else {
@@ -126,28 +125,40 @@ const DetailPage = ({route, navigation}) => {
 
   const handleFABClick = async () => {
     setIsSaved(prevSaved => !prevSaved);
-
+  
     try {
       const savedData = await AsyncStorage.getItem('saved');
       let savedLyrics = savedData !== null ? JSON.parse(savedData) : [];
-
+  
       if (isSaved) {
         savedLyrics = savedLyrics.filter(lyric => lyric.id !== song?.id);
       } else {
-        savedLyrics.push(song);
+        const numberOfSavedLyrics = savedLyrics.length;
+        const newNumbering = numberOfSavedLyrics + 1;
+  
+        let updatedSong;
+        if (numberOfSavedLyrics === 0) {
+          updatedSong = {...song, numbering: 1};
+        } else {
+          updatedSong = {...song, numbering: newNumbering};
+        }
+  
+        savedLyrics.push(updatedSong);
         ToastAndroid.showWithGravity(
           'Lyrics Has Been Saved',
           ToastAndroid.SHORT,
           ToastAndroid.BOTTOM,
         );
+  
+        // setSong(updatedSong);
       }
-
+  
       await AsyncStorage.setItem('saved', JSON.stringify(savedLyrics));
     } catch (error) {
       console.error(error);
     }
   };
-
+  
   const openYouTubeApp = () => {
     Linking.openURL(song?.youtube);
   };

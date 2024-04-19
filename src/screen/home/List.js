@@ -1,42 +1,57 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { FlatList, SafeAreaView, Text, PixelRatio, StyleSheet, TouchableOpacity, Pressable, View, RefreshControl } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, {useState, useCallback, useEffect} from 'react';
+import {
+  FlatList,
+  SafeAreaView,
+  Text,
+  PixelRatio,
+  StyleSheet,
+  TouchableOpacity,
+  Pressable,
+  View,
+  RefreshControl,
+} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { sampleLyrics } from '../../config/sampleLyrics';
 
 
 const phoneFontScale = PixelRatio.getFontScale();
 
 
-const sampleTags = [
-  {id: '1', name: 'Mahavir'},
-  {id: '2', name: 'Nem'},
-  {id: '3', name: 'R&B'},
-  {id: '4', name: 'Soul'},
-];
 
-const List = () => {
+const List = ({route}) => {
+  const { Lyrics, Tags } = route.params;
+
+// Now you can use Lyrics in your List component
+
   const navigation = useNavigation();
   const [header, setHeader] = useState(true);
-  const [lyrics, setLyrics] = useState(sampleLyrics);
-  const [tags, setTags] = useState(sampleTags);
+  const [lyrics, setLyrics] = useState(Lyrics);
+  const [tags, setTags] = useState(Tags);
   const [selectedTags, setSelectedTags] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [filteredLyrics, setFilteredLyrics] = useState([]);
 
   const filterAndSortLyrics = (tags, lyrics) => {
     const currentDate = new Date();
-  
+
     const filteredItems = lyrics.filter(item => {
       return tags.every(selectedTag => item.tags.includes(selectedTag));
     });
-  
+
     return filteredItems.sort((a, b) => {
       // Check if a is flagged as new and if it's within a week since publication
-      const isNewA = a.newFlag && Math.ceil((currentDate - new Date(a.publishDate)) / (1000 * 60 * 60 * 24)) < 7;
+      const isNewA =
+        a.newFlag &&
+        Math.ceil(
+          (currentDate - new Date(a.publishDate)) / (1000 * 60 * 60 * 24),
+        ) < 7;
       // Check if b is flagged as new and if it's within a week since publication
-      const isNewB = b.newFlag && Math.ceil((currentDate - new Date(b.publishDate)) / (1000 * 60 * 60 * 24)) < 7;
-  
+      const isNewB =
+        b.newFlag &&
+        Math.ceil(
+          (currentDate - new Date(b.publishDate)) / (1000 * 60 * 60 * 24),
+        ) < 7;
+
       // If only one item is new and within a week, prioritize it
       if (isNewA !== isNewB) {
         return isNewA ? -1 : 1;
@@ -46,9 +61,6 @@ const List = () => {
       }
     });
   };
-  
-  
-  
 
   const handleTagPress = useCallback(
     tag => {
@@ -63,7 +75,7 @@ const List = () => {
     [selectedTags, lyrics],
   );
 
-  const renderTags = ({ item }) => (
+  const renderTags = ({item}) => (
     <TouchableOpacity
       style={[
         styles.container,
@@ -79,8 +91,8 @@ const List = () => {
     </TouchableOpacity>
   );
 
-  const renderListItem = ({ item }) => {
-    const { id, numbering, title, content, publishDate, newFlag } = item;
+  const renderListItem = ({item}) => {
+    const {id, numbering, title, content, publishDate, newFlag} = item;
 
     const currentDate = new Date();
     const publishDateTime = new Date(publishDate);
@@ -91,15 +103,17 @@ const List = () => {
     const numberingText =
       newFlag && timeDiff >= 0 && timeDiff < 7 ? 'NEW' : numbering.toString();
 
+
     return (
       <Pressable
-      onPress={() => {
-        navigation.navigate('Details', {
-          itemNumberingparas: item.numbering.toString() // Convert Date to string
-        });
-        setHeader(true);
-      }}
-        style={{ marginHorizontal: 5 }}>
+        onPress={() => {
+          navigation.navigate('Details', {
+            Lyrics: Lyrics,
+            itemNumberingparas: item.numbering.toString(), // Convert Date to string
+          });
+          setHeader(true);
+        }}
+        style={{marginHorizontal: 5}}>
         <View
           key={id}
           style={{
@@ -110,7 +124,7 @@ const List = () => {
             flexDirection: 'row',
             alignItems: 'center',
           }}>
-          <View style={{ height: 40 }}>
+          <View style={{height: 40}}>
             <Text
               style={{
                 marginRight: 20,
@@ -135,11 +149,11 @@ const List = () => {
               {numberingText}
             </Text>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontWeight: 'bold', fontSize: 16 * phoneFontScale }}>
+          <View style={{flex: 1}}>
+            <Text style={{fontWeight: 'bold', fontSize: 16 * phoneFontScale}}>
               {title}
             </Text>
-            <Text style={{ fontSize: 14 * phoneFontScale }} numberOfLines={1}>
+            <Text style={{fontSize: 14 * phoneFontScale}} numberOfLines={1}>
               {content.split('\n')[0]}
             </Text>
           </View>
@@ -155,13 +169,6 @@ const List = () => {
       </Text>
     </View>
   );
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    setLyrics(sampleLyrics);
-    setTags(sampleTags);
-    setRefreshing(false);
-  };
 
   useEffect(() => {
     const sortedFilteredItems = filterAndSortLyrics(selectedTags, lyrics);
@@ -199,14 +206,7 @@ const List = () => {
         renderItem={renderListItem}
         keyExtractor={item => item.id}
         ListEmptyComponent={renderEmptyList}
-        ListFooterComponent={<View style={{ height: 70 }}></View>} 
-        refreshControl={
-          <RefreshControl
-            tintColor="#673AB7"
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-          />
-        }
+        ListFooterComponent={<View style={{height: 70}}></View>}
       />
     </SafeAreaView>
   );
