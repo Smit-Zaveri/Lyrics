@@ -1,4 +1,11 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useLayoutEffect,
+  useRef,
+} from 'react';
 import {
   ScrollView,
   Text,
@@ -17,26 +24,57 @@ import {sampleLyrics} from '../config/sampleLyrics';
 
 const DetailPage = ({route, navigation}) => {
   const {itemNumberingparas} = route.params;
+
+  // State variables
   const [itemNumbering, setItemNumbering] = useState(itemNumberingparas);
   const [song, setSong] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
   const [slideAnim] = useState(new Animated.Value(0));
 
-  const setSongByNumbering = (numbering) => {
-    const song = sampleLyrics.find(
-      (song) => song.numbering === parseInt(numbering),
-    );
-    return song || setItemNumbering(1);
-  };
+  // Memoized functions and values
+  const setSongByNumbering = useCallback(
+    numbering => {
+      const song = sampleLyrics.find(
+        song => song.numbering === parseInt(numbering),
+      );
+      return song || setItemNumbering(1);
+    },
+    [sampleLyrics],
+  );
 
-  const number = song?.numbering;
-  const videoUrl = song?.youtube;
+  const headerOptions = useMemo(
+    () => ({
+      title: `${song?.numbering}. ${song?.title}`,
+      headerRight: () => (
+        <CustomMaterialMenu
+          menuText="Menu"
+          textStyle={{color: 'white'}}
+          navigation={navigation}
+          item={song}
+          route={route}
+          isIcon={true}
+        />
+      ),
+    }),
+    [navigation, route, song],
+  );
 
+  // Effects
   useEffect(() => {
     const foundSong = setSongByNumbering(itemNumbering);
     setSong(foundSong);
-  }, [itemNumbering]);
+  }, [itemNumbering, setSongByNumbering]);
 
+  useEffect(() => {
+    checkIfSaved();
+  }, [song, checkIfSaved]);
+
+  // Layout Effects
+  useLayoutEffect(() => {
+    navigation.setOptions(headerOptions);
+  }, [navigation, headerOptions]);
+
+  // PanResponder for gestures
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -50,84 +88,42 @@ const DetailPage = ({route, navigation}) => {
     }),
   ).current;
 
-  const navigateSong = (direction) => {
-    const duration = 100;
-    const easing = Easing.in(Easing.bounce);
-    // const easing = Easing.inOut(Easing.ease);
-  
-    if (direction === 'next') {
-      Animated.timing(slideAnim, {
-        toValue: 1,
-        duration: duration,
-        easing: easing,
-        useNativeDriver: false,
-      }).start(() => {
-        setItemNumbering((prev) => parseInt(prev, 10) + 1);
-        slideAnim.setValue(0);
-      });
-    } else if (direction === 'prev') {
-      Animated.timing(slideAnim, {
-        toValue: -1,
-        duration: duration,
-        easing: easing,
-        useNativeDriver: false,
-      }).start(() => {
-        setItemNumbering((prev) => parseInt(prev, 10) - 1);
-        slideAnim.setValue(0);
-      });
-    }
-  };
-  
-
-
-
-
-  useEffect(() => {
-    setSong(setSongByNumbering(itemNumbering));
-  }, [itemNumbering]);
-
-  React.useLayoutEffect(() => {
-    navigation.setOptions({
-      title: `${song?.numbering}. ${song?.title}`,
-      headerRight: () => (
-        <CustomMaterialMenu
-          menuText="Menu"
-          textStyle={{color: 'white'}}
-          navigation={navigation}
-          item={song}
-          route={route}
-          isIcon={true}
-        />
-      ),
+  // Helper functions
+  const navigateSong = direction => {
+    const toValue = direction === 'next' ? 1 : -1;
+    Animated.timing(slideAnim, {
+      toValue: toValue,
+      duration: 300, // Increased duration to make it slower
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1), // Smoother easing function
+      useNativeDriver: false,
+    }).start(() => {
+      setItemNumbering(prev => parseInt(prev, 10) + toValue);
+      slideAnim.setValue(0);
     });
-  }, [navigation, song]);
+  };
 
-  useEffect(() => {
-    const checkIfSaved = async () => {
-      try {
-        const savedData = await AsyncStorage.getItem('saved');
-        if (savedData !== null) {
-          const savedLyrics = JSON.parse(savedData);
-          const isItemSaved = savedLyrics.some((lyric) => lyric.id === song?.id);
-          setIsSaved(isItemSaved);
-        }
-      } catch (error) {
-        console.error(error);
+  const checkIfSaved = useCallback(async () => {
+    try {
+      const savedData = await AsyncStorage.getItem('saved');
+      if (savedData !== null) {
+        const savedLyrics = JSON.parse(savedData);
+        const isItemSaved = savedLyrics.some(lyric => lyric.id === song?.id);
+        setIsSaved(isItemSaved);
       }
-    };
-
-    checkIfSaved();
+    } catch (error) {
+      console.error(error);
+    }
   }, [song]);
 
   const handleFABClick = async () => {
-    setIsSaved((prevSaved) => !prevSaved);
+    setIsSaved(prevSaved => !prevSaved);
 
     try {
       const savedData = await AsyncStorage.getItem('saved');
       let savedLyrics = savedData !== null ? JSON.parse(savedData) : [];
 
       if (isSaved) {
-        savedLyrics = savedLyrics.filter((lyric) => lyric.id !== song?.id);
+        savedLyrics = savedLyrics.filter(lyric => lyric.id !== song?.id);
       } else {
         savedLyrics.push(song);
         ToastAndroid.showWithGravity(
@@ -147,32 +143,32 @@ const DetailPage = ({route, navigation}) => {
     Linking.openURL(videoUrl);
   };
 
-
-
+  // Render
   if (!song) {
-    // Check if the item numbering is already 1 before setting it
-    if (itemNumbering == 0 ) {
+    if (itemNumbering == 0) {
       setItemNumbering(1);
     }
-    
+
     return (
       <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
         <Text>Loading...</Text>
       </View>
     );
   }
-  
 
   const animatedStyle = {
     transform: [
       {
         translateX: slideAnim.interpolate({
           inputRange: [-1, 0, 1],
-          outputRange: [-170, 0, 170],
+          outputRange: [-100, 0, 100],
         }),
       },
     ],
   };
+
+  const number = song?.numbering;
+  const videoUrl = song?.youtube;
 
   return (
     <View style={{height: '100%'}} {...panResponder.panHandlers}>
@@ -192,7 +188,7 @@ const DetailPage = ({route, navigation}) => {
           </View>
         </Animated.View>
       </ScrollView>
-      {song.youtube ? (
+      {song.youtube && (
         <FAB
           icon={() => (
             <MaterialCommunityIcons name="youtube" color="#fff" size={25} />
@@ -202,7 +198,7 @@ const DetailPage = ({route, navigation}) => {
           style={{marginRight: 82, borderRadius: 50}}
           onPress={openYouTubeApp}
         />
-      ) : null}
+      )}
       <FAB
         icon={() => (
           <MaterialCommunityIcons
