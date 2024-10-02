@@ -1,0 +1,77 @@
+{
+  "project_info": {
+    "project_number": "285813640279",
+    "firebase_url": "https://jain-stavan-86cb6-default-rtdb.firebaseio.com",
+    "project_id": "jain-stavan-86cb6",
+    "storage_bucket": "jain-stavan-86cb6.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:285813640279:android:90a9bab1ba65584f9b6712",
+        "android_client_info": {
+          "package_name": "com.jaindhun.android"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "285813640279-retus0brocgjkluceceal6reuicmh66p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFcLgJhkdaPY1ra5LIrqRERJJ3-WIyBTk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "285813640279-kesrte26ndv7dqk2umb0sgjmn3t7sqr7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:285813640279:android:391d7080512f1ed79b6712",
+        "android_client_info": {
+          "package_name": "com.lyrics"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "285813640279-tln1ebnj0r2nh8h5r00cglb9s3h9ee1n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.lyrics",
+            "certificate_hash": "df25b1feccc9a6e0fbfdbe869abcf7d2212f719b"
+          }
+        },
+        {
+          "client_id": "285813640279-retus0brocgjkluceceal6reuicmh66p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFcLgJhkdaPY1ra5LIrqRERJJ3-WIyBTk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "285813640279-kesrte26ndv7dqk2umb0sgjmn3t7sqr7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
