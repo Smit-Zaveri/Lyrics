@@ -1,10 +1,11 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { useColorScheme } from 'react-native';
-import List from './List';
+import List from '../../component/List';
 import DetailPage from '../../component/DetailPage';
 import Search from '../../component/Search';
 import { colors } from '../../theme/theme';
+import HomeList from './HomeList';
 
 const Stack = createNativeStackNavigator();
 
@@ -19,7 +20,7 @@ const HomeStack = () => {
 
   return (
     <Stack.Navigator
-      initialRouteName="List"
+      initialRouteName="HomeList"
       screenOptions={{
         headerStyle: {
           backgroundColor: themeColors.primary, // Dynamic header background based on theme
@@ -32,10 +33,17 @@ const HomeStack = () => {
       }}
     >
       <Stack.Screen
+        name="HomeList"
+        component={HomeList}
+        options={{
+          title: 'Jain Dhun',
+        }}
+      />
+      <Stack.Screen
         name="List"
         component={List}
-        initialParams={{ collectionName: "lyrics", Tags: "tags" , title: "Jain Dhun"}}
       />
+
       <Stack.Screen
         name="Details"
         component={DetailPage}

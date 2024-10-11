@@ -89,10 +89,10 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: 'bold',
-    fontSize: 16 * phoneFontScale,
+    fontSize: 16,
   },
   content: {
-    fontSize: 14 * phoneFontScale,
+    fontSize: 14 ,
   },
   newFlagContainer: {
     backgroundColor: '#FFD700', // Yellow background for NEW
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   },
   newFlagText: {
     fontWeight: 'bold',
-    fontSize: 12 * phoneFontScale,
+    fontSize: 12,
   },
 });
 

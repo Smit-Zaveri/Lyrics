@@ -29,7 +29,7 @@ const DetailPage = ({ route, navigation }) => {
 
   const headerOptions = useMemo(
     () => ({
-      title: `${song?.numbering}. ${song?.title}`,
+      title: `${song?.title}`,
       headerRight: () => (
         <CustomMaterialMenu
           menuText="Menu"
@@ -204,13 +204,13 @@ const DetailPage = ({ route, navigation }) => {
 
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.background }}  {...panResponder.panHandlers}>
-        <Animated.View style={[animatedStyle, { paddingStart: 20,  paddingEnd: 10, paddingBottom: 20 }]}>
+        <Animated.View style={[animatedStyle, { paddingStart: 20,  paddingEnd: 20, paddingBottom: 20 }]}>
           <Text style={{ paddingTop: 10, fontSize: song.artist ? 16 : 0, marginBottom: song.artist ? 10 : 0, color: themeColors.text }}>
             {song.artist ? 'Artist :' : null} {song.artist}
           </Text>
       <ScrollView showsVerticalScrollIndicator={false}>
 
-          <Text style={{ fontSize: 17, textAlign: 'justify', color: themeColors.text }} {...panResponder.panHandlers}>
+          <Text style={{ fontSize: 18, textAlign: '', color: themeColors.text }} {...panResponder.panHandlers}>
             {song.content}
           </Text>
       </ScrollView>
@@ -223,7 +223,7 @@ const DetailPage = ({ route, navigation }) => {
           )}
           color={themeColors.primary}
           placement="right"
-          style={{ marginRight: 82, borderRadius: 50 }}
+          style={{ marginBottom: 82, borderRadius: 50 }}
           onPress={openYouTubeApp}
         />
       )}

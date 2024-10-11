@@ -18,7 +18,7 @@ const CategoryDisplay = ({ navigation }) => {
 
   const loadData = async () => {
     try {
-      const fetchedDataTags = await getFromAsyncStorage("collections");
+      const fetchedDataTags = await getFromAsyncStorage("tags");
       const fetchedDataArtist = await getFromAsyncStorage("artists");
       const fetchedDataTirtankar = await getFromAsyncStorage("tirtankar");
       setTagData(fetchedDataTags);

@@ -3,11 +3,11 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import { useColorScheme } from 'react-native';
 import DetailPage from '../../component/DetailPage';
-import List from '../home/List';
 import ProfileDisplay from './ProfileDisplay';
 import Suggestion from './Suggestion';
 import { colors } from '../../theme/theme';
 import Search from '../../component/Search';
+import List from '../../component/List';
 
 const Stack = createNativeStackNavigator();
 
