@@ -28,7 +28,7 @@ const DetailPage = ({ route, navigation }) => {
 
   const headerOptions = useMemo(
     () => ({
-      title: `${song?.numbering} ${song?.title}`,
+      title: `${song?.numbering}.  ${song?.title}`,
       headerRight: () => (
         <CustomMaterialMenu
           menuText="Menu"
