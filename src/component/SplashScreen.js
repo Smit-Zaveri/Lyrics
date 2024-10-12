@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Animated, StyleSheet, useColorScheme } from 'react-native';
+import { View, Text, Animated, StyleSheet, Image, useColorScheme } from 'react-native';
 import { colors } from '../theme/theme';
 
 const SplashScreen = () => {
   const [alignSecond, setAlignSecond] = useState(false);
   const fadeInAnimation = useRef(new Animated.Value(0)).current;
+  const fadeOutAnimation = useRef(new Animated.Value(1)).current;
   const systemTheme = useColorScheme();
-  
+
   // Determine logo source based on the current theme
   const logoSource = systemTheme === 'dark' 
     ? require('../assets/logo.png') 
@@ -29,6 +30,20 @@ const SplashScreen = () => {
       toValue: 1,
       duration: 1000,
       useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) {
+        setTimeout(() => {
+          fadeOut();
+        }, 2000); // Delay before fading out
+      }
+    });
+  };
+
+  const fadeOut = () => {
+    Animated.timing(fadeOutAnimation, {
+      toValue: 0,
+      duration: 500,
+      useNativeDriver: true,
     }).start();
   };
 
@@ -39,7 +54,7 @@ const SplashScreen = () => {
         style={[styles.logo, { opacity: fadeInAnimation }]}
       />
       {alignSecond && (
-        <Animated.View style={{ opacity: fadeInAnimation }}>
+        <Animated.View style={{ opacity: fadeOutAnimation }}>
           <Text style={[styles.text, { color: activeColors.text }]}>
             Jain Dhun
           </Text>
