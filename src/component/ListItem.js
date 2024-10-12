@@ -1,7 +1,5 @@
 import React from 'react';
-import { Pressable, View, Text, StyleSheet, PixelRatio } from 'react-native';
-
-const phoneFontScale = PixelRatio.getFontScale();
+import { Pressable, View, Text, StyleSheet } from 'react-native';
 
 const ListItem = ({ item, themeColors, onItemPress }) => {
   const { numbering, title, content, publishDate, newFlag } = item;
@@ -89,10 +87,10 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: 'bold',
-    fontSize: 16 * phoneFontScale,
+    fontSize: 16,
   },
   content: {
-    fontSize: 14 * phoneFontScale,
+    fontSize: 14 ,
   },
   newFlagContainer: {
     backgroundColor: '#FFD700', // Yellow background for NEW
@@ -104,7 +102,7 @@ const styles = StyleSheet.create({
   },
   newFlagText: {
     fontWeight: 'bold',
-    fontSize: 12 * phoneFontScale,
+    fontSize: 12,
   },
 });
 

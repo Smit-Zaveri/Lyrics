@@ -10,11 +10,11 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-import {getFromAsyncStorage} from '../../config/dataService';
-import {colors} from '../../theme/theme';
-import TagItem from '../../component/TagItem';
-import ListItem from '../../component/ListItem';
-import EmptyList from '../../component/EmptyList';
+import {getFromAsyncStorage} from '../config/dataService';
+import {colors} from '../theme/theme';
+import TagItem from './TagItem';
+import ListItem from './ListItem';
+import EmptyList from './EmptyList';
 
 const List = ({route}) => {
   const {collectionName, Tags, title} = route.params;
@@ -73,24 +73,45 @@ const List = ({route}) => {
     try {
       const fetchedDataTags = await getFromAsyncStorage(Tags);
       const fetchedDataLyrics = await getFromAsyncStorage(collectionName);
-
+  
       let lyricsArray = Array.isArray(fetchedDataLyrics)
         ? fetchedDataLyrics
         : [];
       let tagsArray = Array.isArray(fetchedDataTags) ? fetchedDataTags : [];
-
-      // Ensure lyrics have numbering based on index
-      const lyricsWithIndex = lyricsArray.map((item, index) => ({
-        ...item,
-        numbering: index + 1, // Set numbering based on index
-      }));
-
+  
+      // Check if all items have unique and valid 'order' field
+      const hasValidOrder = lyricsArray.every(
+        (item, index, arr) =>
+          item.order !== undefined &&
+          item.order !== null &&
+          typeof item.order === 'number' &&
+          // Ensure order is not repeated
+          arr.filter(({ order }) => order === item.order).length === 1
+      );
+  
+      let lyricsWithNumbering;
+      if (hasValidOrder) {
+        // Sort lyrics by 'order' if it's valid
+        lyricsWithNumbering = lyricsArray
+          .sort((a, b) => a.order - b.order)
+          .map(item => ({
+            ...item,
+            numbering: item.order, // Use 'order' as numbering
+          }));
+      } else {
+        // Fallback to numbering based on index if 'order' is missing or invalid
+        lyricsWithNumbering = lyricsArray.map((item, index) => ({
+          ...item,
+          numbering: index + 1, // Use index-based numbering
+        }));
+      }
+  
       // Ensure tags have numbering based on index or other numerical property
       const sortedTagsArray = tagsArray.sort(
         (a, b) => Number(a.numbering) - Number(b.numbering),
       );
-
-      setLyrics(lyricsWithIndex);
+  
+      setLyrics(lyricsWithNumbering); // Set lyrics with either order or index numbering
       setTags(sortedTagsArray);
     } catch (error) {
       console.error('Error loading data:', error);
@@ -99,6 +120,7 @@ const List = ({route}) => {
       setIsLoading(false); // Turn off loading state when data is ready
     }
   };
+  
 
   useEffect(() => {
     loadData(); // Automatically load data on mount
@@ -142,18 +164,6 @@ const List = ({route}) => {
     });
     setHeader(true);
   };
-
-  // Auto-refresh logic: Trigger refresh after 1 second if no data is loaded
-  useEffect(() => {
-    if (filteredLyrics.length === 0 && shouldAutoRefresh) {
-      const timer = setTimeout(() => {
-        loadData();
-        setShouldAutoRefresh(false); // Prevent multiple refreshes
-      }, 500);
-
-      return () => clearTimeout(timer); // Clean up timer on unmount
-    }
-  }, [filteredLyrics, shouldAutoRefresh]);
 
   // Show loading indicator until data is fetched
   if (isLoading) {

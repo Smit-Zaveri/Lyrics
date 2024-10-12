@@ -206,12 +206,8 @@ const Suggestion = () => {
             control={control}
             name="artistName"
             placeholder="Artist name"
-            rules={{required: true}}
             themeColors={themeColors}
           />
-          {errors.artistName && (
-            <Text style={styles.error}>Artist name is required.</Text>
-          )}
 
           <InputField
             control={control}
@@ -226,31 +222,7 @@ const Suggestion = () => {
             <Text style={styles.error}>Content is required.</Text>
           )}
 
-          <Text style={[styles.label, {color: themeColors.text}]}>
-            Publish Date:
-          </Text>
-          <TouchableOpacity
-            style={[styles.dateButton, {backgroundColor: themeColors.primary}]}
-            onPress={() => setShowDatePicker(true)}
-            accessibilityLabel="Select Publish Date">
-            <Text style={styles.dateButtonText}>
-              {date.format('MMMM D, YYYY')}
-            </Text>
-          </TouchableOpacity>
-          {showDatePicker && (
-            <DateTimePicker
-              testID="dateTimePicker"
-              value={date}
-              mode="date"
-              display="default"
-              onChange={(event, selectedDate) => {
-                if (event.type === 'set') {
-                  setDate(dayjs(selectedDate));
-                }
-                setShowDatePicker(false);
-              }}
-            />
-          )}
+         
 
           <Button
             mode="contained"
