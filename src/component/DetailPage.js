@@ -14,7 +14,6 @@ const DetailPage = ({ route, navigation }) => {
   const [itemNumbering, setItemNumbering] = useState(itemNumberingparas);
   const [song, setSong] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
-  const [lastItemNumber, setLastItemNumber] = useState(itemNumberingparas);
   const [slideAnim] = useState(new Animated.Value(0));
   const [opacityAnim] = useState(new Animated.Value(1));
   const [scaleAnim] = useState(new Animated.Value(1));
@@ -22,14 +21,14 @@ const DetailPage = ({ route, navigation }) => {
   const setSongByNumbering = useCallback(
     numbering => {
       const foundSong = Lyrics.find(song => song.numbering === parseInt(numbering));
-      return foundSong || setItemNumbering(lastItemNumber);
+      return foundSong;
     },
-    [Lyrics, lastItemNumber]
+    [Lyrics]
   );
 
   const headerOptions = useMemo(
     () => ({
-      title: `${song?.title}`,
+      title: `${song?.numbering} ${song?.title}`,
       headerRight: () => (
         <CustomMaterialMenu
           menuText="Menu"
@@ -62,7 +61,6 @@ const DetailPage = ({ route, navigation }) => {
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (evt, gestureState) => {
-        // Allow swipe gestures only if there is no vertical scroll
         return Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
       },
       onPanResponderRelease: (e, gestureState) => {
@@ -81,38 +79,36 @@ const DetailPage = ({ route, navigation }) => {
     Animated.parallel([
       Animated.timing(slideAnim, {
         toValue: toValue,
-        duration: 400, // Increased duration
-        easing: Easing.out(Easing.exp), // Smoother easing
+        duration: 400,
+        easing: Easing.out(Easing.exp),
         useNativeDriver: true,
       }),
       Animated.timing(opacityAnim, {
         toValue: 0,
-        duration: 300, // Increased duration
-        easing: Easing.out(Easing.exp), // Smoother easing
+        duration: 300,
+        easing: Easing.out(Easing.exp),
         useNativeDriver: true,
       }),
       Animated.timing(scaleAnim, {
         toValue: 0.95,
-        duration: 300, // Increased duration
-        easing: Easing.out(Easing.exp), // Smoother easing
+        duration: 300,
+        easing: Easing.out(Easing.exp),
         useNativeDriver: true,
       }),
     ]).start(() => {
-  
       setItemNumbering(prev => {
-        let newNumber = parseInt(prev, 10) + toValue;
-        let attempts = 0;
+        const currentNumber = parseInt(prev, 10);
+        const sortedNumberings = Lyrics.map(song => song.numbering).sort((a, b) => a - b);
+        const currentIndex = sortedNumberings.indexOf(currentNumber);
+        let newIndex = currentIndex + toValue;
 
-        while (attempts < 5) {
-          const foundSong = Lyrics.find(song => song.numbering === newNumber);
-          if (foundSong) {
-            setLastItemNumber(newNumber);
-            return newNumber;
-          }
-          newNumber += toValue;
-          attempts++;
+        if (newIndex < 0) {
+          newIndex = sortedNumberings.length - 1;
+        } else if (newIndex >= sortedNumberings.length) {
+          newIndex = 0;
         }
-        return prev;
+
+        return sortedNumberings[newIndex].toString();
       });
 
       slideAnim.setValue(0);
