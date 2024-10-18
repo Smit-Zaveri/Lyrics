@@ -1,32 +1,36 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 
-const TagItem = ({ item, selectedTags, onTagPress, themeColors }) => (
-  <TouchableOpacity
-    style={[
-      styles.container,
-      {
-        backgroundColor: selectedTags.includes(item.name) ? '#FFC107' : themeColors.surface, // Yellow when selected, theme surface otherwise
-        borderColor: themeColors.primary, // Primary color for the border
-        borderWidth: 2,
-        marginTop: 8,
-        marginBottom: 11,
-      },
-    ]}
-    onPress={() => onTagPress(item.name)}
-  >
-    <Text
+const TagItem = ({ item, selectedTags, onTagPress, themeColors }) => {
+  const isSelected = selectedTags.includes(item.name);
+
+  return (
+    <TouchableOpacity
       style={[
-        styles.chipText,
+        styles.container,
         {
-          color: selectedTags.includes(item.name) ? themeColors.surface : themeColors.primary, // Inverted colors when selected
+          backgroundColor: isSelected ? '#FFC107' : themeColors.surface, // Yellow when selected, theme surface otherwise
+          borderColor: themeColors.primary, // Primary color for the border
+          borderWidth: 2,
+          marginTop: 8,
+          marginBottom: 11,
         },
       ]}
+      onPress={() => onTagPress(item.name)}
     >
-      {item.displayName ? item.displayName : item.name}
-    </Text>
-  </TouchableOpacity>
-);
+      <Text
+        style={[
+          styles.chipText,
+          {
+            color: isSelected ? themeColors.surface : themeColors.primary, // Inverted colors when selected
+          },
+        ]}
+      >
+        {item.displayName || item.name}
+      </Text>
+    </TouchableOpacity>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {

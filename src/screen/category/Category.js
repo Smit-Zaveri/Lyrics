@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import CategoryDisplay from './CategoryDisplay';
-import List from '../home/List';
+import List from '../../component/List';
 import DetailPage from '../../component/DetailPage';
 import Search from '../../component/Search';
 import DoubleColum from './DoubleColum';

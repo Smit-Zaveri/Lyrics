@@ -1,16 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import firebase from '@react-native-firebase/app';
 import firestore from '@react-native-firebase/firestore';
 import NetInfo from '@react-native-community/netinfo';
 
 const DATA_KEY_PREFIX = 'cachedData_';
 let collectionGroups = [];
 let all = [];
-
-// Initialize Firebase if not already initialized
-if (!firebase.apps.length) {
-  firebase.initializeApp(); // Initialize Firebase with default settings if necessary
-}
 
 // Fetch collection groups and all groups from Firestore
 const fetchCollectionGroups = async () => {
@@ -24,10 +18,9 @@ const fetchCollectionGroups = async () => {
       collectionGroups = data.groupNames || [];
       all = data.allNames || [];
       return {collectionGroups, all};
-    } else {
-      console.error('Document not found in Firestore');
-      return {collectionGroups: [], all: []};
     }
+    console.error('Document not found in Firestore');
+    return {collectionGroups: [], all: []};
   } catch (error) {
     console.error('Error fetching collection groups from Firestore:', error);
     throw error;
@@ -43,12 +36,10 @@ const fetchAndStoreData = async collectionName => {
       id: doc.id,
       collectionName,
     }));
-
     await AsyncStorage.setItem(
       `${DATA_KEY_PREFIX}${collectionName}`,
       JSON.stringify(data),
     );
-
     return data;
   } catch (error) {
     console.error(
@@ -59,48 +50,45 @@ const fetchAndStoreData = async collectionName => {
   }
 };
 
-// Get data from AsyncStorage
+// Get data from AsyncStorage or fetch if not available
 const getFromAsyncStorage = async collectionName => {
   try {
-    // Handle the case when collectionName is 'all'
-    if (collectionName === 'all') {
-      const allData = await Promise.all(
-        all.map(group => getFromAsyncStorage(group)),
-      );
-      return allData.flat();
+    if (collectionGroups.length === 0) {
+      const netInfo = await NetInfo.fetch();
+      if (netInfo.isConnected) {
+        console.log('No data found. Fetching new data...');
+        await initializeGroups();
+      } else {
+        console.log('No internet connection and no cached data available.');
+        return null;
+      }
     }
 
-    // If collection is in collectionGroups, retrieve from AsyncStorage
+    if (collectionName === 'all') {
+      return Promise.all(all.map(getFromAsyncStorage)).then(data =>
+        data.flat(),
+      );
+    }
+
     if (collectionGroups.includes(collectionName)) {
       const data = await AsyncStorage.getItem(
         `${DATA_KEY_PREFIX}${collectionName}`,
       );
       return data ? JSON.parse(data) : null;
-    } else {
-      // Otherwise, filter by tags or artist in all groups
-      const allData = await Promise.all(
-        all.map(group => getFromAsyncStorage(group)),
-      );
-
-      const filteredData = allData.flat().filter(item => {
-        const tags = item.tags || []; // Ensure tags is an array or empty array
-        const artist = item.artist || ""; // Ensure artist is a string or empty string
-      
-        // Case-insensitive matching
-        const tagMatches = tags.some(tag => tag.toLowerCase() === collectionName.toLowerCase());
-        const artistMatches = artist.toLowerCase().includes(collectionName.toLowerCase());
-      
-        return tagMatches || artistMatches;
-      });
-      
-
-      return filteredData;
     }
+
+    // Filter by tags or artist in all groups if collectionName not found
+    const allData = await Promise.all(all.map(getFromAsyncStorage));
+    return allData.flat().filter(item => {
+      const tags = item.tags || [];
+      const artist = item.artist || '';
+      return (
+        tags.some(tag => tag.toLowerCase() === collectionName.toLowerCase()) ||
+        artist.toLowerCase().includes(collectionName.toLowerCase())
+      );
+    });
   } catch (error) {
-    console.error(
-      `Error retrieving data from AsyncStorage for ${collectionName}:`,
-      error,
-    );
+    console.error(`Error retrieving data for ${collectionName}:`, error);
     throw error;
   }
 };
@@ -112,22 +100,16 @@ const refreshAllData = async () => {
     console.log('No internet connection, skipping data refresh.');
     return;
   }
-
-  await Promise.all(
-    collectionGroups.map(async collectionName => {
-      try {
-        await fetchAndStoreData(collectionName);
-      } catch (error) {
-        console.error(`Error refreshing data for ${collectionName}:`, error);
-      }
-    }),
-  );
+  await Promise.all(collectionGroups.map(fetchAndStoreData));
 };
 
 // Initialize collectionGroups and all before using them
 const initializeGroups = async () => {
-  const {collectionGroups, all} = await fetchCollectionGroups();
-  await refreshAllData(); // Ensure data is refreshed before continuing
+  const {collectionGroups: groups, all: allGroups} =
+    await fetchCollectionGroups();
+  collectionGroups = groups;
+  all = allGroups;
+  await refreshAllData();
 };
 
 export {
