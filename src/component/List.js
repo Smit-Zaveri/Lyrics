@@ -1,23 +1,23 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   FlatList,
   SafeAreaView,
   RefreshControl,
   View,
-  ActivityIndicator, // Import ActivityIndicator for showing loading state
+  ActivityIndicator,
   useColorScheme,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-import {getFromAsyncStorage} from '../config/dataService';
-import {colors} from '../theme/theme';
+import { getFromAsyncStorage } from '../config/dataService';
+import { colors } from '../theme/theme';
 import TagItem from './TagItem';
 import ListItem from './ListItem';
 import EmptyList from './EmptyList';
 
-const List = ({route}) => {
-  const {collectionName, Tags, title} = route.params;
+const List = ({ route }) => {
+  const { collectionName, Tags, title } = route.params;
   const navigation = useNavigation();
 
   const systemTheme = useColorScheme();
@@ -28,9 +28,12 @@ const List = ({route}) => {
   const [selectedTags, setSelectedTags] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [filteredLyrics, setFilteredLyrics] = useState([]);
-  const [isLoading, setIsLoading] = useState(true); // Add loading state
-  const [shouldAutoRefresh, setShouldAutoRefresh] = useState(true); // Track if auto-refresh is needed
+  const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1); // For tracking pagination
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [lastFetchTime, setLastFetchTime] = useState(0); // Track last fetch time
 
+  const itemsPerPage = 10; // Number of items to load per page
   const themeColors = isDarkMode ? colors.dark : colors.light;
 
   useEffect(() => {
@@ -38,97 +41,68 @@ const List = ({route}) => {
   }, [systemTheme]);
 
   const filterAndSortLyrics = (tags, lyrics) => {
-    const currentDate = new Date();
     const filteredItems = lyrics.filter(item =>
-      tags.every(
-        selectedTag =>
-          item.tags.some(tag => tag.toLowerCase() === selectedTag.toLowerCase()) ||
-          item.collectionName.includes(selectedTag),
-      ),
+      tags.every(selectedTag =>
+        item.tags.some(tag => tag.toLowerCase() === selectedTag.toLowerCase())
+      )
     );
 
-    const isPublishedWithinWeek = publishDate => {
-      const publishDateTime = new Date(publishDate.seconds * 1000);
-      const timeDiff = Math.ceil(
-        (currentDate - publishDateTime) / (1000 * 60 * 60 * 24),
-      );
-      return timeDiff <= 7;
-    };
-
-    return filteredItems.sort((a, b) => {
-      if (a.newFlag && isPublishedWithinWeek(a.publishDate)) {
-        if (!b.newFlag || !isPublishedWithinWeek(b.publishDate)) {
-          return -1;
-        }
-      } else if (b.newFlag && isPublishedWithinWeek(b.publishDate)) {
-        return 1;
-      }
-      return Number(a.numbering) - Number(b.numbering);
-    });
+    return filteredItems.sort((a, b) => Number(a.numbering) - Number(b.numbering));
   };
 
-  const loadData = async () => {
-    setRefreshing(true);
-    setIsLoading(true); // Set loading state
+  const loadData = async (newPage = 1) => {
+    if (newPage === 1) {
+      setIsLoading(true); // Initial loading state
+      setLyrics([]); // Reset lyrics on full reload
+    } else {
+      setIsFetchingMore(true); // Set loading state for pagination
+    }
+
     try {
       const fetchedDataTags = await getFromAsyncStorage(Tags);
       const fetchedDataLyrics = await getFromAsyncStorage(collectionName);
-  
-      let lyricsArray = Array.isArray(fetchedDataLyrics)
-        ? fetchedDataLyrics
-        : [];
-      let tagsArray = Array.isArray(fetchedDataTags) ? fetchedDataTags : [];
-  
-      // Check if all items have unique and valid 'order' field
-      const hasValidOrder = lyricsArray.every(
+
+      const tagsArray = Array.isArray(fetchedDataTags) ? fetchedDataTags : [];
+      const allLyrics = Array.isArray(fetchedDataLyrics) ? fetchedDataLyrics : [];
+      const startIdx = (newPage - 1) * itemsPerPage;
+      const endIdx = newPage * itemsPerPage;
+      const paginatedLyrics = allLyrics.slice(startIdx, endIdx);
+
+      const hasValidOrder = paginatedLyrics.every(
         (item, index, arr) =>
           item.order !== undefined &&
           item.order !== null &&
           typeof item.order === 'number' &&
-          // Ensure order is not repeated
           arr.filter(({ order }) => order === item.order).length === 1
       );
-  
-      let lyricsWithNumbering;
-      if (hasValidOrder) {
-        // Sort lyrics by 'order' if it's valid
-        lyricsWithNumbering = lyricsArray
-          .sort((a, b) => a.order - b.order)
-          .map(item => ({
+
+      const lyricsWithNumbering = hasValidOrder
+        ? paginatedLyrics
+            .sort((a, b) => a.order - b.order)
+            .map(item => ({ ...item, numbering: item.order }))
+        : paginatedLyrics.map((item, index) => ({
             ...item,
-            numbering: item.order, // Use 'order' as numbering
+            numbering: startIdx + index + 1,
           }));
-      } else {
-        // Fallback to numbering based on index if 'order' is missing or invalid
-        lyricsWithNumbering = lyricsArray.map((item, index) => ({
-          ...item,
-          numbering: index + 1, // Use index-based numbering
-        }));
-      }
-  
-      // Ensure tags have numbering based on index or other numerical property
-      const sortedTagsArray = tagsArray.sort(
-        (a, b) => Number(a.numbering) - Number(b.numbering),
-      );
-  
-      setLyrics(lyricsWithNumbering); // Set lyrics with either order or index numbering
-      setTags(sortedTagsArray);
+
+      setLyrics(prevLyrics => (newPage === 1 ? lyricsWithNumbering : [...prevLyrics, ...lyricsWithNumbering]));
+      setTags(tagsArray);
+      setPage(newPage); // Update page number after successful load
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
       setRefreshing(false);
-      setIsLoading(false); // Turn off loading state when data is ready
+      setIsLoading(false);
+      setIsFetchingMore(false);
     }
   };
-  
 
   useEffect(() => {
-    loadData(); // Automatically load data on mount
+    loadData(); // Load first page of data on mount
   }, [Tags, collectionName]);
 
   useEffect(() => {
-    const sortedFilteredItems = filterAndSortLyrics(selectedTags, lyrics);
-    setFilteredLyrics(sortedFilteredItems);
+    setFilteredLyrics(filterAndSortLyrics(selectedTags, lyrics));
   }, [selectedTags, lyrics]);
 
   useEffect(() => {
@@ -138,7 +112,7 @@ const List = ({route}) => {
         <Icon
           name="search"
           color="#fff"
-          onPress={() => navigation.navigate('Search', {collectionName})}
+          onPress={() => navigation.navigate('Search', { collectionName })}
           size={26}
         />
       ),
@@ -154,7 +128,7 @@ const List = ({route}) => {
       setSelectedTags(newSelectedTags);
       setFilteredLyrics(filterAndSortLyrics(newSelectedTags, lyrics));
     },
-    [selectedTags, lyrics],
+    [selectedTags, lyrics]
   );
 
   const handleItemPress = item => {
@@ -165,23 +139,30 @@ const List = ({route}) => {
     setHeader(true);
   };
 
-  // Show loading indicator until data is fetched
+  const fetchMoreData = () => {
+    const currentTime = Date.now();
+    if (!isFetchingMore && currentTime - lastFetchTime > 1000) {
+      loadData(page + 1);
+      setLastFetchTime(currentTime); // Update last fetch time
+    }
+  };
+
   if (isLoading) {
     return (
-      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: themeColors.background}}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: themeColors.background }}>
         <ActivityIndicator size="large" color={themeColors.primary} />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: themeColors.background}}>
-      <View style={{flexGrow: 0, flexShrink: 0}}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
+      <View style={{ flexGrow: 0, flexShrink: 0 }}>
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
           data={tags}
-          renderItem={({item}) => (
+          renderItem={({ item }) => (
             <TagItem
               key={item.id}
               item={item}
@@ -193,13 +174,11 @@ const List = ({route}) => {
         />
       </View>
 
-      <View style={{flex: 1}}>
+      <View style={{ flex: 1 }}>
         <FlatList
-          contentContainerStyle={{
-            backgroundColor: themeColors.background,
-          }}
+          contentContainerStyle={{ backgroundColor: themeColors.background }}
           data={filteredLyrics}
-          renderItem={({item}) => (
+          renderItem={({ item }) => (
             <ListItem
               key={item.id}
               item={item}
@@ -208,8 +187,15 @@ const List = ({route}) => {
             />
           )}
           ListEmptyComponent={<EmptyList filteredLyrics={filteredLyrics} />}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={loadData} />
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => loadData(1)} />}
+          onEndReached={fetchMoreData}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            isFetchingMore ? (
+              <View style={{ paddingVertical: 20 }}>
+                <ActivityIndicator size="small" color={themeColors.primary} />
+              </View>
+            ) : null
           }
         />
       </View>
