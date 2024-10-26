@@ -1,13 +1,29 @@
-import React, { useState, useEffect, useCallback, useMemo, useLayoutEffect, useRef } from 'react';
-import { ScrollView, Text, View, Linking, Animated, Easing, useColorScheme, PanResponder } from 'react-native';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useLayoutEffect,
+  useRef,
+} from 'react';
+import {
+  ScrollView,
+  Text,
+  View,
+  Linking,
+  Animated,
+  Easing,
+  useColorScheme,
+  PanResponder,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { FAB } from '@rneui/themed';
+import {FAB} from '@rneui/themed';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import CustomMaterialMenu from './CustomMaterialMenu';
-import { colors } from '../theme/theme';
+import {colors} from '../theme/theme';
 
-const DetailPage = ({ route, navigation }) => {
-  const { itemNumberingparas, Lyrics } = route.params;
+const DetailPage = ({route, navigation}) => {
+  const {itemNumberingparas, Lyrics} = route.params;
   const systemTheme = useColorScheme();
   const themeColors = systemTheme === 'dark' ? colors.dark : colors.light;
 
@@ -20,10 +36,12 @@ const DetailPage = ({ route, navigation }) => {
 
   const setSongByNumbering = useCallback(
     numbering => {
-      const foundSong = Lyrics.find(song => song.numbering === parseInt(numbering));
+      const foundSong = Lyrics.find(
+        song => song.numbering === parseInt(numbering),
+      );
       return foundSong;
     },
-    [Lyrics]
+    [Lyrics],
   );
 
   const headerOptions = useMemo(
@@ -32,7 +50,7 @@ const DetailPage = ({ route, navigation }) => {
       headerRight: () => (
         <CustomMaterialMenu
           menuText="Menu"
-          textStyle={{ color: themeColors.text }}
+          textStyle={{color: themeColors.text}}
           navigation={navigation}
           item={song}
           route={route}
@@ -41,7 +59,7 @@ const DetailPage = ({ route, navigation }) => {
         />
       ),
     }),
-    [navigation, route, song, themeColors]
+    [navigation, route, song, themeColors],
   );
 
   useEffect(() => {
@@ -70,12 +88,12 @@ const DetailPage = ({ route, navigation }) => {
           navigateSong('next');
         }
       },
-    })
+    }),
   ).current;
 
   const navigateSong = direction => {
     const toValue = direction === 'next' ? 1 : -1;
-  
+
     Animated.parallel([
       Animated.timing(slideAnim, {
         toValue: toValue,
@@ -98,7 +116,9 @@ const DetailPage = ({ route, navigation }) => {
     ]).start(() => {
       setItemNumbering(prev => {
         const currentNumber = parseInt(prev, 10);
-        const sortedNumberings = Lyrics.map(song => song.numbering).sort((a, b) => a - b);
+        const sortedNumberings = Lyrics.map(song => song.numbering).sort(
+          (a, b) => a - b,
+        );
         const currentIndex = sortedNumberings.indexOf(currentNumber);
         let newIndex = currentIndex + toValue;
 
@@ -161,11 +181,14 @@ const DetailPage = ({ route, navigation }) => {
         }));
       } else {
         const newNumbering = savedLyrics.length + 1;
-        let updatedSong = { ...song, numbering: newNumbering };
+        let updatedSong = {...song, numbering: newNumbering};
         savedLyrics.push(updatedSong);
       }
 
-      await AsyncStorage.setItem('cachedData_saved', JSON.stringify(savedLyrics));
+      await AsyncStorage.setItem(
+        'cachedData_saved',
+        JSON.stringify(savedLyrics),
+      );
     } catch (error) {
       console.error(error);
     }
@@ -177,8 +200,14 @@ const DetailPage = ({ route, navigation }) => {
 
   if (!song) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: themeColors.background }}>
-        <Text style={{ color: themeColors.text }}>Loading...</Text>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: themeColors.background,
+        }}>
+        <Text style={{color: themeColors.text}}>Loading...</Text>
       </View>
     );
   }
@@ -199,19 +228,33 @@ const DetailPage = ({ route, navigation }) => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: themeColors.background }}  {...panResponder.panHandlers}>
-        <Animated.View style={[animatedStyle, { paddingStart: 20,  paddingEnd: 20, paddingBottom: 20 }]}>
-          <Text style={{ paddingTop: 10, fontSize: song.artist ? 16 : 0, marginBottom: song.artist ? 10 : 0, color: themeColors.text }}>
-            {song.artist ? 'Artist :' : null} {song.artist}
-          </Text>
-      <ScrollView showsVerticalScrollIndicator={false}>
-
-          <Text style={{ fontSize: 18, textAlign: '', color: themeColors.text }} {...panResponder.panHandlers}>
+    <View
+      style={{flex: 1, backgroundColor: themeColors.background}}
+      {...panResponder.panHandlers}>
+      <Animated.View
+        style={[
+          animatedStyle,
+          {paddingStart: 20, paddingEnd: 20, paddingBottom: 20},
+        ]}>
+        <Text
+          style={{
+            paddingTop: 10,
+            fontSize: song.artist ? 16 : 0,
+            marginBottom: song.artist ? 10 : 0,
+            color: themeColors.text,
+          }}>
+          {song.artist ? 'Artist :' : null} {song.artist}
+        </Text>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{paddingBottom: 100}}>
+          <Text
+            style={{fontSize: 18, textAlign: '', color: themeColors.text}}
+            {...panResponder.panHandlers}>
             {song.content}
           </Text>
-      </ScrollView>
-
-        </Animated.View>
+        </ScrollView>
+      </Animated.View>
       {song.youtube && (
         <FAB
           icon={() => (
@@ -219,12 +262,12 @@ const DetailPage = ({ route, navigation }) => {
           )}
           color={themeColors.primary}
           placement="right"
-          style={{ marginBottom: 82, borderRadius: 50 }}
+          style={{marginBottom: 82, borderRadius: 50}}
           onPress={openYouTubeApp}
         />
       )}
       <FAB
-        style={{ transform: [{ scale: fabAnim }] }}
+        style={{transform: [{scale: fabAnim}]}}
         icon={() => (
           <MaterialCommunityIcons
             name={isSaved ? 'heart' : 'heart-outline'}
