@@ -15,7 +15,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-import { getFromAsyncStorage } from '../config/dataService'; // Fetch lyrics based on collectionName
+import { getFromAsyncStorage } from '../config/DataService'; // Fetch lyrics based on collectionName
 import { colors } from '../theme/theme';
 import ListItem from './ListItem';
 import EmptyList from './EmptyList';
