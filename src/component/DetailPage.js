@@ -247,7 +247,7 @@ const DetailPage = ({route, navigation}) => {
         </Text>
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{paddingBottom: 100}}>
+          contentContainerStyle={{paddingBottom: 30}}>
           <Text
             style={{fontSize: 18, textAlign: '', color: themeColors.text}}
             {...panResponder.panHandlers}>
