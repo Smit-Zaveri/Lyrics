@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback, useMemo} from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   FlatList,
   Text,
@@ -8,10 +8,11 @@ import {
   Pressable,
   ActivityIndicator,
   useColorScheme,
+  RefreshControl, // Import RefreshControl
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {colors} from '../../theme/theme';
-import {getFromAsyncStorage} from '../../config/dataService';
+import { useNavigation } from '@react-navigation/native';
+import { colors } from '../../theme/theme';
+import { getFromAsyncStorage } from '../../config/dataService';
 
 const HomeList = () => {
   const systemTheme = useColorScheme();
@@ -22,6 +23,7 @@ const HomeList = () => {
 
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false); // State for refresh control
 
   useEffect(() => {
     setIsDarkMode(systemTheme === 'dark');
@@ -39,12 +41,26 @@ const HomeList = () => {
       console.error('Error fetching data:', error);
     } finally {
       setIsLoading(false);
+      setRefreshing(false); // Reset refreshing state
     }
   }, []);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Automatically refresh if data is empty after 1 second
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (data.length === 0) {
+        setRefreshing(true); // Set refreshing state
+        loadData(); // Reload data
+        console.log('No data found, refreshing...');
+      }
+    }, 1000); // 1 second delay
+
+    return () => clearTimeout(timeoutId); // Cleanup on unmount or data change
+  }, [data, loadData]);
 
   const handleItemPress = useCallback(
     item => () => {
@@ -59,10 +75,10 @@ const HomeList = () => {
 
   const ListItem = useMemo(
     () =>
-      ({item, onItemPress, themeColors}) => (
+      ({ item, onItemPress, themeColors }) => (
         <Pressable
           onPress={onItemPress}
-          style={({pressed}) => [
+          style={({ pressed }) => [
             styles.itemContainer,
             {
               backgroundColor: pressed
@@ -75,13 +91,13 @@ const HomeList = () => {
               <Text
                 style={[
                   styles.numberingText,
-                  {backgroundColor: themeColors.primary, color: '#fff'},
+                  { backgroundColor: themeColors.primary, color: '#fff' },
                 ]}>
                 {item.numbering}
               </Text>
             </View>
             <View style={styles.detailsContainer}>
-              <Text style={[styles.title, {color: themeColors.text}]}>
+              <Text style={[styles.title, { color: themeColors.text }]}>
                 {item.displayName}
               </Text>
             </View>
@@ -106,19 +122,28 @@ const HomeList = () => {
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: themeColors.background}}>
-      <View style={{flex: 1}}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
+      <View style={{ flex: 1 }}>
         <FlatList
-          contentContainerStyle={{backgroundColor: themeColors.background}}
+          contentContainerStyle={{ backgroundColor: themeColors.background }}
           data={data}
           keyExtractor={item => item.id.toString()}
-          renderItem={({item}) => (
+          renderItem={({ item }) => (
             <ListItem
               item={item}
               onItemPress={handleItemPress(item)}
               themeColors={themeColors}
             />
           )}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => {
+                setRefreshing(true); // Set refreshing state
+                loadData(); // Reload data
+                }}
+            />
+          }
         />
       </View>
     </SafeAreaView>
