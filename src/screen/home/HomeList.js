@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback, useMemo} from 'react';
 import {
   FlatList,
   Text,
@@ -6,7 +6,7 @@ import {
   View,
   SafeAreaView,
   Pressable,
-  ActivityIndicator, // Loading indicator
+  ActivityIndicator,
   useColorScheme,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
@@ -23,18 +23,14 @@ const HomeList = () => {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Update theme mode based on system changes
   useEffect(() => {
     setIsDarkMode(systemTheme === 'dark');
   }, [systemTheme]);
 
-  // Fetch collections data
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const collections = await getFromAsyncStorage('collections'); // Fetch collection names
-      // Sort collections by numbering in ascending order
-
+      const collections = await getFromAsyncStorage('collections');
       const sortedCollections = collections.sort(
         (a, b) => a.numbering - b.numbering,
       );
@@ -44,54 +40,57 @@ const HomeList = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Load data on component mount
-  useEffect(() => {
-    loadData();
   }, []);
 
-  // Handle item press
-  const handleItemPress = item => {
-    navigation.navigate('List', {
-      collectionName: item.name,
-      Tags: 'tirtankar',
-      title: item.displayName || item.name,
-    });
-  };
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-  const ListItem = ({item, onItemPress, themeColors}) => (
-    <Pressable
-      onPress={() => onItemPress(item)}
-      style={({pressed}) => [
-        styles.itemContainer,
-        {
-          backgroundColor: pressed
-            ? themeColors.surface
-            : themeColors.background,
-          borderBottomColor: themeColors.border,
-        },
-      ]}>
-      <View style={styles.leftContainer}>
-        <View style={styles.numberingContainer}>
-          <Text
-            style={[
-              styles.numberingText,
-              {backgroundColor: themeColors.primary, color: '#fff'},
-            ]}>
-            {item.numbering}
-          </Text>
-        </View>
-        <View style={styles.detailsContainer}>
-          <Text style={[styles.title, {color: themeColors.text}]}>
-            {item.displayName}
-          </Text>
-        </View>
-      </View>
-    </Pressable>
+  const handleItemPress = useCallback(
+    item => () => {
+      navigation.navigate('List', {
+        collectionName: item.name,
+        Tags: 'tirtankar',
+        title: item.displayName || item.name,
+      });
+    },
+    [navigation],
   );
 
-  // Show loading indicator while data is loading
+  const ListItem = useMemo(
+    () =>
+      ({item, onItemPress, themeColors}) => (
+        <Pressable
+          onPress={onItemPress}
+          style={({pressed}) => [
+            styles.itemContainer,
+            {
+              backgroundColor: pressed
+                ? themeColors.surface
+                : themeColors.background,
+            },
+          ]}>
+          <View style={styles.leftContainer}>
+            <View style={styles.numberingContainer}>
+              <Text
+                style={[
+                  styles.numberingText,
+                  {backgroundColor: themeColors.primary, color: '#fff'},
+                ]}>
+                {item.numbering}
+              </Text>
+            </View>
+            <View style={styles.detailsContainer}>
+              <Text style={[styles.title, {color: themeColors.text}]}>
+                {item.displayName}
+              </Text>
+            </View>
+          </View>
+        </Pressable>
+      ),
+    [],
+  );
+
   if (isLoading) {
     return (
       <View
@@ -116,8 +115,8 @@ const HomeList = () => {
           renderItem={({item}) => (
             <ListItem
               item={item}
+              onItemPress={handleItemPress(item)}
               themeColors={themeColors}
-              onItemPress={handleItemPress}
             />
           )}
         />
