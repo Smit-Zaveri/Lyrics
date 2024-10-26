@@ -57,17 +57,19 @@ const List = ({ route }) => {
     } else {
       setIsFetchingMore(true); // Set loading state for pagination
     }
-
+  
     try {
       const fetchedDataTags = await getFromAsyncStorage(Tags);
       const fetchedDataLyrics = await getFromAsyncStorage(collectionName);
-
+  
       const tagsArray = Array.isArray(fetchedDataTags) ? fetchedDataTags : [];
+      const sortedTags = tagsArray.sort((a, b) => a.numbering - b.numbering); // Sort tags based on numbering
+  
       const allLyrics = Array.isArray(fetchedDataLyrics) ? fetchedDataLyrics : [];
       const startIdx = (newPage - 1) * itemsPerPage;
       const endIdx = newPage * itemsPerPage;
       const paginatedLyrics = allLyrics.slice(startIdx, endIdx);
-
+  
       const hasValidOrder = paginatedLyrics.every(
         (item, index, arr) =>
           item.order !== undefined &&
@@ -75,7 +77,7 @@ const List = ({ route }) => {
           typeof item.order === 'number' &&
           arr.filter(({ order }) => order === item.order).length === 1
       );
-
+  
       const lyricsWithNumbering = hasValidOrder
         ? paginatedLyrics
             .sort((a, b) => a.order - b.order)
@@ -84,9 +86,9 @@ const List = ({ route }) => {
             ...item,
             numbering: startIdx + index + 1,
           }));
-
+  
       setLyrics(prevLyrics => (newPage === 1 ? lyricsWithNumbering : [...prevLyrics, ...lyricsWithNumbering]));
-      setTags(tagsArray);
+      setTags(sortedTags); // Set sorted tags
       setPage(newPage); // Update page number after successful load
     } catch (error) {
       console.error('Error loading data:', error);
