@@ -7,7 +7,7 @@ import { colors } from '../../theme/theme'; // Assuming you have a theme file wi
 const { height } = Dimensions.get('window');
 
 const CategoryDisplay = ({ navigation }) => {
-  const [tagData, setTagData] = useState([]);
+  const [tirthData, setTirthData] = useState([]);
   const [artistData, setArtistData] = useState([]);
   const [tirtankarData, setTirtankarData] = useState([]);
 
@@ -18,10 +18,10 @@ const CategoryDisplay = ({ navigation }) => {
 
   const loadData = async () => {
     try {
-      const fetchedDataTags = await getFromAsyncStorage("tags");
+      const fetchedDataTirths = await getFromAsyncStorage("tirth");
       const fetchedDataArtist = await getFromAsyncStorage("artists");
       const fetchedDataTirtankar = await getFromAsyncStorage("tirtankar");
-      setTagData(fetchedDataTags);
+      setTirthData(fetchedDataTirths);
       setArtistData(fetchedDataArtist);
       setTirtankarData(fetchedDataTirtankar);
     } catch (error) {
@@ -48,8 +48,8 @@ const CategoryDisplay = ({ navigation }) => {
       <SingleRow
         navigation={navigation}
         redirect={'List'}
-        title="Tags"
-        data={tagData}
+        title="Tirth"
+        data={tirthData}
         themeColors={themeColors} // Pass themeColors to SingleRow if necessary
       />
       <SingleRow
