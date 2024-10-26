@@ -36,10 +36,14 @@ const fetchAndStoreData = async collectionName => {
       id: doc.id,
       collectionName,
     }));
-    await AsyncStorage.setItem(
-      `${DATA_KEY_PREFIX}${collectionName}`,
-      JSON.stringify(data),
-    );
+    
+    if (collectionName !== 'saved') {
+      await AsyncStorage.setItem(
+        `${DATA_KEY_PREFIX}${collectionName}`,
+        JSON.stringify(data),
+      );
+    }
+    
     return data;
   } catch (error) {
     console.error(
