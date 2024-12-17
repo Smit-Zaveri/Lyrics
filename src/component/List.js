@@ -40,10 +40,14 @@ const List = ({ route }) => {
     setIsDarkMode(systemTheme === 'dark');
   }, [systemTheme]);
 
+  // console.log(selectedTags);
+  // console.log(lyrics);
+
   const filterAndSortLyrics = (tags, lyrics) => {
     const filteredItems = lyrics.filter(item =>
       tags.every(selectedTag =>
-        item.tags.some(tag => tag.toLowerCase() === selectedTag.toLowerCase())
+        item.tags.some(tag => tag.toLowerCase() === selectedTag.toLowerCase()) ||
+        item.collectionName.toLowerCase() === selectedTag.toLowerCase()
       )
     );
 

@@ -94,12 +94,6 @@ const Suggestion = () => {
             value: name,
           };
         });
-
-        collectionList.unshift({
-          label: 'Lyrics', // Label for the manually added collection
-          value: 'lyrics', // Value for the manually added collection
-        });
-
         setCollections(collectionList);
       } catch (error) {
         console.error('Error fetching collections: ', error);
