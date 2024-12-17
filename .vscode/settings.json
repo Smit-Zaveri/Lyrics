@@ -2,5 +2,7 @@
     "cSpell.words": [
         "chaityavandan",
         "firestore"
-    ]
+    ],
+    "java.compile.nullAnalysis.mode": "automatic",
+    "cmake.sourceDirectory": "D:/Project/Lyrics/node_modules/react-native-screens/android"
 }
