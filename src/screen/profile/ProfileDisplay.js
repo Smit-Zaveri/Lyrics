@@ -1,10 +1,17 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, useColorScheme } from 'react-native';
+import React, {useState} from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  useColorScheme,
+  Share,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { colors } from '../../theme/theme';
-import { refreshAllData } from '../../config/dataService';
+import {colors} from '../../theme/theme';
+import {refreshAllData} from '../../config/DataService';
 
-const ProfileDisplay = ({ navigation }) => {
+const ProfileDisplay = ({navigation}) => {
   const [refreshMessage, setRefreshMessage] = useState('');
   const systemTheme = useColorScheme();
   const isDarkMode = systemTheme === 'dark';
@@ -20,13 +27,29 @@ const ProfileDisplay = ({ navigation }) => {
     }, 3000);
   };
 
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `🌟 Discover Your Next Favorite Lyrics App! 🎶
+
+Hey there! If you love music and want to access a world of lyrics at your fingertips, check out this amazing app! It's designed to enhance your lyrical experience, making it easy to find, save, and enjoy your favorite songs.
+
+✨ Download it here: https://bit.ly/jain_dhun
+
+Join the community of music lovers and elevate your listening experience today! 🎤💖`,
+      });
+    } catch (error) {
+      console.log('Error sharing the app:', error.message);
+    }
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+    <View style={[styles.container, {backgroundColor: themeColors.background}]}>
       {/* Saved Lyrics Button */}
       <TouchableOpacity onPress={() => navigation.navigate('SavedLyrics')}>
         <View style={styles.item}>
           <Icon name="favorite" color={themeColors.primary} size={25} />
-          <Text style={[styles.text, { color: themeColors.text }]}>Saved</Text>
+          <Text style={[styles.text, {color: themeColors.text}]}>Saved</Text>
         </View>
       </TouchableOpacity>
 
@@ -34,7 +57,9 @@ const ProfileDisplay = ({ navigation }) => {
       <TouchableOpacity onPress={() => navigation.navigate('Suggestion')}>
         <View style={styles.item}>
           <Icon name="info" color={themeColors.primary} size={25} />
-          <Text style={[styles.text, { color: themeColors.text }]}>Suggestion</Text>
+          <Text style={[styles.text, {color: themeColors.text}]}>
+            Suggestion
+          </Text>
         </View>
       </TouchableOpacity>
 
@@ -42,14 +67,26 @@ const ProfileDisplay = ({ navigation }) => {
       <TouchableOpacity onPress={handleRefresh}>
         <View style={styles.item}>
           <Icon name="refresh" color={themeColors.primary} size={25} />
-          <Text style={[styles.text, { color: themeColors.text }]}>Refresh Data</Text>
+          <Text style={[styles.text, {color: themeColors.text}]}>
+            Refresh Data
+          </Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* Share App Button */}
+      <TouchableOpacity onPress={handleShare}>
+        <View style={styles.item}>
+          <Icon name="share" color={themeColors.primary} size={25} />
+          <Text style={[styles.text, {color: themeColors.text}]}>
+            Share App
+          </Text>
         </View>
       </TouchableOpacity>
 
       {/* Toast Message */}
       {refreshMessage ? (
-        <View style={[styles.toast, { backgroundColor: themeColors.surface }]}>
-          <Text style={[styles.toastText, { color: themeColors.text }]}>
+        <View style={[styles.toast, {backgroundColor: themeColors.surface}]}>
+          <Text style={[styles.toastText, {color: themeColors.text}]}>
             {refreshMessage}
           </Text>
         </View>

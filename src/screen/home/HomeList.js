@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   FlatList,
   Text,
@@ -6,97 +6,144 @@ import {
   View,
   SafeAreaView,
   Pressable,
+  ActivityIndicator,
   useColorScheme,
+  RefreshControl, // Import RefreshControl
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {colors} from '../../theme/theme';
+import { useNavigation } from '@react-navigation/native';
+import { colors } from '../../theme/theme';
+import { getFromAsyncStorage } from '../../config/DataService';
 
 const HomeList = () => {
   const systemTheme = useColorScheme();
   const navigation = useNavigation();
 
   const [isDarkMode, setIsDarkMode] = useState(systemTheme === 'dark');
-
   const themeColors = isDarkMode ? colors.dark : colors.light;
 
-  // Handle theme change dynamically when system theme changes
+  const [data, setData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false); // State for refresh control
+
   useEffect(() => {
     setIsDarkMode(systemTheme === 'dark');
   }, [systemTheme]);
 
-  const data = [
-    {id: '1', displayName: 'ગીત', collection: 'lyrics'},
-    {id: '2', displayName: 'ચૈત્યવંદન', collection: 'chaityavandan'},
-    {id: '3', displayName: 'સ્તુતિ', collection: 'Stuti'},
-    {id: '4', displayName: 'સ્તવન', collection: 'Stavana'},
-    {id: '5', displayName: 'સજઝાય', collection: 'Sajajhaya'},
-    {id: '6', displayName: 'થોય', collection: 'Thoya'},
-    {id: '7', displayName: 'પચ્ચક્ખાણ', collection: 'pachkhan'},
-    {id: '8', displayName: 'અન્ય', collection: 'other'},
-  ];
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const collections = await getFromAsyncStorage('collections');
+      const sortedCollections = collections.sort(
+        (a, b) => a.numbering - b.numbering,
+      );
+      setData(sortedCollections);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false); // Reset refreshing state
+    }
+  }, []);
 
-  const handleItemPress = item => {
-    navigation.navigate('List', {
-      collectionName: item.collection,
-      Tags: 'tirtankar',
-      title: item.displayName ? item.displayName : item.name,
-    });
-  };
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-  const ListItem = ({item, onItemPress, themeColors}) => {
+  // Automatically refresh if data is empty after 1 second
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (data.length === 0) {
+        setRefreshing(true); // Set refreshing state
+        loadData(); // Reload data
+        console.log('No data found, refreshing...');
+      }
+    }, 1000); // 1 second delay
+
+    return () => clearTimeout(timeoutId); // Cleanup on unmount or data change
+  }, [data, loadData]);
+
+  const handleItemPress = useCallback(
+    item => () => {
+      navigation.navigate('List', {
+        collectionName: item.name,
+        Tags: 'tirtankar',
+        title: item.displayName || item.name,
+      });
+    },
+    [navigation],
+  );
+
+  const ListItem = useMemo(
+    () =>
+      ({ item, onItemPress, themeColors }) => (
+        <Pressable
+          onPress={onItemPress}
+          style={({ pressed }) => [
+            styles.itemContainer,
+            {
+              backgroundColor: pressed
+                ? themeColors.surface
+                : themeColors.background,
+            },
+          ]}>
+          <View style={styles.leftContainer}>
+            <View style={styles.numberingContainer}>
+              <Text
+                style={[
+                  styles.numberingText,
+                  { backgroundColor: themeColors.primary, color: '#fff' },
+                ]}>
+                {item.numbering}
+              </Text>
+            </View>
+            <View style={styles.detailsContainer}>
+              <Text style={[styles.title, { color: themeColors.text }]}>
+                {item.displayName}
+              </Text>
+            </View>
+          </View>
+        </Pressable>
+      ),
+    [],
+  );
+
+  if (isLoading) {
     return (
-      <Pressable
-        onPress={() => onItemPress(item)}
-        style={({pressed}) => [
-          styles.itemContainer,
-          {
-            backgroundColor: pressed
-              ? themeColors.surface
-              : themeColors.background, // Dynamically change background on press based on theme
-            borderBottomColor: themeColors.border, // Border color from theme
-          },
-        ]}>
-        <View style={styles.leftContainer}>
-          <View style={styles.numberingContainer}>
-            <Text
-              style={[
-                styles.numberingText,
-                {
-                  backgroundColor: themeColors.primary, // Use primary theme color for numbering
-                  color: '#fff', // White text for numbering
-                },
-              ]}>
-              {item.id}
-            </Text>
-          </View>
-          <View style={styles.detailsContainer}>
-            <Text style={[styles.title, {color: themeColors.text}]}>
-              {item.displayName}
-            </Text>
-          </View>
-        </View>
-      </Pressable>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: themeColors.background,
+        }}>
+        <ActivityIndicator size="large" color={themeColors.primary} />
+      </View>
     );
-  };
+  }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: themeColors.background}}>
-      <View style={{flex: 1}}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
+      <View style={{ flex: 1 }}>
         <FlatList
-          contentContainerStyle={{
-            backgroundColor: themeColors.background,
-          }}
+          contentContainerStyle={{ backgroundColor: themeColors.background }}
           data={data}
           keyExtractor={item => item.id.toString()}
-          renderItem={({item}) => (
+          renderItem={({ item }) => (
             <ListItem
               item={item}
+              onItemPress={handleItemPress(item)}
               themeColors={themeColors}
-              onItemPress={handleItemPress}
             />
           )}
-          initialNumToRender={8} // Optimize initial render for better performance
-          removeClippedSubviews={true} // Improves performance by unmounting off-screen items
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => {
+                setRefreshing(true); // Set refreshing state
+                loadData(); // Reload data
+                }}
+            />
+          }
         />
       </View>
     </SafeAreaView>

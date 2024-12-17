@@ -10,7 +10,6 @@ import {
   FlatList,
 } from 'react-native';
 import {Controller, useForm} from 'react-hook-form';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
 import {colors} from '../../theme/theme';
 import firestore from '@react-native-firebase/firestore';
