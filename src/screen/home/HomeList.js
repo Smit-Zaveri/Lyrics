@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {colors} from '../../theme/theme';
-import {getFromAsyncStorage} from '../../config/DataService';
+import {getFromAsyncStorage} from '../../config/dataService';
 
 const HomeList = () => {
   const systemTheme = useColorScheme();

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Dimensions, useColorScheme } from 'react-native';
 import SingleRow from './SingleRow';
-import { getFromAsyncStorage } from '../../config/DataService';
+import { getFromAsyncStorage } from '../../config/dataService';
 import { colors } from '../../theme/theme'; // Assuming you have a theme file with colors
 
 const { height } = Dimensions.get('window');

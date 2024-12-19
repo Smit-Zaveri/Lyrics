@@ -9,7 +9,7 @@ import Profile from './src/screen/profile/Profile';
 import Category from './src/screen/category/Category';
 import {colors} from './src/theme/theme';
 import {LogLevel, OneSignal} from 'react-native-onesignal';
-import {initializeGroups, subscribeToCollectionGroups } from './src/config/DataService';
+import {initializeGroups, subscribeToCollectionGroups } from './src/config/dataService';
 
 const Tab = createMaterialBottomTabNavigator();
 

@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Searchbar, List, Portal, Provider } from 'react-native-paper';
-import { getFromAsyncStorage } from '../config/DataService';
+import { getFromAsyncStorage } from '../config/dataService';
 import EmptyList from './EmptyList';
 import { debounce } from 'lodash';
 
