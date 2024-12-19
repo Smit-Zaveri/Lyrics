@@ -13,14 +13,16 @@ const fetchCollectionGroups = async () => {
       .collection('collectionGroups')
       .doc('groups')
       .get();
+
     if (doc.exists) {
       const data = doc.data();
       collectionGroups = data.groupNames || [];
       all = data.allNames || [];
-      return {collectionGroups, all};
+      return { collectionGroups, all };
     }
+
     console.error('Document not found in Firestore');
-    return {collectionGroups: [], all: []};
+    return { collectionGroups: [], all: [] };
   } catch (error) {
     console.error('Error fetching collection groups from Firestore:', error);
     throw error;
@@ -28,7 +30,7 @@ const fetchCollectionGroups = async () => {
 };
 
 // Fetch data from Firestore and store it in AsyncStorage
-const fetchAndStoreData = async collectionName => {
+const fetchAndStoreData = async (collectionName) => {
   try {
     const snapshot = await firestore().collection(collectionName).get();
     const data = snapshot.docs.map(doc => ({
@@ -36,14 +38,14 @@ const fetchAndStoreData = async collectionName => {
       id: doc.id,
       collectionName,
     }));
-    
+
     if (collectionName !== 'saved') {
       await AsyncStorage.setItem(
         `${DATA_KEY_PREFIX}${collectionName}`,
         JSON.stringify(data),
       );
     }
-    
+
     return data;
   } catch (error) {
     console.error(
@@ -54,13 +56,12 @@ const fetchAndStoreData = async collectionName => {
   }
 };
 
-// Get data from AsyncStorage or fetch if not available
-const getFromAsyncStorage = async collectionName => {
+// Get data from AsyncStorage or Firestore if not available
+const getFromAsyncStorage = async (collectionName) => {
   try {
     if (collectionGroups.length === 0) {
       const netInfo = await NetInfo.fetch();
       if (netInfo.isConnected) {
-        // console.log('No data found. Fetching new data...');
         await initializeGroups();
       } else {
         console.log('No internet connection and no cached data available.');
@@ -75,10 +76,16 @@ const getFromAsyncStorage = async collectionName => {
     }
 
     if (collectionGroups.includes(collectionName)) {
-      const data = await AsyncStorage.getItem(
+      const cachedData = await AsyncStorage.getItem(
         `${DATA_KEY_PREFIX}${collectionName}`,
       );
-      return data ? JSON.parse(data) : null;
+
+      if (cachedData) {
+        return JSON.parse(cachedData);
+      }
+
+      // Fetch and cache data if not already cached
+      return await fetchAndStoreData(collectionName);
     }
 
     // Filter by tags or artist in all groups if collectionName not found
@@ -97,19 +104,39 @@ const getFromAsyncStorage = async collectionName => {
   }
 };
 
-// Refresh data for all collections
+// Refresh data for all collections if there's any update
 const refreshAllData = async () => {
   const netInfo = await NetInfo.fetch();
   if (!netInfo.isConnected) {
     console.log('No internet connection, skipping data refresh.');
     return;
   }
+
   await Promise.all(collectionGroups.map(fetchAndStoreData));
+};
+
+// Real-time listener for Firestore updates
+const subscribeToCollectionGroups = () => {
+  return firestore()
+    .collection('collectionGroups')
+    .doc('groups')
+    .onSnapshot(async (doc) => {
+      if (doc.exists) {
+        const data = doc.data();
+        collectionGroups = data.groupNames || [];
+        all = data.allNames || [];
+        await refreshAllData();
+      } else {
+        console.error('Document for collectionGroups does not exist.');
+      }
+    }, error => {
+      console.error('Error listening to collectionGroups:', error);
+    });
 };
 
 // Initialize collectionGroups and all before using them
 const initializeGroups = async () => {
-  const {collectionGroups: groups, all: allGroups} =
+  const { collectionGroups: groups, all: allGroups } =
     await fetchCollectionGroups();
   collectionGroups = groups;
   all = allGroups;
@@ -121,4 +148,5 @@ export {
   getFromAsyncStorage,
   refreshAllData,
   initializeGroups,
+  subscribeToCollectionGroups,
 };

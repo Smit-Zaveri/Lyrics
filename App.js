@@ -9,7 +9,7 @@ import Profile from './src/screen/profile/Profile';
 import Category from './src/screen/category/Category';
 import {colors} from './src/theme/theme';
 import {LogLevel, OneSignal} from 'react-native-onesignal';
-import {initializeGroups} from './src/config/DataService';
+import {initializeGroups, subscribeToCollectionGroups } from './src/config/DataService';
 
 const Tab = createMaterialBottomTabNavigator();
 
@@ -20,6 +20,22 @@ const App = () => {
   const systemTheme = useColorScheme();
   const themeColors = systemTheme === 'dark' ? colors.dark : colors.light;
   const {primary, surface, text} = themeColors;
+
+
+  useEffect(() => {
+    // Initialize groups on app launch
+    const initialize = async () => {
+      await initializeGroups();
+    };
+
+    initialize();
+
+    // Subscribe to real-time updates
+    const unsubscribe = subscribeToCollectionGroups();
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
 
   // OneSignal initialization and event listener
   useMemo(() => {
@@ -34,7 +50,6 @@ const App = () => {
     OneSignal.Notifications.addEventListener('click', handleNotificationClick);
 
     // Initialize groups
-    initializeGroups();
 
     // Cleanup event listener when component unmounts
     return () => {
