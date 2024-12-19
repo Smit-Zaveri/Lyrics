@@ -5,7 +5,7 @@ import { useColorScheme } from 'react-native';
 import DetailPage from '../../component/DetailPage';
 import ProfileDisplay from './ProfileDisplay';
 import Suggestion from './Suggestion';
-import { colors } from '../../theme/theme';
+import { colors } from '../../theme/Theme';
 import Search from '../../component/Search';
 import List from '../../component/List';
 

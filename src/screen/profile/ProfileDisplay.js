@@ -8,7 +8,7 @@ import {
   Share,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {colors} from '../../theme/theme';
+import {colors} from '../../theme/Theme';
 import { refreshAllData } from '../../config/DataService';
 
 const ProfileDisplay = ({navigation}) => {

@@ -6,7 +6,7 @@ import List from '../../component/List';
 import DetailPage from '../../component/DetailPage';
 import Search from '../../component/Search';
 import DoubleColum from './DoubleColum';
-import { colors } from '../../theme/theme'; // Import theme colors
+import { colors } from '../../theme/Theme'; // Import theme colors
 
 const Stack = createNativeStackNavigator();
 

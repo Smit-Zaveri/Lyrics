@@ -20,7 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {FAB} from '@rneui/themed';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import CustomMaterialMenu from './CustomMaterialMenu';
-import {colors} from '../theme/theme';
+import {colors} from '../theme/Theme';
 
 const DetailPage = ({route, navigation}) => {
   const {itemNumberingparas, Lyrics} = route.params;

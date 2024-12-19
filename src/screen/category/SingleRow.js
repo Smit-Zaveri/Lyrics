@@ -11,7 +11,7 @@ import {
   useColorScheme,
 } from 'react-native';
 import { Card } from 'react-native-elements';
-import { colors } from '../../theme/theme'; // Assuming you have a theme file with colors
+import { colors } from '../../theme/Theme'; // Assuming you have a theme file with colors
 
 const { width } = Dimensions.get('window');
 

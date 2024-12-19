@@ -4,7 +4,7 @@ import { useColorScheme } from 'react-native';
 import List from '../../component/List';
 import DetailPage from '../../component/DetailPage';
 import Search from '../../component/Search';
-import { colors } from '../../theme/theme';
+import { colors } from '../../theme/Theme';
 import HomeList from './HomeList';
 
 const Stack = createNativeStackNavigator();

@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   useColorScheme,
 } from 'react-native';
-import { colors } from '../../theme/theme'; // Assuming you have a theme file with colors
+import { colors } from '../../theme/Theme'; // Assuming you have a theme file with colors
 
 const DoubleColumn = ({ route, navigation }) => {
   const { data, title, redirect } = route.params;

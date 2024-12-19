@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import {Controller, useForm} from 'react-hook-form';
 import dayjs from 'dayjs';
-import {colors} from '../../theme/theme';
+import {colors} from '../../theme/Theme';
 import firestore from '@react-native-firebase/firestore';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { Button } from 'react-native-paper'; // Importing Material UI Button from react-native-paper
