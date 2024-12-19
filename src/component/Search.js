@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   SafeAreaView,
   FlatList,
@@ -16,7 +16,6 @@ import { useNavigation } from '@react-navigation/native';
 import { Searchbar, List, Portal, Provider } from 'react-native-paper';
 import { getFromAsyncStorage } from '../config/dataService';
 import EmptyList from './EmptyList';
-import { debounce } from 'lodash';
 
 const Search = ({ route }) => {
   const navigation = useNavigation();
@@ -29,86 +28,106 @@ const Search = ({ route }) => {
 
   const { collectionName } = route.params;
 
-  const loadLyrics = async () => {
+  const loadLyrics = useCallback(async () => {
     setLoading(true);
     setRefreshing(true);
+
     try {
       const fetchedLyrics = await getFromAsyncStorage(collectionName);
       const lyricsArray = Array.isArray(fetchedLyrics) ? fetchedLyrics : [];
+
       const lyricsWithIndex = lyricsArray.map((item, index) => ({
         ...item,
         numbering: index + 1,
       }));
+
       setLyrics(lyricsWithIndex);
-      extractAllWords(lyricsWithIndex);
+      cacheSuggestions(lyricsWithIndex);
     } catch (error) {
       console.error('Error loading lyrics:', error);
     } finally {
-      setRefreshing(false);
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [collectionName]);
 
   useEffect(() => {
     loadLyrics();
-  }, [collectionName]);
+  }, [collectionName, loadLyrics]);
 
-  const extractAllWords = (lyrics) => {
+  // Cache suggestions and split concatenated words
+  const cacheSuggestions = (lyrics) => {
     const wordSet = new Set();
 
     lyrics.forEach((lyric) => {
-      const fields = ['title', 'content', 'artist'];
-
+      const fields = ['title', 'content', 'artist', 'tags'];
       fields.forEach((field) => {
-        if (lyric[field]) {
-          const words = lyric[field]
-            .split(/\s+/)
-            .map((word) => word.trim().replace(/[^ઁ-૱\u0A80-\u0AFFa-zA-Z0-9]/g, ''));
-          words.forEach((word) => {
-            if (word) {
-              wordSet.add(word);
-            }
-          });
+        const text = lyric[field];
+        if (Array.isArray(text)) {
+          text.forEach((item) => addWordsToSet(item, wordSet));
+        } else if (typeof text === 'string') {
+          addWordsToSet(text, wordSet);
         }
       });
-
-      if (lyric.tags && Array.isArray(lyric.tags)) {
-        lyric.tags.forEach((tag) => {
-          const words = tag
-            .split(/\s+/)
-            .map((word) => word.trim().replace(/[^ઁ-૱\u0A80-\u0AFFa-zA-Z0-9]/g, ''));
-          words.forEach((word) => {
-            if (word) {
-              wordSet.add(word);
-            }
-          });
-        });
-      }
     });
 
-    setSuggestions(Array.from(wordSet));
+    // Additional logic to handle concatenated words
+    const fixedSuggestions = Array.from(wordSet).map(word => {
+      // Check if word contains concatenated parts (i.e., camel case or transliterated words)
+      if (word.match(/[a-zA-Z]+[A-Z][a-zA-Z]/)) {
+        // Insert space before capital letter (camel-case detection)
+        return word.replace(/([a-zA-Z])([A-Z])/g, '$1 $2');
+      } else if (word.match(/[a-zA-Z]+[\u0A80-\u0AFF]/)) {
+        // Handling camel-case for mixed scripts (Latin + Gujarati)
+        return word.replace(/([a-zA-Z])([\u0A80-\u0AFF])/g, '$1 $2');
+      }
+      return word;
+    });
+
+    setSuggestions(fixedSuggestions);
   };
 
-  const handleSearch = debounce((text) => {
+  // Function to add words to the set
+  const addWordsToSet = (text, wordSet) => {
+    // Split the text using space and additional punctuation, handle Gujarati characters as well
+    text
+      .split(/\s+/)  // Split by whitespace characters
+      .map((word) => word.trim().replace(/[^ઁ-૱\u0A80-\u0AFFa-zA-Z0-9]/g, '')) // Keep only Gujarati and alphanumeric
+      .filter((word) => word)  // Remove empty words
+      .forEach((word) => wordSet.add(word));
+  };
+
+  const handleSearch = (text) => {
     setSearchQuery(text);
+
     if (!text.trim()) {
       setFilteredLyrics([]);
       return;
     }
 
-    const terms = text.split(' ').filter((term) => term.trim() !== '');
+    const terms = text.split(/\s+/).filter((term) => term.trim()); // Split by any whitespace
+    const lowerCaseQuery = text.toLowerCase();
+
     const results = lyrics.filter((item) => {
-      return terms.every((term) => {
-        const searchText = term.toLowerCase();
-        return (
-          item.title.toLowerCase().includes(searchText) ||
-          item.content.toLowerCase().includes(searchText) ||
-          (item.tags && item.tags.some((tag) => tag.toLowerCase().includes(searchText)))
-        );
-      });
+      const fields = [item.title, item.content, ...(item.tags || [])];
+
+      // Check for exact phrase match (entire query)
+      const phraseMatch = fields.some((field) =>
+        field?.toLowerCase().includes(lowerCaseQuery)
+      );
+
+      // Check for all individual terms (split words)
+      const termsMatch = terms.every((term) =>
+        fields.some((field) =>
+          field?.toLowerCase().includes(term.toLowerCase())
+        )
+      );
+
+      return phraseMatch || termsMatch;
     });
+
     setFilteredLyrics(results);
-  });
+  };
 
   const handleSuggestionClick = (suggestion) => {
     setSearchQuery(suggestion);
@@ -122,12 +141,13 @@ const Search = ({ route }) => {
     });
   };
 
-  const onRefresh = () => {
+  const onRefresh = useCallback(() => {
     loadLyrics();
-  };
+  }, [loadLyrics]);
 
   const highlightSearchTerms = (text, terms) => {
     if (!text) return null;
+
     const parts = text.split(new RegExp(`(${terms.join('|')})`, 'gi'));
     return parts.map((part, index) =>
       terms.includes(part.toLowerCase()) ? (
@@ -141,21 +161,18 @@ const Search = ({ route }) => {
   };
 
   const renderItem = ({ item }) => {
-    const terms = searchQuery.split(' ').filter((term) => term.trim() !== '');
-    
-    // Find the line containing the search term
-    const matchingLine = item.content
-      .split('\n')
-      .find((line) =>
-        terms.some((term) => line.toLowerCase().includes(term.toLowerCase()))
-      ) || item.content.split('\n')[0]; // Fallback to the first line if no match
-    
+    const terms = searchQuery.split(' ').filter((term) => term.trim());
+    const matchingLine =
+      item.content
+        .split('\n')
+        .find((line) =>
+          terms.some((term) => line.toLowerCase().includes(term.toLowerCase()))
+        ) || item.content.split('\n')[0];
+
     return (
       <Pressable onPress={() => handleItemPress(item)} style={styles.itemContainer}>
         <View style={styles.leftContainer}>
-          <View style={styles.numberingContainer}>
-            <Text style={styles.numberingText}>{item.numbering}</Text>
-          </View>
+          <Text style={styles.numberingText}>{item.numbering}</Text>
           <View style={styles.detailsContainer}>
             <Text style={styles.title}>{highlightSearchTerms(item.title, terms)}</Text>
             <Text style={styles.content} numberOfLines={1}>
@@ -166,7 +183,6 @@ const Search = ({ route }) => {
       </Pressable>
     );
   };
-  
 
   return (
     <Provider>
@@ -187,11 +203,10 @@ const Search = ({ route }) => {
             style={styles.searchbar}
             inputStyle={styles.searchbarInput}
           />
-
-          {searchQuery.trim() !== '' && (
+          {!!searchQuery.trim() && (
             <FlatList
-              data={suggestions.filter((suggestion) =>
-                suggestion.toLowerCase().includes(searchQuery.toLowerCase())
+              data={suggestions.filter((s) =>
+                s.toLowerCase().includes(searchQuery.toLowerCase())
               )}
               renderItem={({ item }) => (
                 <List.Item
@@ -201,22 +216,17 @@ const Search = ({ route }) => {
                 />
               )}
               keyExtractor={(item, index) => index.toString()}
-              style={{
-                ...styles.suggestionsList,
-                height: suggestions.length > 0 ? Math.min(suggestions.length * 40, 200) : 0,
-              }}
+              style={styles.suggestionsList}
             />
           )}
-
-          {filteredLyrics.length === 0 && searchQuery.trim() !== '' && (
+          {filteredLyrics.length === 0 && searchQuery.trim() && (
             <Text style={styles.noResultsText}>No results found</Text>
           )}
-
           <FlatList
             data={filteredLyrics}
             renderItem={renderItem}
             keyExtractor={(item) => item.id.toString()}
-            ListEmptyComponent={<EmptyList filteredLyrics={filteredLyrics} />}
+            ListEmptyComponent={<EmptyList />}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             contentContainerStyle={styles.listContainer}
           />
@@ -266,46 +276,52 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   itemContainer: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: 12,
+    marginVertical: 8,
     borderRadius: 10,
-    backgroundColor: '#fff',
-    elevation: 2, // Shadow for Android
+    backgroundColor: '#ffffff',
+    elevation: 3, // Shadow for Android
     shadowColor: '#000', // Shadow for iOS
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 6,
   },
   leftContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  numberingContainer: {
-    marginRight: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
+    flex: 1,
   },
   numberingText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#6200EE',
+    backgroundColor: '#E0E0E0',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    textAlign: 'center',
+    textAlignVertical: 'center', // For Android vertical alignment
+    marginRight: 12,
   },
   detailsContainer: {
     flex: 1,
+    flexDirection: 'column',
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#222',
+    color: '#333',
+    marginBottom: 4,
   },
   content: {
     fontSize: 14,
-    color: '#555',
-    marginTop: 4,
+    color: '#666',
+    lineHeight: 20,
   },
   highlight: {
-    backgroundColor: 'rgba(255, 255, 0, 0.5)',
+    backgroundColor: 'rgba(255, 235, 59, 0.4)', // Yellow highlight
     borderRadius: 3,
   },
   modalContainer: {
