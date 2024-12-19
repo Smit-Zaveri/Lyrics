@@ -10,7 +10,7 @@ const SplashScreen = () => {
 
   // Determine logo source based on the current theme
   const logoSource = systemTheme === 'dark' 
-    ? require('../assets/logo.png') 
+    ? require('../assets/logo_black.png') 
     : require('../assets/logo_black.png');
 
   // Get active colors based on the current theme

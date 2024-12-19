@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, {useState, useEffect, useCallback, useMemo} from 'react';
 import {
   FlatList,
   Text,
@@ -8,59 +8,43 @@ import {
   Pressable,
   ActivityIndicator,
   useColorScheme,
-  RefreshControl, // Import RefreshControl
+  RefreshControl,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { colors } from '../../theme/theme';
-import { getFromAsyncStorage } from '../../config/DataService';
+import {useNavigation} from '@react-navigation/native';
+import {colors} from '../../theme/theme';
+import {getFromAsyncStorage} from '../../config/DataService';
 
 const HomeList = () => {
   const systemTheme = useColorScheme();
   const navigation = useNavigation();
 
-  const [isDarkMode, setIsDarkMode] = useState(systemTheme === 'dark');
-  const themeColors = isDarkMode ? colors.dark : colors.light;
+  const themeColors = useMemo(
+    () => (systemTheme === 'dark' ? colors.dark : colors.light),
+    [systemTheme],
+  );
 
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false); // State for refresh control
-
-  useEffect(() => {
-    setIsDarkMode(systemTheme === 'dark');
-  }, [systemTheme]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadData = useCallback(async () => {
+    setRefreshing(true);
     try {
-      setIsLoading(true);
       const collections = await getFromAsyncStorage('collections');
-      const sortedCollections = collections.sort(
-        (a, b) => a.numbering - b.numbering,
+      setData(
+        collections.sort((a, b) => a.numbering - b.numbering), // Sort only if necessary
       );
-      setData(sortedCollections);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setIsLoading(false);
-      setRefreshing(false); // Reset refreshing state
+      setRefreshing(false);
     }
   }, []);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  // Automatically refresh if data is empty after 1 second
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (data.length === 0) {
-        setRefreshing(true); // Set refreshing state
-        loadData(); // Reload data
-        console.log('No data found, refreshing...');
-      }
-    }, 1000); // 1 second delay
-
-    return () => clearTimeout(timeoutId); // Cleanup on unmount or data change
-  }, [data, loadData]);
 
   const handleItemPress = useCallback(
     item => () => {
@@ -73,12 +57,12 @@ const HomeList = () => {
     [navigation],
   );
 
-  const ListItem = useMemo(
+  const renderItem = useMemo(
     () =>
-      ({ item, onItemPress, themeColors }) => (
+      ({item}) => (
         <Pressable
-          onPress={onItemPress}
-          style={({ pressed }) => [
+          onPress={handleItemPress(item)}
+          style={({pressed}) => [
             styles.itemContainer,
             {
               backgroundColor: pressed
@@ -91,83 +75,64 @@ const HomeList = () => {
               <Text
                 style={[
                   styles.numberingText,
-                  { backgroundColor: themeColors.primary, color: '#fff' },
+                  {backgroundColor: themeColors.primary, color: '#fff'},
                 ]}>
                 {item.numbering}
               </Text>
             </View>
             <View style={styles.detailsContainer}>
-              <Text style={[styles.title, { color: themeColors.text }]}>
+              <Text style={[styles.title, {color: themeColors.text}]}>
                 {item.displayName}
               </Text>
             </View>
           </View>
         </Pressable>
       ),
-    [],
+    [themeColors, handleItemPress],
   );
 
   if (isLoading) {
     return (
       <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: themeColors.background,
-        }}>
+        style={[styles.centered, {backgroundColor: themeColors.background}]}>
         <ActivityIndicator size="large" color={themeColors.primary} />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
-      <View style={{ flex: 1 }}>
-        <FlatList
-          contentContainerStyle={{ backgroundColor: themeColors.background }}
-          data={data}
-          keyExtractor={item => item.id.toString()}
-          renderItem={({ item }) => (
-            <ListItem
-              item={item}
-              onItemPress={handleItemPress(item)}
-              themeColors={themeColors}
-            />
-          )}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={() => {
-                setRefreshing(true); // Set refreshing state
-                loadData(); // Reload data
-                }}
-            />
-          }
-        />
-      </View>
+    <SafeAreaView
+      style={[styles.flex, {backgroundColor: themeColors.background}]}>
+      <FlatList
+        contentContainerStyle={{backgroundColor: themeColors.background}}
+        data={data}
+        keyExtractor={item => item.id.toString()}
+        renderItem={renderItem}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={loadData} />
+        }
+        getItemLayout={(data, index) => ({
+          length: 70,
+          offset: 70 * index,
+          index,
+        })}
+      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  flex: {flex: 1},
+  centered: {flex: 1, justifyContent: 'center', alignItems: 'center'},
   itemContainer: {
     borderBottomWidth: 0.5,
     padding: 12,
     height: 70,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
-  leftContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  numberingContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  leftContainer: {flexDirection: 'row', alignItems: 'center', flex: 1},
+  numberingContainer: {justifyContent: 'center', alignItems: 'center'},
   numberingText: {
     marginRight: 20,
     paddingHorizontal: 16,
@@ -178,13 +143,8 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
   },
-  detailsContainer: {
-    flex: 1,
-  },
-  title: {
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
+  detailsContainer: {flex: 1},
+  title: {fontWeight: 'bold', fontSize: 16},
 });
 
 export default HomeList;

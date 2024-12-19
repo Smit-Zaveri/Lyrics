@@ -60,7 +60,7 @@ const getFromAsyncStorage = async collectionName => {
     if (collectionGroups.length === 0) {
       const netInfo = await NetInfo.fetch();
       if (netInfo.isConnected) {
-        console.log('No data found. Fetching new data...');
+        // console.log('No data found. Fetching new data...');
         await initializeGroups();
       } else {
         console.log('No internet connection and no cached data available.');

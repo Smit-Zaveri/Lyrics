@@ -34,7 +34,7 @@ const App = () => {
     OneSignal.Notifications.addEventListener('click', handleNotificationClick);
 
     // Initialize groups
-    // console.log(initializeGroups());
+    initializeGroups();
 
     // Cleanup event listener when component unmounts
     return () => {
