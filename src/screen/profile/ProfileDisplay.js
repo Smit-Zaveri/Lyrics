@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {colors} from '../../theme/theme';
-import { refreshAllData } from '../../config/dataService';
+import { refreshAllData } from '../../config/DataService';
 
 const ProfileDisplay = ({navigation}) => {
   const [refreshMessage, setRefreshMessage] = useState('');

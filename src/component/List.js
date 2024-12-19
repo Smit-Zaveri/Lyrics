@@ -10,8 +10,8 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-import { getFromAsyncStorage } from '../config/dataService';
-import { colors } from '../theme/theme';
+import { getFromAsyncStorage } from '../config/DataService';
+import { colors } from '../theme/Theme';
 import TagItem from './TagItem';
 import ListItem from './ListItem';
 import EmptyList from './EmptyList';

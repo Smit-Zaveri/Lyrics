@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, useColorScheme } from 'react-native';
-import { colors } from '../theme/theme';
+import { colors } from '../theme/Theme';
 
 const EmptyList = () => {
   const systemTheme = useColorScheme(); // Hook to detect system theme

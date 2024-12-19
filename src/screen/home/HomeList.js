@@ -11,8 +11,8 @@ import {
   RefreshControl,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {colors} from '../../theme/theme';
-import {getFromAsyncStorage} from '../../config/dataService';
+import {colors} from '../../theme/Theme';
+import {getFromAsyncStorage} from '../../config/DataService';
 
 const HomeList = () => {
   const systemTheme = useColorScheme();

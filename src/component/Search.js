@@ -9,12 +9,10 @@ import {
   Modal,
   StyleSheet,
   Pressable,
-  Keyboard,
-  TouchableWithoutFeedback,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Searchbar, List, Portal, Provider } from 'react-native-paper';
-import { getFromAsyncStorage } from '../config/dataService';
+import { Searchbar, List, Portal, Provider, Divider } from 'react-native-paper';
+import { getFromAsyncStorage } from '../config/DataService';
 import EmptyList from './EmptyList';
 
 const Search = ({ route }) => {
@@ -55,7 +53,6 @@ const Search = ({ route }) => {
     loadLyrics();
   }, [collectionName, loadLyrics]);
 
-  // Cache suggestions and split concatenated words
   const cacheSuggestions = (lyrics) => {
     const wordSet = new Set();
 
@@ -71,14 +68,10 @@ const Search = ({ route }) => {
       });
     });
 
-    // Additional logic to handle concatenated words
-    const fixedSuggestions = Array.from(wordSet).map(word => {
-      // Check if word contains concatenated parts (i.e., camel case or transliterated words)
+    const fixedSuggestions = Array.from(wordSet).map((word) => {
       if (word.match(/[a-zA-Z]+[A-Z][a-zA-Z]/)) {
-        // Insert space before capital letter (camel-case detection)
         return word.replace(/([a-zA-Z])([A-Z])/g, '$1 $2');
       } else if (word.match(/[a-zA-Z]+[\u0A80-\u0AFF]/)) {
-        // Handling camel-case for mixed scripts (Latin + Gujarati)
         return word.replace(/([a-zA-Z])([\u0A80-\u0AFF])/g, '$1 $2');
       }
       return word;
@@ -87,47 +80,54 @@ const Search = ({ route }) => {
     setSuggestions(fixedSuggestions);
   };
 
-  // Function to add words to the set
   const addWordsToSet = (text, wordSet) => {
-    // Split the text using space and additional punctuation, handle Gujarati characters as well
     text
-      .split(/\s+/)  // Split by whitespace characters
-      .map((word) => word.trim().replace(/[^ઁ-૱\u0A80-\u0AFFa-zA-Z0-9]/g, '')) // Keep only Gujarati and alphanumeric
-      .filter((word) => word)  // Remove empty words
+      .split(/\s+/)
+      .map((word) => word.trim().replace(/[^ઁ-૱\u0A80-\u0AFFa-zA-Z0-9]/g, ''))
+      .filter((word) => word)
       .forEach((word) => wordSet.add(word));
   };
 
   const handleSearch = (text) => {
     setSearchQuery(text);
-
+  
     if (!text.trim()) {
       setFilteredLyrics([]);
       return;
     }
-
-    const terms = text.split(/\s+/).filter((term) => term.trim()); // Split by any whitespace
+  
+    const terms = text.split(/\s+/).filter((term) => term.trim());
     const lowerCaseQuery = text.toLowerCase();
-
+  
     const results = lyrics.filter((item) => {
       const fields = [item.title, item.content, ...(item.tags || [])];
-
-      // Check for exact phrase match (entire query)
+  
       const phraseMatch = fields.some((field) =>
         field?.toLowerCase().includes(lowerCaseQuery)
       );
-
-      // Check for all individual terms (split words)
+  
       const termsMatch = terms.every((term) =>
         fields.some((field) =>
           field?.toLowerCase().includes(term.toLowerCase())
         )
       );
-
-      return phraseMatch || termsMatch;
+  
+      const individualWordMatch = terms.some((term) =>
+        fields.some((field) =>
+          field?.toLowerCase().includes(term.toLowerCase())
+        )
+      );
+  
+      return phraseMatch || termsMatch || individualWordMatch;
     });
-
+  
     setFilteredLyrics(results);
   };
+  
+  
+  
+  
+  
 
   const handleSuggestionClick = (suggestion) => {
     setSearchQuery(suggestion);
@@ -170,7 +170,10 @@ const Search = ({ route }) => {
         ) || item.content.split('\n')[0];
 
     return (
-      <Pressable onPress={() => handleItemPress(item)} style={styles.itemContainer}>
+      <Pressable
+        onPress={() => handleItemPress(item)}
+        style={styles.itemContainer}
+      >
         <View style={styles.leftContainer}>
           <Text style={styles.numberingText}>{item.numbering}</Text>
           <View style={styles.detailsContainer}>
@@ -194,22 +197,22 @@ const Search = ({ route }) => {
           </View>
         </Modal>
       </Portal>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <SafeAreaView style={styles.container}>
-          <Searchbar
-            placeholder="Search lyrics, artist, or tags"
-            onChangeText={handleSearch}
-            value={searchQuery}
-            style={styles.searchbar}
-            inputStyle={styles.searchbarInput}
-          />
-          {!!searchQuery.trim() && (
+      <SafeAreaView style={styles.container}>
+        <Searchbar
+          placeholder="Search lyrics, artist, or tags"
+          onChangeText={handleSearch}
+          value={searchQuery}
+          style={styles.searchbar}
+          inputStyle={styles.searchbarInput}
+        />
+        {!!searchQuery.trim() && suggestions.length > 0 && (
+          <View style={styles.suggestionsContainer}>
             <FlatList
               data={suggestions.filter((s) =>
                 s.toLowerCase().includes(searchQuery.toLowerCase())
-              )}
+              ).filter(s => s)} // Remove empty suggestions
               renderItem={({ item }) => (
-                <List.Item
+                item && <List.Item
                   title={item}
                   onPress={() => handleSuggestionClick(item)}
                   titleStyle={styles.suggestionItem}
@@ -218,20 +221,20 @@ const Search = ({ route }) => {
               keyExtractor={(item, index) => index.toString()}
               style={styles.suggestionsList}
             />
-          )}
-          {filteredLyrics.length === 0 && searchQuery.trim() && (
-            <Text style={styles.noResultsText}>No results found</Text>
-          )}
-          <FlatList
-            data={filteredLyrics}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.id.toString()}
-            ListEmptyComponent={<EmptyList />}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-            contentContainerStyle={styles.listContainer}
-          />
-        </SafeAreaView>
-      </TouchableWithoutFeedback>
+          </View>
+        )}
+        {filteredLyrics.length === 0 && searchQuery.trim() && (
+          <Text style={styles.noResultsText}>No results found</Text>
+        )}
+        <FlatList
+          data={filteredLyrics}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id.toString()}
+          ListEmptyComponent={<EmptyList />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          contentContainerStyle={styles.listContainer}
+        />
+      </SafeAreaView>
     </Provider>
   );
 };
@@ -257,32 +260,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-  suggestionsList: {
+  suggestionsContainer: {
+    maxHeight: 150, // Limit the height of the suggestion box
     marginTop: 5,
     backgroundColor: '#fff',
     borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 1,
+  },
+  suggestionsList: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
   suggestionItem: {
     color: '#6200EE',
     fontSize: 16,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
   itemContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     padding: 12,
-    marginVertical: 8,
+    marginVertical: 4,
     borderRadius: 10,
     backgroundColor: '#ffffff',
-    elevation: 3, // Shadow for Android
+    elevation: 1, // Shadow for Android
     shadowColor: '#000', // Shadow for iOS
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
