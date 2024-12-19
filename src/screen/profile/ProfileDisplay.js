@@ -39,7 +39,7 @@ Hey there! If you love music and want to access a world of lyrics at your finger
 Join the community of music lovers and elevate your listening experience today! 🎤💖`,
       });
     } catch (error) {
-      console.log('Error sharing the app:', error.message);
+      // console.log('Error sharing the app:', error.message);
     }
   };
 

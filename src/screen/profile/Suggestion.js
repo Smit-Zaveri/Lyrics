@@ -104,7 +104,7 @@ const Suggestion = () => {
 
     fetchCollections();
   }, []);
-  console.log(collections);
+  // console.log(collections);
 
   const onSubmit = useCallback(
     async data => {

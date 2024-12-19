@@ -63,7 +63,7 @@ const getFromAsyncStorage = async collectionName => {
         // console.log('No data found. Fetching new data...');
         await initializeGroups();
       } else {
-        console.log('No internet connection and no cached data available.');
+        // console.log('No internet connection and no cached data available.');
         return null;
       }
     }
@@ -101,7 +101,7 @@ const getFromAsyncStorage = async collectionName => {
 const refreshAllData = async () => {
   const netInfo = await NetInfo.fetch();
   if (!netInfo.isConnected) {
-    console.log('No internet connection, skipping data refresh.');
+    // console.log('No internet connection, skipping data refresh.');
     return;
   }
   await Promise.all(collectionGroups.map(fetchAndStoreData));
