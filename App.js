@@ -11,47 +11,54 @@ import {colors} from './src/theme/Theme';
 import {LogLevel, OneSignal} from 'react-native-onesignal';
 import {initializeGroups} from './src/config/DataService';
 
+// Create bottom tab navigator
 const Tab = createMaterialBottomTabNavigator();
 
 const App = () => {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(true); // State to manage splash screen visibility
 
-  // Detect system theme (light or dark)
+  // Detect system theme (light or dark) and set theme colors accordingly
   const systemTheme = useColorScheme();
   const themeColors = systemTheme === 'dark' ? colors.dark : colors.light;
   const {primary, surface, text} = themeColors;
 
-  // OneSignal initialization and event listener
+  // OneSignal initialization and event listener setup
   useMemo(() => {
-    OneSignal.Debug.setLogLevel(LogLevel.Verbose);
-    OneSignal.initialize('c9a87eea-dc14-4e8b-a750-b59978073d9c');
-    OneSignal.Notifications.requestPermission(true);
+    try {
+      OneSignal.Debug.setLogLevel(LogLevel.Verbose); // Set OneSignal log level
+      OneSignal.initialize('c9a87eea-dc14-4e8b-a750-b59978073d9c'); // Initialize OneSignal with app ID
+      OneSignal.Notifications.requestPermission(true); // Request notification permissions
 
-    const handleNotificationClick = event => {
-      //console.log('OneSignal: notification clicked:', event);
-    };
+      const handleNotificationClick = event => {
+        // Handle notification click event
+        console.log('OneSignal: notification clicked:', event);
+      };
 
-    OneSignal.Notifications.addEventListener('click', handleNotificationClick);
+      // Add event listener for notification clicks
+      OneSignal.Notifications.addEventListener('click', handleNotificationClick);
 
-    // Initialize groups
-    initializeGroups();
+      // Initialize groups (custom function)
+      initializeGroups();
 
-    // Cleanup event listener when component unmounts
-    return () => {
-      OneSignal.Notifications.removeEventListener(
-        'click',
-        handleNotificationClick,
-      );
-    };
+      // Cleanup event listener when component unmounts
+      return () => {
+        OneSignal.Notifications.removeEventListener(
+          'click',
+          handleNotificationClick,
+        );
+      };
+    } catch (error) {
+      console.error('Error initializing OneSignal:', error);
+    }
   }, []);
 
   // Handle splash screen timeout
   useEffect(() => {
     const timer = setTimeout(() => {
-      setShowSplash(false);
+      setShowSplash(false); // Hide splash screen after 1300ms
     }, 1300);
 
-    return () => clearTimeout(timer);
+    return () => clearTimeout(timer); // Cleanup timer on component unmount
   }, []);
 
   // Memoize renderIcon to avoid unnecessary re-renders
@@ -60,10 +67,12 @@ const App = () => {
     [],
   );
 
+  // If splash screen is visible, render it
   if (showSplash) {
     return <SplashScreen />;
   }
 
+  // Main app rendering with navigation container and tab navigator
   return (
     <NavigationContainer>
       <StatusBar
