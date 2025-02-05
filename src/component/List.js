@@ -181,51 +181,53 @@ const List = ({route}) => {
 
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: themeColors.background}}>
-      {/* Tag List */}
-      <FlatList
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        data={tags}
-        keyExtractor={item => item.id?.toString()}
-        renderItem={({item}) => (
-          <TagItem
-            item={item}
-            selectedTags={selectedTags}
-            onTagPress={handleTagPress}
-            themeColors={themeColors}
-          />
-        )}
-      />
+      <View style={{flexGrow: 0, flexShrink: 0}}>
+        {/* Tag List */}
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={tags}
+          keyExtractor={item => item.id?.toString()}
+          renderItem={({item}) => (
+            <TagItem
+              item={item}
+              selectedTags={selectedTags}
+              onTagPress={handleTagPress}
+              themeColors={themeColors}
+            />
+          )}
+        />
 
-      {/* Lyrics List */}
-      <FlatList
-        contentContainerStyle={{backgroundColor: themeColors.background}}
-        data={filteredLyrics}
-        keyExtractor={item => item.id?.toString()} // Ensure keys are explicitly defined
-        renderItem={({item}) => (
-          <ListItem
-            item={item}
-            themeColors={themeColors}
-            onItemPress={handleItemPress}
-          />
-        )}
-        ListEmptyComponent={<EmptyList filteredLyrics={filteredLyrics} />}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => loadData(1)}
-          />
-        }
-        onEndReached={fetchMoreData}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          isFetchingMore ? (
-            <View style={{paddingVertical: 20}}>
-              <ActivityIndicator size="small" color={themeColors.primary} />
-            </View>
-          ) : null
-        }
-      />
+        {/* Lyrics List */}
+        <FlatList
+          contentContainerStyle={{backgroundColor: themeColors.background}}
+          data={filteredLyrics}
+          keyExtractor={item => item.id?.toString()} // Ensure keys are explicitly defined
+          renderItem={({item}) => (
+            <ListItem
+              item={item}
+              themeColors={themeColors}
+              onItemPress={handleItemPress}
+            />
+          )}
+          ListEmptyComponent={<EmptyList filteredLyrics={filteredLyrics} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => loadData(1)}
+            />
+          }
+          onEndReached={fetchMoreData}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            isFetchingMore ? (
+              <View style={{paddingVertical: 20}}>
+                <ActivityIndicator size="small" color={themeColors.primary} />
+              </View>
+            ) : null
+          }
+        />
+      </View>
     </SafeAreaView>
   );
 };
