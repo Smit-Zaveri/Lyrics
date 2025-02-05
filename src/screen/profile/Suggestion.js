@@ -215,8 +215,6 @@ const Suggestion = () => {
             <Text style={styles.error}>Content is required.</Text>
           )}
 
-         
-
           <Button
             mode="contained"
             disabled={isSubmitting} // Disable button while submitting

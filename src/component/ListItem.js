@@ -1,24 +1,29 @@
 import React from 'react';
-import { Pressable, View, Text, StyleSheet } from 'react-native';
+import {Pressable, View, Text, StyleSheet} from 'react-native';
 
-const ListItem = ({ item, themeColors, onItemPress }) => {
-  const { numbering, title, content, publishDate, newFlag } = item;
+const ListItem = ({item, themeColors, onItemPress}) => {
+  const {numbering, title, content, publishDate, newFlag} = item;
   const currentDate = new Date();
-  const publishDateTime = new Date(publishDate.seconds * 1000);
-  const timeDiff = Math.ceil((currentDate - publishDateTime) / (1000 * 60 * 60 * 24));
-  const isNew = newFlag && timeDiff >= 0 && timeDiff < 7;
+  const publishDateTime = publishDate?.seconds
+    ? new Date(publishDate.seconds * 1000)
+    : null;
+
+  const timeDiff = publishDateTime
+    ? Math.ceil((currentDate - publishDateTime) / (1000 * 60 * 60 * 24))
+    : null;
+
+  const isNew = newFlag && timeDiff !== null && timeDiff >= 0 && timeDiff < 7;
 
   return (
     <Pressable
       onPress={() => onItemPress(item)}
-      style={({ pressed }) => [
+      style={({pressed}) => [
         styles.itemContainer,
         {
           backgroundColor: pressed ? themeColors.surface : 'transparent', // Change press color based on theme
           borderBottomColor: themeColors.border, // Border color from theme
         },
-      ]}
-    >
+      ]}>
       <View style={styles.leftContainer}>
         <View style={styles.numberingContainer}>
           <Text
@@ -29,14 +34,15 @@ const ListItem = ({ item, themeColors, onItemPress }) => {
                 color: '#fff', // Text color
                 borderColor: themeColors.primary, // Border color
               },
-            ]}
-          >
+            ]}>
             {numbering.toString()}
           </Text>
         </View>
         <View style={styles.detailsContainer}>
-          <Text style={[styles.title, { color: themeColors.text }]}>{title}</Text>
-          <Text style={[styles.content, { color: themeColors.text }]} numberOfLines={1}>
+          <Text style={[styles.title, {color: themeColors.text}]}>{title}</Text>
+          <Text
+            style={[styles.content, {color: themeColors.text}]}
+            numberOfLines={1}>
             {content.split('\n')[0]}
           </Text>
         </View>
@@ -45,7 +51,9 @@ const ListItem = ({ item, themeColors, onItemPress }) => {
       {/* Display "NEW" on the right side if the item is new */}
       {isNew && (
         <View style={styles.newFlagContainer}>
-          <Text style={[styles.newFlagText, { color: themeColors.primary }]}>NEW</Text>
+          <Text style={[styles.newFlagText, {color: themeColors.primary}]}>
+            NEW
+          </Text>
         </View>
       )}
     </Pressable>
@@ -90,7 +98,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   content: {
-    fontSize: 14 ,
+    fontSize: 14,
   },
   newFlagContainer: {
     backgroundColor: '#FFD700', // Yellow background for NEW
