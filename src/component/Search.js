@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {
   SafeAreaView,
   FlatList,
@@ -9,22 +9,39 @@ import {
   Modal,
   StyleSheet,
   Pressable,
+  useColorScheme,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { Searchbar, List, Portal, Provider, Divider } from 'react-native-paper';
-import { getFromAsyncStorage } from '../config/DataService';
+import {useNavigation} from '@react-navigation/native';
+import {Searchbar, List, Portal, Provider, Divider} from 'react-native-paper';
+import {getFromAsyncStorage} from '../config/DataService';
+import {colors} from '../theme/Theme';
 import EmptyList from './EmptyList';
 
-const Search = ({ route }) => {
+const Search = ({route}) => {
   const navigation = useNavigation();
   const [lyrics, setLyrics] = useState([]);
+  const searchbarRef = useRef(null);
+  const systemTheme = useColorScheme();
+  const [isDarkMode, setIsDarkMode] = useState(systemTheme === 'dark');
   const [filteredLyrics, setFilteredLyrics] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const {collectionName} = route.params;
 
-  const { collectionName } = route.params;
+  const themeColors = isDarkMode ? colors.dark : colors.light;
+
+  useEffect(() => {
+    // Focus the Searchbar after 1 second when the component mounts
+    const focusTimeout = setTimeout(() => {
+      searchbarRef.current?.focus();
+    }, 500);
+
+    return () => {
+      clearTimeout(focusTimeout); // Clean up the timeout if the component unmounts
+    };
+  }, []);
 
   const loadLyrics = useCallback(async () => {
     setLoading(true);
@@ -53,22 +70,22 @@ const Search = ({ route }) => {
     loadLyrics();
   }, [collectionName, loadLyrics]);
 
-  const cacheSuggestions = (lyrics) => {
+  const cacheSuggestions = lyrics => {
     const wordSet = new Set();
 
-    lyrics.forEach((lyric) => {
+    lyrics.forEach(lyric => {
       const fields = ['title', 'content', 'artist', 'tags'];
-      fields.forEach((field) => {
+      fields.forEach(field => {
         const text = lyric[field];
         if (Array.isArray(text)) {
-          text.forEach((item) => addWordsToSet(item, wordSet));
+          text.forEach(item => addWordsToSet(item, wordSet));
         } else if (typeof text === 'string') {
           addWordsToSet(text, wordSet);
         }
       });
     });
 
-    const fixedSuggestions = Array.from(wordSet).map((word) => {
+    const fixedSuggestions = Array.from(wordSet).map(word => {
       if (word.match(/[a-zA-Z]+[A-Z][a-zA-Z]/)) {
         return word.replace(/([a-zA-Z])([A-Z])/g, '$1 $2');
       } else if (word.match(/[a-zA-Z]+[\u0A80-\u0AFF]/)) {
@@ -83,58 +100,49 @@ const Search = ({ route }) => {
   const addWordsToSet = (text, wordSet) => {
     text
       .split(/\s+/)
-      .map((word) => word.trim().replace(/[^ઁ-૱\u0A80-\u0AFFa-zA-Z0-9]/g, ''))
-      .filter((word) => word)
-      .forEach((word) => wordSet.add(word));
+      .map(word => word.trim().replace(/[^ઁ-૱\u0A80-\u0AFFa-zA-Z0-9]/g, ''))
+      .filter(word => word)
+      .forEach(word => wordSet.add(word));
   };
 
-  const handleSearch = (text) => {
+  const handleSearch = text => {
     setSearchQuery(text);
-  
+
     if (!text.trim()) {
       setFilteredLyrics([]);
       return;
     }
-  
-    const terms = text.split(/\s+/).filter((term) => term.trim());
+
+    const terms = text.split(/\s+/).filter(term => term.trim());
     const lowerCaseQuery = text.toLowerCase();
-  
-    const results = lyrics.filter((item) => {
+
+    const results = lyrics.filter(item => {
       const fields = [item.title, item.content, ...(item.tags || [])];
-  
-      const phraseMatch = fields.some((field) =>
-        field?.toLowerCase().includes(lowerCaseQuery)
+
+      const phraseMatch = fields.some(field =>
+        field?.toLowerCase().includes(lowerCaseQuery),
       );
-  
-      const termsMatch = terms.every((term) =>
-        fields.some((field) =>
-          field?.toLowerCase().includes(term.toLowerCase())
-        )
+
+      const termsMatch = terms.every(term =>
+        fields.some(field => field?.toLowerCase().includes(term.toLowerCase())),
       );
-  
-      const individualWordMatch = terms.some((term) =>
-        fields.some((field) =>
-          field?.toLowerCase().includes(term.toLowerCase())
-        )
+
+      const individualWordMatch = terms.some(term =>
+        fields.some(field => field?.toLowerCase().includes(term.toLowerCase())),
       );
-  
+
       return phraseMatch || termsMatch || individualWordMatch;
     });
-  
+
     setFilteredLyrics(results);
   };
-  
-  
-  
-  
-  
 
-  const handleSuggestionClick = (suggestion) => {
+  const handleSuggestionClick = suggestion => {
     setSearchQuery(suggestion);
     handleSearch(suggestion);
   };
 
-  const handleItemPress = (item) => {
+  const handleItemPress = item => {
     navigation.navigate('Details', {
       Lyrics: lyrics,
       itemNumberingparas: item.numbering.toString(),
@@ -156,28 +164,29 @@ const Search = ({ route }) => {
         </Text>
       ) : (
         part
-      )
+      ),
     );
   };
 
-  const renderItem = ({ item }) => {
-    const terms = searchQuery.split(' ').filter((term) => term.trim());
+  const renderItem = ({item}) => {
+    const terms = searchQuery.split(' ').filter(term => term.trim());
     const matchingLine =
       item.content
         .split('\n')
-        .find((line) =>
-          terms.some((term) => line.toLowerCase().includes(term.toLowerCase()))
+        .find(line =>
+          terms.some(term => line.toLowerCase().includes(term.toLowerCase())),
         ) || item.content.split('\n')[0];
 
     return (
       <Pressable
         onPress={() => handleItemPress(item)}
-        style={styles.itemContainer}
-      >
+        style={styles.itemContainer}>
         <View style={styles.leftContainer}>
           <Text style={styles.numberingText}>{item.numbering}</Text>
           <View style={styles.detailsContainer}>
-            <Text style={styles.title}>{highlightSearchTerms(item.title, terms)}</Text>
+            <Text style={styles.title}>
+              {highlightSearchTerms(item.title, terms)}
+            </Text>
             <Text style={styles.content} numberOfLines={1}>
               {highlightSearchTerms(matchingLine, terms)}
             </Text>
@@ -197,27 +206,34 @@ const Search = ({ route }) => {
           </View>
         </Modal>
       </Portal>
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[{backgroundColor: themeColors.background}, styles.container]}>
         <Searchbar
           placeholder="Search lyrics, artist, or tags"
+          ref={searchbarRef}
           onChangeText={handleSearch}
           value={searchQuery}
           style={styles.searchbar}
           inputStyle={styles.searchbarInput}
+          placeholderTextColor="#000" // Added placeholderTextColor
         />
         {!!searchQuery.trim() && suggestions.length > 0 && (
           <View style={styles.suggestionsContainer}>
             <FlatList
-              data={suggestions.filter((s) =>
-                s.toLowerCase().includes(searchQuery.toLowerCase())
-              ).filter(s => s)} // Remove empty suggestions
-              renderItem={({ item }) => (
-                item && <List.Item
-                  title={item}
-                  onPress={() => handleSuggestionClick(item)}
-                  titleStyle={styles.suggestionItem}
-                />
-              )}
+              data={suggestions
+                .filter(s =>
+                  s.toLowerCase().includes(searchQuery.toLowerCase()),
+                )
+                .filter(s => s)} // Remove empty suggestions
+              renderItem={({item}) =>
+                item && (
+                  <List.Item
+                    title={item}
+                    onPress={() => handleSuggestionClick(item)}
+                    titleStyle={styles.suggestionItem}
+                  />
+                )
+              }
               keyExtractor={(item, index) => index.toString()}
               style={styles.suggestionsList}
             />
@@ -229,9 +245,11 @@ const Search = ({ route }) => {
         <FlatList
           data={filteredLyrics}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={item => item.id.toString()}
           ListEmptyComponent={<EmptyList />}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
           contentContainerStyle={styles.listContainer}
         />
       </SafeAreaView>
@@ -242,7 +260,6 @@ const Search = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9f9f9',
     paddingHorizontal: 16,
     paddingTop: 10,
   },
@@ -251,14 +268,14 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     elevation: 3, // Shadow for Android
     shadowColor: '#000', // Shadow for iOS
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 2,
     backgroundColor: '#ffffff',
   },
   searchbarInput: {
     fontSize: 16,
-    color: '#333',
+    color: '#000',
   },
   suggestionsContainer: {
     maxHeight: 150, // Limit the height of the suggestion box
@@ -268,7 +285,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 1,
@@ -292,7 +309,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     elevation: 1, // Shadow for Android
     shadowColor: '#000', // Shadow for iOS
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 6,
   },
@@ -304,8 +321,8 @@ const styles = StyleSheet.create({
   numberingText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#6200EE',
-    backgroundColor: '#E0E0E0',
+    color: '#ffffff',
+    backgroundColor: '#6200EE',
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -320,12 +337,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#222',
     marginBottom: 4,
   },
   content: {
     fontSize: 14,
-    color: '#666',
+    color: '#444',
     lineHeight: 20,
   },
   highlight: {
@@ -348,7 +365,7 @@ const styles = StyleSheet.create({
   },
   noResultsText: {
     fontSize: 16,
-    color: '#777',
+    color: '#444',
     textAlign: 'center',
     marginTop: 30,
   },
