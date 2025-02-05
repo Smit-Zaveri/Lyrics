@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef, useCallback} from 'react';
+import React, {useState, useEffect, useRef, useCallback, useMemo} from 'react';
 import {
   SafeAreaView,
   FlatList,
@@ -12,50 +12,50 @@ import {
   useColorScheme,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {Searchbar, List, Portal, Provider, Divider} from 'react-native-paper';
+import {Searchbar, List, Portal, Provider} from 'react-native-paper';
 import {getFromAsyncStorage} from '../config/DataService';
 import {colors} from '../theme/Theme';
 import EmptyList from './EmptyList';
 
+// Precompiled regex patterns for suggestion fixes
+const camelCaseRegex = /([a-zA-Z])([A-Z])/g;
+const devanagariRegex = /([a-zA-Z])([\u0A80-\u0AFF])/g;
+
+// Helper function to escape regex special characters in search terms
+const escapeRegExp = string => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const Search = ({route}) => {
   const navigation = useNavigation();
-  const [lyrics, setLyrics] = useState([]);
   const searchbarRef = useRef(null);
   const systemTheme = useColorScheme();
-  const [isDarkMode, setIsDarkMode] = useState(systemTheme === 'dark');
-  const [filteredLyrics, setFilteredLyrics] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
-  const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const isDarkMode = systemTheme === 'dark';
+  const themeColors = isDarkMode ? colors.dark : colors.light;
   const {collectionName} = route.params;
 
-  const themeColors = isDarkMode ? colors.dark : colors.light;
+  const [lyrics, setLyrics] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(false);
 
+  // Focus the Searchbar after a short delay when the component mounts
   useEffect(() => {
-    // Focus the Searchbar after 1 second when the component mounts
     const focusTimeout = setTimeout(() => {
       searchbarRef.current?.focus();
     }, 500);
-
-    return () => {
-      clearTimeout(focusTimeout); // Clean up the timeout if the component unmounts
-    };
+    return () => clearTimeout(focusTimeout);
   }, []);
 
   const loadLyrics = useCallback(async () => {
     setLoading(true);
     setRefreshing(true);
-
     try {
       const fetchedLyrics = await getFromAsyncStorage(collectionName);
       const lyricsArray = Array.isArray(fetchedLyrics) ? fetchedLyrics : [];
-
       const lyricsWithIndex = lyricsArray.map((item, index) => ({
         ...item,
         numbering: index + 1,
       }));
-
       setLyrics(lyricsWithIndex);
       cacheSuggestions(lyricsWithIndex);
     } catch (error) {
@@ -70,10 +70,10 @@ const Search = ({route}) => {
     loadLyrics();
   }, [collectionName, loadLyrics]);
 
-  const cacheSuggestions = lyrics => {
+  // Cache suggestions by extracting words from selected fields
+  const cacheSuggestions = lyricsData => {
     const wordSet = new Set();
-
-    lyrics.forEach(lyric => {
+    lyricsData.forEach(lyric => {
       const fields = ['title', 'content', 'artist', 'tags'];
       fields.forEach(field => {
         const text = lyric[field];
@@ -84,16 +84,14 @@ const Search = ({route}) => {
         }
       });
     });
-
     const fixedSuggestions = Array.from(wordSet).map(word => {
-      if (word.match(/[a-zA-Z]+[A-Z][a-zA-Z]/)) {
-        return word.replace(/([a-zA-Z])([A-Z])/g, '$1 $2');
-      } else if (word.match(/[a-zA-Z]+[\u0A80-\u0AFF]/)) {
-        return word.replace(/([a-zA-Z])([\u0A80-\u0AFF])/g, '$1 $2');
+      if (camelCaseRegex.test(word)) {
+        return word.replace(camelCaseRegex, '$1 $2');
+      } else if (devanagariRegex.test(word)) {
+        return word.replace(devanagariRegex, '$1 $2');
       }
       return word;
     });
-
     setSuggestions(fixedSuggestions);
   };
 
@@ -101,45 +99,36 @@ const Search = ({route}) => {
     text
       .split(/\s+/)
       .map(word => word.trim().replace(/[^ઁ-૱\u0A80-\u0AFFa-zA-Z0-9]/g, ''))
-      .filter(word => word)
+      .filter(Boolean)
       .forEach(word => wordSet.add(word));
   };
 
-  const handleSearch = text => {
+  // Only update search query; filtering is derived via useMemo below.
+  const handleSearch = useCallback(text => {
     setSearchQuery(text);
+  }, []);
 
-    if (!text.trim()) {
-      setFilteredLyrics([]);
-      return;
-    }
-
-    const terms = text.split(/\s+/).filter(term => term.trim());
-    const lowerCaseQuery = text.toLowerCase();
-
-    const results = lyrics.filter(item => {
+  // Compute filtered lyrics based on searchQuery and cached lyrics.
+  // Returns an empty array when searchQuery is empty.
+  const filteredLyrics = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const terms = searchQuery.split(/\s+/).filter(Boolean);
+    const lowerCaseQuery = searchQuery.toLowerCase();
+    return lyrics.filter(item => {
       const fields = [item.title, item.content, ...(item.tags || [])];
-
+      // Check if the entire query or any individual term matches a field.
       const phraseMatch = fields.some(field =>
         field?.toLowerCase().includes(lowerCaseQuery),
       );
-
-      const termsMatch = terms.every(term =>
+      const individualMatch = terms.some(term =>
         fields.some(field => field?.toLowerCase().includes(term.toLowerCase())),
       );
-
-      const individualWordMatch = terms.some(term =>
-        fields.some(field => field?.toLowerCase().includes(term.toLowerCase())),
-      );
-
-      return phraseMatch || termsMatch || individualWordMatch;
+      return phraseMatch || individualMatch;
     });
-
-    setFilteredLyrics(results);
-  };
+  }, [lyrics, searchQuery]);
 
   const handleSuggestionClick = suggestion => {
     setSearchQuery(suggestion);
-    handleSearch(suggestion);
   };
 
   const handleItemPress = item => {
@@ -153,12 +142,15 @@ const Search = ({route}) => {
     loadLyrics();
   }, [loadLyrics]);
 
+  // Highlight matching search terms in the provided text.
   const highlightSearchTerms = (text, terms) => {
     if (!text) return null;
-
-    const parts = text.split(new RegExp(`(${terms.join('|')})`, 'gi'));
+    // Escape terms to safely build the regex pattern.
+    const escapedTerms = terms.map(term => escapeRegExp(term));
+    const regex = new RegExp(`(${escapedTerms.join('|')})`, 'gi');
+    const parts = text.split(regex);
     return parts.map((part, index) =>
-      terms.includes(part.toLowerCase()) ? (
+      regex.test(part) ? (
         <Text key={index} style={styles.highlight}>
           {part}
         </Text>
@@ -169,7 +161,7 @@ const Search = ({route}) => {
   };
 
   const renderItem = ({item}) => {
-    const terms = searchQuery.split(' ').filter(term => term.trim());
+    const terms = searchQuery.split(' ').filter(Boolean);
     const matchingLine =
       item.content
         .split('\n')
@@ -196,6 +188,15 @@ const Search = ({route}) => {
     );
   };
 
+  // Filter suggestions based on current search query.
+  const filteredSuggestions = useMemo(
+    () =>
+      suggestions.filter(
+        s => s && s.toLowerCase().includes(searchQuery.trim().toLowerCase()),
+      ),
+    [suggestions, searchQuery],
+  );
+
   return (
     <Provider>
       <Portal>
@@ -215,25 +216,19 @@ const Search = ({route}) => {
           value={searchQuery}
           style={styles.searchbar}
           inputStyle={styles.searchbarInput}
-          placeholderTextColor="#000" // Added placeholderTextColor
+          placeholderTextColor="#000"
         />
-        {!!searchQuery.trim() && suggestions.length > 0 && (
+        {!!searchQuery.trim() && filteredSuggestions.length > 0 && (
           <View style={styles.suggestionsContainer}>
             <FlatList
-              data={suggestions
-                .filter(s =>
-                  s.toLowerCase().includes(searchQuery.toLowerCase()),
-                )
-                .filter(s => s)} // Remove empty suggestions
-              renderItem={({item}) =>
-                item && (
-                  <List.Item
-                    title={item}
-                    onPress={() => handleSuggestionClick(item)}
-                    titleStyle={styles.suggestionItem}
-                  />
-                )
-              }
+              data={filteredSuggestions}
+              renderItem={({item}) => (
+                <List.Item
+                  title={item}
+                  onPress={() => handleSuggestionClick(item)}
+                  titleStyle={styles.suggestionItem}
+                />
+              )}
               keyExtractor={(item, index) => index.toString()}
               style={styles.suggestionsList}
             />
@@ -266,8 +261,8 @@ const styles = StyleSheet.create({
   searchbar: {
     marginVertical: 15,
     borderRadius: 25,
-    elevation: 3, // Shadow for Android
-    shadowColor: '#000', // Shadow for iOS
+    elevation: 3,
+    shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 2,
@@ -278,7 +273,7 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   suggestionsContainer: {
-    maxHeight: 150, // Limit the height of the suggestion box
+    maxHeight: 150,
     marginTop: 5,
     backgroundColor: '#fff',
     borderRadius: 10,
@@ -307,8 +302,8 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     borderRadius: 10,
     backgroundColor: '#ffffff',
-    elevation: 1, // Shadow for Android
-    shadowColor: '#000', // Shadow for iOS
+    elevation: 1,
+    shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 6,
@@ -327,7 +322,7 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     textAlign: 'center',
-    textAlignVertical: 'center', // For Android vertical alignment
+    textAlignVertical: 'center',
     marginRight: 12,
   },
   detailsContainer: {
@@ -346,7 +341,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   highlight: {
-    backgroundColor: 'rgba(255, 235, 59, 0.4)', // Yellow highlight
+    backgroundColor: 'rgba(255, 235, 59, 0.4)',
     borderRadius: 3,
   },
   modalContainer: {
