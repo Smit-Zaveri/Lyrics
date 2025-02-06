@@ -27,13 +27,8 @@ const List = ({route}) => {
   const [tags, setTags] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [filteredLyrics, setFilteredLyrics] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [isFetchingMore, setIsFetchingMore] = useState(false);
-  const [lastFetchTime, setLastFetchTime] = useState(0);
 
-  const itemsPerPage = 10;
   const themeColors = isDarkMode ? colors.dark : colors.light;
 
   useEffect(() => {
@@ -55,19 +50,13 @@ const List = ({route}) => {
     );
   };
 
-  const loadData = async (newPage = 1) => {
-    if (newPage === 1) {
-      setIsLoading(true);
-      setLyrics([]);
-    } else {
-      setIsFetchingMore(true);
-    }
-
+  const loadData = async () => {
     try {
-      // Ensure data is not null by providing default empty arrays
-      const fetchedDataTags = (await getFromAsyncStorage(Tags)) || [];
-      const fetchedDataLyrics =
-        (await getFromAsyncStorage(collectionName)) || [];
+      setIsLoading(true);
+      setRefreshing(true);
+
+      const fetchedDataTags = await getFromAsyncStorage(Tags);
+      const fetchedDataLyrics = await getFromAsyncStorage(collectionName);
 
       const tagsArray = Array.isArray(fetchedDataTags) ? fetchedDataTags : [];
       const sortedTags = [...tagsArray].sort(
@@ -77,11 +66,7 @@ const List = ({route}) => {
       const allLyrics = Array.isArray(fetchedDataLyrics)
         ? fetchedDataLyrics
         : [];
-      const startIdx = (newPage - 1) * itemsPerPage;
-      const endIdx = newPage * itemsPerPage;
-      const paginatedLyrics = allLyrics.slice(startIdx, endIdx);
-
-      const hasValidOrder = paginatedLyrics.every(
+      const hasValidOrder = allLyrics.every(
         (item, index, arr) =>
           item.order !== undefined &&
           item.order !== null &&
@@ -90,37 +75,29 @@ const List = ({route}) => {
       );
 
       const lyricsWithNumbering = hasValidOrder
-        ? paginatedLyrics
+        ? allLyrics
             .sort((a, b) => a.order - b.order)
             .map(item => ({...item, numbering: item.order}))
-        : paginatedLyrics.map((item, index) => ({
+        : allLyrics.map((item, index) => ({
             ...item,
-            numbering: startIdx + index + 1,
+            numbering: index + 1,
           }));
 
-      setLyrics(prevLyrics =>
-        newPage === 1
-          ? lyricsWithNumbering
-          : [...prevLyrics, ...lyricsWithNumbering],
-      );
+      setLyrics(lyricsWithNumbering);
       setTags(sortedTags);
-      setPage(newPage);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
-      setRefreshing(false);
       setIsLoading(false);
-      setIsFetchingMore(false);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => {
     loadData();
-  }, [Tags, collectionName]);
+  }, [Tags, collectionName, getFromAsyncStorage]);
 
-  useEffect(() => {
-    setFilteredLyrics(filterAndSortLyrics(selectedTags, lyrics));
-  }, [selectedTags, lyrics]);
+  const filteredLyrics = filterAndSortLyrics(selectedTags, lyrics);
 
   useEffect(() => {
     navigation.setOptions({
@@ -144,9 +121,8 @@ const List = ({route}) => {
         : [...selectedTags, tag];
 
       setSelectedTags(newSelectedTags);
-      setFilteredLyrics(filterAndSortLyrics(newSelectedTags, lyrics));
     },
-    [selectedTags, lyrics],
+    [selectedTags],
   );
 
   const handleItemPress = item => {
@@ -155,14 +131,6 @@ const List = ({route}) => {
       itemNumberingparas: item.numbering.toString(),
     });
     setHeader(true);
-  };
-
-  const fetchMoreData = () => {
-    const currentTime = Date.now();
-    if (!isFetchingMore && currentTime - lastFetchTime > 1000) {
-      loadData(page + 1);
-      setLastFetchTime(currentTime);
-    }
   };
 
   if (isLoading) {
@@ -202,7 +170,7 @@ const List = ({route}) => {
         <FlatList
           contentContainerStyle={{backgroundColor: themeColors.background}}
           data={filteredLyrics}
-          keyExtractor={item => item.id?.toString()} // Ensure keys are explicitly defined
+          keyExtractor={item => item.id?.toString()}
           renderItem={({item}) => (
             <ListItem
               item={item}
@@ -212,19 +180,7 @@ const List = ({route}) => {
           )}
           ListEmptyComponent={<EmptyList filteredLyrics={filteredLyrics} />}
           refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={() => loadData(1)}
-            />
-          }
-          onEndReached={fetchMoreData}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={
-            isFetchingMore ? (
-              <View style={{paddingVertical: 20}}>
-                <ActivityIndicator size="small" color={themeColors.primary} />
-              </View>
-            ) : null
+            <RefreshControl refreshing={refreshing} onRefresh={loadData} />
           }
         />
       </View>

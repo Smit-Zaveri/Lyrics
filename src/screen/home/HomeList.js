@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback, useMemo} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   FlatList,
   Text,
@@ -12,33 +12,39 @@ import {
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {colors} from '../../theme/Theme';
-import {getFromAsyncStorage} from '../../config/DataService';
+import {getFromAsyncStorage, refreshAllData} from '../../config/DataService';
 
 const HomeList = () => {
   const systemTheme = useColorScheme();
   const navigation = useNavigation();
 
-  const themeColors = useMemo(
-    () => (systemTheme === 'dark' ? colors.dark : colors.light),
-    [systemTheme],
-  );
+  const themeColors = systemTheme === 'dark' ? colors.dark : colors.light;
 
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
 
-  const loadData = useCallback(async () => {
-    setRefreshing(true);
+  const loadData = useCallback(async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
+    }
     try {
       const collections = await getFromAsyncStorage('collections');
-      setData(
-        collections.sort((a, b) => a.numbering - b.numbering), // Sort only if necessary
-      );
+      if (collections) {
+        setData(collections.sort((a, b) => a.numbering - b.numbering));
+      } else {
+        await refreshAllData();
+        const refreshedCollections = await getFromAsyncStorage('collections');
+        setData(refreshedCollections.sort((a, b) => a.numbering - b.numbering));
+      }
+      setError(null);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error loading data:', error);
+      setError(error.message);
     } finally {
       setIsLoading(false);
-      setRefreshing(false);
+      if (isRefresh) setRefreshing(false);
     }
   }, []);
 
@@ -57,38 +63,34 @@ const HomeList = () => {
     [navigation],
   );
 
-  const renderItem = useMemo(
-    () =>
-      ({item}) => (
-        <Pressable
-          onPress={handleItemPress(item)}
-          style={({pressed}) => [
-            styles.itemContainer,
-            {
-              backgroundColor: pressed
-                ? themeColors.surface
-                : themeColors.background,
-            },
-          ]}>
-          <View style={styles.leftContainer}>
-            <View style={styles.numberingContainer}>
-              <Text
-                style={[
-                  styles.numberingText,
-                  {backgroundColor: themeColors.primary, color: '#fff'},
-                ]}>
-                {item.numbering}
-              </Text>
-            </View>
-            <View style={styles.detailsContainer}>
-              <Text style={[styles.title, {color: themeColors.text}]}>
-                {item.displayName}
-              </Text>
-            </View>
-          </View>
-        </Pressable>
-      ),
-    [themeColors, handleItemPress],
+  const renderItem = ({item}) => (
+    <Pressable
+      onPress={handleItemPress(item)}
+      style={({pressed}) => [
+        styles.itemContainer,
+        {
+          backgroundColor: pressed
+            ? themeColors.surface
+            : themeColors.background,
+        },
+      ]}>
+      <View style={styles.leftContainer}>
+        <View style={styles.numberingContainer}>
+          <Text
+            style={[
+              styles.numberingText,
+              {backgroundColor: themeColors.primary, color: '#fff'},
+            ]}>
+            {item.numbering}
+          </Text>
+        </View>
+        <View style={styles.detailsContainer}>
+          <Text style={[styles.title, {color: themeColors.text}]}>
+            {item.displayName}
+          </Text>
+        </View>
+      </View>
+    </Pressable>
   );
 
   if (isLoading) {
@@ -96,6 +98,15 @@ const HomeList = () => {
       <View
         style={[styles.centered, {backgroundColor: themeColors.background}]}>
         <ActivityIndicator size="large" color={themeColors.primary} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View
+        style={[styles.centered, {backgroundColor: themeColors.background}]}>
+        <Text style={{color: themeColors.error}}>{error}</Text>
       </View>
     );
   }
@@ -109,7 +120,10 @@ const HomeList = () => {
         keyExtractor={item => item.id.toString()}
         renderItem={renderItem}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={loadData} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => loadData(true)}
+          />
         }
         getItemLayout={(data, index) => ({
           length: 70,
@@ -145,6 +159,7 @@ const styles = StyleSheet.create({
   },
   detailsContainer: {flex: 1},
   title: {fontWeight: 'bold', fontSize: 16},
+  error: {color: 'red'},
 });
 
 export default HomeList;

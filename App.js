@@ -9,7 +9,7 @@ import Profile from './src/screen/profile/Profile';
 import Category from './src/screen/category/Category';
 import {LogLevel, OneSignal} from 'react-native-onesignal';
 import {colors} from './src/theme/Theme';
-import {initializeGroups} from './src/config/DataService';
+// import {initializeGroups} from './src/config/DataService';
 
 // Create bottom tab navigator
 const Tab = createMaterialBottomTabNavigator();
@@ -40,8 +40,8 @@ const App = () => {
         handleNotificationClick,
       );
 
-      // Initialize groups (custom function)
-      initializeGroups();
+      // // Initialize groups (custom function)
+      // initializeGroups();
 
       // Cleanup event listener when component unmounts
       return () => {
