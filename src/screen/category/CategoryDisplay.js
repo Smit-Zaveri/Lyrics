@@ -4,8 +4,6 @@ import ItemGrid from '../../component/ItemGrid';
 import {getFromAsyncStorage} from '../../config/DataService';
 import {colors} from '../../theme/Theme'; // Assuming you have a theme file with colors
 
-const {height} = Dimensions.get('window');
-
 const CategoryDisplay = ({navigation}) => {
   const [tirthData, setTirthData] = useState([]);
   const [artistData, setArtistData] = useState([]);
