@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { View, Dimensions, useColorScheme } from 'react-native';
-import SingleRow from './SingleRow';
-import { getFromAsyncStorage } from '../../config/DataService';
-import { colors } from '../../theme/Theme'; // Assuming you have a theme file with colors
+import React, {useEffect, useState} from 'react';
+import {View, Dimensions, useColorScheme} from 'react-native';
+import ItemGrid from '../../component/ItemGrid';
+import {getFromAsyncStorage} from '../../config/DataService';
+import {colors} from '../../theme/Theme'; // Assuming you have a theme file with colors
 
-const { height } = Dimensions.get('window');
+const {height} = Dimensions.get('window');
 
-const CategoryDisplay = ({ navigation }) => {
+const CategoryDisplay = ({navigation}) => {
   const [tirthData, setTirthData] = useState([]);
   const [artistData, setArtistData] = useState([]);
   const [tirtankarData, setTirtankarData] = useState([]);
@@ -18,9 +18,9 @@ const CategoryDisplay = ({ navigation }) => {
 
   const loadData = async () => {
     try {
-      const fetchedDataTirths = await getFromAsyncStorage("tirth");
-      const fetchedDataArtist = await getFromAsyncStorage("artists");
-      const fetchedDataTirtankar = await getFromAsyncStorage("tirtankar");
+      const fetchedDataTirths = await getFromAsyncStorage('tirth');
+      const fetchedDataArtist = await getFromAsyncStorage('artists');
+      const fetchedDataTirtankar = await getFromAsyncStorage('tirtankar');
       setTirthData(fetchedDataTirths);
       setArtistData(fetchedDataArtist);
       setTirtankarData(fetchedDataTirtankar);
@@ -38,33 +38,27 @@ const CategoryDisplay = ({ navigation }) => {
   }, [systemTheme]);
 
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: 'space-between',
-        height,
-        backgroundColor: themeColors.background, // Use dynamic background color
-      }}>
-      <SingleRow
+    <View style={{flex: 1, backgroundColor: themeColors.background}}>
+      <ItemGrid
         navigation={navigation}
         redirect={'List'}
         title="Tirth"
         data={tirthData}
-        themeColors={themeColors} // Pass themeColors to SingleRow if necessary
+        layout="single"
       />
-      <SingleRow
+      <ItemGrid
         navigation={navigation}
         redirect={'List'}
         title="24 Tirthenkar"
         data={tirtankarData}
-        themeColors={themeColors} // Pass themeColors to SingleRow if necessary
+        layout="single"
       />
-      <SingleRow
+      <ItemGrid
         navigation={navigation}
-        title="Artist"
         redirect={'List'}
+        title="Artist"
         data={artistData}
-        themeColors={themeColors} // Pass themeColors to SingleRow if necessary
+        layout="single"
       />
     </View>
   );

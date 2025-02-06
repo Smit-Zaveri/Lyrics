@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useColorScheme } from 'react-native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React, {useState, useEffect} from 'react';
+import {useColorScheme} from 'react-native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import CategoryDisplay from './CategoryDisplay';
 import List from '../../component/List';
 import DetailPage from '../../component/DetailPage';
 import Search from '../../component/Search';
-import DoubleColum from './DoubleColum';
-import { colors } from '../../theme/Theme'; // Import theme colors
+import FullGridDisplay from './FullGridDisplay';
+import {colors} from '../../theme/Theme'; // Import theme colors
 
 const Stack = createNativeStackNavigator();
 
@@ -43,6 +43,15 @@ const Category = () => {
         }}
       />
       <Stack.Screen
+        name="FullGrid"
+        component={FullGridDisplay}
+        options={({route}) => ({
+          headerTitle: route.params.title,
+          headerStyle: {backgroundColor: themeColors.primary},
+          headerTintColor: '#fff',
+        })}
+      />
+      <Stack.Screen
         name="List"
         component={List}
         options={{
@@ -59,13 +68,6 @@ const Category = () => {
       <Stack.Screen
         name="Details"
         component={DetailPage}
-        options={{
-          ...getHeaderStyle(), // Apply dynamic header styles
-        }}
-      />
-      <Stack.Screen
-        name="Double"
-        component={DoubleColum}
         options={{
           ...getHeaderStyle(), // Apply dynamic header styles
         }}
