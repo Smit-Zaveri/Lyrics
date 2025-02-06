@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useRef} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {
   Text,
   View,
@@ -64,6 +64,39 @@ const ItemGrid = ({navigation, title, data, redirect, layout}) => {
     });
   };
 
+  const renderItem = ({item}) => (
+    <Animated.View style={[styles.itemContainer, {opacity: fadeAnim}]}>
+      <TouchableOpacity
+        onPress={() => handlePress(item)}
+        style={styles.touchableItem}>
+        {item.picture ? (
+          <Image
+            source={{uri: item.picture}}
+            style={[styles.imageStyle, {width: itemWidth, height: itemWidth}]}
+            resizeMode="cover"
+          />
+        ) : (
+          <View
+            style={[
+              styles.placeholderImage,
+              {
+                backgroundColor: themeColors.surface,
+                width: itemWidth,
+                height: itemWidth,
+              },
+            ]}>
+            <Text style={[styles.placeholderText, {color: themeColors.text}]}>
+              {item.name.charAt(0)}
+            </Text>
+          </View>
+        )}
+        <Text style={[styles.itemText, {color: themeColors.text}]}>
+          {item.displayName || item.name}
+        </Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+
   return (
     <Card
       containerStyle={[
@@ -90,42 +123,7 @@ const ItemGrid = ({navigation, title, data, redirect, layout}) => {
         showsHorizontalScrollIndicator={false}
         horizontal={isSingleLayout}
         data={sortedData}
-        renderItem={({item}) => (
-          <Animated.View style={[styles.itemContainer, {opacity: fadeAnim}]}>
-            <TouchableOpacity
-              onPress={() => handlePress(item)}
-              style={styles.touchableItem}>
-              {item.picture ? (
-                <Image
-                  source={{uri: item.picture}}
-                  style={[
-                    styles.imageStyle,
-                    {width: itemWidth, height: itemWidth},
-                  ]}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View
-                  style={[
-                    styles.placeholderImage,
-                    {
-                      backgroundColor: themeColors.surface,
-                      width: itemWidth,
-                      height: itemWidth,
-                    },
-                  ]}>
-                  <Text
-                    style={[styles.placeholderText, {color: themeColors.text}]}>
-                    {item.name.charAt(0)}
-                  </Text>
-                </View>
-              )}
-              <Text style={[styles.itemText, {color: themeColors.text}]}>
-                {item.displayName || item.name}
-              </Text>
-            </TouchableOpacity>
-          </Animated.View>
-        )}
+        renderItem={renderItem}
         keyExtractor={(item, index) => index.toString()}
         numColumns={numColumns}
         contentContainerStyle={
@@ -181,6 +179,9 @@ const styles = StyleSheet.create({
   },
   horizontalContent: {
     paddingHorizontal: 10,
+  },
+  gridContent: {
+    padding: 10,
   },
 });
 
