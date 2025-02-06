@@ -285,7 +285,7 @@ const DetailPage = ({route, navigation}) => {
         </ScrollView>
 
         {/* Text-to-Speech Controls */}
-        {song.tts && (
+        {song.newTts && (
           <View style={styles.audioControlsContainer}>
             <TouchableOpacity
               style={[
