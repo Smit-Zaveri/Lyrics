@@ -105,9 +105,7 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item, theme}) => {
           )
         }
         onRequestClose={hideMenu}>
-        <MenuItem
-          onPress={openReportPopup}
-          textStyle={{color: theme.menuItemText}}>
+        <MenuItem onPress={openReportPopup} textStyle={{color: theme.text}}>
           Report
         </MenuItem>
       </Menu>

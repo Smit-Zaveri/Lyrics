@@ -1,21 +1,21 @@
 export const colors = {
   light: {
-    primary: "#673BB7",        // Primary Purple
-    text: "#333333",           // Dark Gray for text
-    background: "#EDE7F6",     // Light Lavender for background
-    surface: "#FFFFFF",        // White for cards and surfaces
-    cardBackground: "#D1C4E9", // Light Purple for cards
-    link: '#5E35B1',           // Darker Purple for links
-    placeholder: '#BDBDBD',    // Medium Gray for placeholder text
+    primary: '#673BB7', // Primary Purple
+    text: '#333333', // Dark Gray for text
+    background: '#EDE7F6', // Light Lavender for background
+    surface: '#FFFFFF', // White for cards and surfaces
+    cardBackground: '#D1C4E9', // Light Purple for cards
+    link: '#5E35B1', // Darker Purple for links
+    placeholder: '#BDBDBD', // Medium Gray for placeholder text
   },
   dark: {
-    primary: "#673BB7",        // Primary Purple
-    text: "#333333",           // Dark Gray for text
-    background: "#EDE7F6",     // Light Lavender for background
-    surface: "#FFFFFF",        // White for cards and surfaces
-    cardBackground: "#D1C4E9", // Light Purple for cards
-    link: '#5E35B1',           // Darker Purple for links
-    placeholder: '#BDBDBD',    // Light Gray for placeholder text
+    primary: '#673BB7', // Primary Purple
+    text: '#333333', // Dark Gray for text
+    background: '#EDE7F6', // Light Lavender for background
+    surface: '#FFFFFF', // White for cards and surfaces
+    cardBackground: '#D1C4E9', // Light Purple for cards
+    link: '#5E35B1', // Darker Purple for links
+    placeholder: '#BDBDBD', // Light Gray for placeholder text
   },
 };
 

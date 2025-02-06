@@ -1,7 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Animated, StyleSheet, Image, useColorScheme } from 'react-native';
-import { colors } from '../theme/Theme';
-
+import React, {useState, useEffect, useRef} from 'react';
+import {
+  View,
+  Text,
+  Animated,
+  StyleSheet,
+  Image,
+  useColorScheme,
+} from 'react-native';
+import {colors} from '../theme/Theme';
 const SplashScreen = () => {
   const [alignSecond, setAlignSecond] = useState(false);
   const fadeInAnimation = useRef(new Animated.Value(0)).current;
@@ -9,9 +15,10 @@ const SplashScreen = () => {
   const systemTheme = useColorScheme();
 
   // Determine logo source based on the current theme
-  const logoSource = systemTheme === 'dark' 
-    ? require('../assets/logo_black.png') 
-    : require('../assets/logo_black.png');
+  const logoSource =
+    systemTheme === 'dark'
+      ? require('../assets/logo_black.png')
+      : require('../assets/logo_black.png');
 
   // Get active colors based on the current theme
   const activeColors = colors[systemTheme];
@@ -30,7 +37,7 @@ const SplashScreen = () => {
       toValue: 1,
       duration: 1000,
       useNativeDriver: true,
-    }).start(({ finished }) => {
+    }).start(({finished}) => {
       if (finished) {
         setTimeout(() => {
           fadeOut();
@@ -48,14 +55,15 @@ const SplashScreen = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: activeColors.background }]}>
+    <View
+      style={[styles.container, {backgroundColor: activeColors.background}]}>
       <Animated.Image
         source={logoSource}
-        style={[styles.logo, { opacity: fadeInAnimation }]}
+        style={[styles.logo, {opacity: fadeInAnimation}]}
       />
       {alignSecond && (
-        <Animated.View style={{ opacity: fadeOutAnimation }}>
-          <Text style={[styles.text, { color: activeColors.text }]}>
+        <Animated.View style={{opacity: fadeOutAnimation}}>
+          <Text style={[styles.text, {color: activeColors.text}]}>
             Jain Dhun
           </Text>
         </Animated.View>

@@ -7,8 +7,8 @@ import SplashScreen from './src/component/SplashScreen';
 import HomeStack from './src/screen/home/HomeStack';
 import Profile from './src/screen/profile/Profile';
 import Category from './src/screen/category/Category';
-import {colors} from './src/theme/Theme';
 import {LogLevel, OneSignal} from 'react-native-onesignal';
+import {colors} from './src/theme/Theme';
 import {initializeGroups} from './src/config/DataService';
 
 // Create bottom tab navigator
@@ -35,7 +35,10 @@ const App = () => {
       };
 
       // Add event listener for notification clicks
-      OneSignal.Notifications.addEventListener('click', handleNotificationClick);
+      OneSignal.Notifications.addEventListener(
+        'click',
+        handleNotificationClick,
+      );
 
       // Initialize groups (custom function)
       initializeGroups();

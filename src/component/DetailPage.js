@@ -243,7 +243,7 @@ const DetailPage = ({route, navigation}) => {
             marginBottom: song.artist ? 10 : 0,
             color: themeColors.text,
           }}>
-          {song.artist ? 'Artist :' : null} {song.artist}
+          {song.artist ? 'રચનાર :' : null} {song.artist}
         </Text>
         <ScrollView
           showsVerticalScrollIndicator={false}
