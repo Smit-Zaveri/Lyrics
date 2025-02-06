@@ -15,12 +15,15 @@ import {
   Easing,
   useColorScheme,
   PanResponder,
+  StyleSheet,
+  TouchableOpacity,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {FAB} from '@rneui/themed';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import CustomMaterialMenu from './CustomMaterialMenu';
 import {colors} from '../theme/Theme';
+import Tts from 'react-native-tts';
 
 const DetailPage = ({route, navigation}) => {
   const {itemNumberingparas, Lyrics} = route.params;
@@ -33,6 +36,13 @@ const DetailPage = ({route, navigation}) => {
   const [slideAnim] = useState(new Animated.Value(0));
   const [opacityAnim] = useState(new Animated.Value(1));
   const [scaleAnim] = useState(new Animated.Value(1));
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  useEffect(() => {
+    Tts.setDefaultLanguage('gu-IN'); // Gujarati (India)
+    Tts.setDefaultRate(0.5);
+    Tts.setDefaultPitch(1.0);
+  }, []);
 
   const setSongByNumbering = useCallback(
     numbering => {
@@ -46,7 +56,7 @@ const DetailPage = ({route, navigation}) => {
 
   const headerOptions = useMemo(
     () => ({
-      title: `${song?.numbering}.  ${song?.title}`,
+      title: `${song?.numbering}. ${song?.title}`,
       headerRight: () => (
         <CustomMaterialMenu
           menuText="Menu"
@@ -151,20 +161,21 @@ const DetailPage = ({route, navigation}) => {
   }, [song]);
 
   const [fabAnim] = useState(new Animated.Value(1));
+
   const handleFABClick = async () => {
     setIsSaved(prevSaved => !prevSaved);
 
     Animated.sequence([
       Animated.timing(fabAnim, {
-        toValue: 0.7, // Slightly smaller scale
-        duration: 150, // Increased duration
-        easing: Easing.inOut(Easing.ease), // Smoother easing
+        toValue: 0.7,
+        duration: 150,
+        easing: Easing.inOut(Easing.ease),
         useNativeDriver: true,
       }),
       Animated.timing(fabAnim, {
         toValue: 1,
-        duration: 150, // Increased duration
-        easing: Easing.inOut(Easing.ease), // Smoother easing
+        duration: 150,
+        easing: Easing.inOut(Easing.ease),
         useNativeDriver: true,
       }),
     ]).start();
@@ -196,6 +207,24 @@ const DetailPage = ({route, navigation}) => {
 
   const openYouTubeApp = () => {
     Linking.openURL(song?.youtube);
+  };
+
+  const speakText = () => {
+    if (isSpeaking) {
+      Tts.stop();
+      setIsSpeaking(false);
+    } else {
+      if (song?.content) {
+        Tts.speak(song.content, {
+          androidParams: {
+            KEY_PARAM_PAN: 0,
+            KEY_PARAM_VOLUME: 1,
+            KEY_PARAM_STREAM: 'STREAM_MUSIC',
+          },
+        });
+        setIsSpeaking(true);
+      }
+    }
   };
 
   if (!song) {
@@ -254,7 +283,29 @@ const DetailPage = ({route, navigation}) => {
             {song.content}
           </Text>
         </ScrollView>
+
+        {/* Text-to-Speech Controls */}
+        {song.tts && (
+          <View style={styles.audioControlsContainer}>
+            <TouchableOpacity
+              style={[
+                styles.audioButton,
+                {backgroundColor: themeColors.primary},
+              ]}
+              onPress={speakText}>
+              <MaterialCommunityIcons
+                name={isSpeaking ? 'stop' : 'volume-high'}
+                color="#fff"
+                size={25}
+              />
+              <Text style={styles.audioButtonText}>
+                {isSpeaking ? 'Stop' : 'Listen'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </Animated.View>
+
       {song.youtube && (
         <FAB
           icon={() => (
@@ -282,5 +333,23 @@ const DetailPage = ({route, navigation}) => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  audioControlsContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  audioButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 25,
+  },
+  audioButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    marginLeft: 10,
+  },
+});
 
 export default DetailPage;
