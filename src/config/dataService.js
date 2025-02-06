@@ -8,24 +8,27 @@ let all = [];
 
 const fetchCollectionGroups = async () => {
   try {
-    const doc = await firestore()
+    const docSnap = await firestore()
       .collection('collectionGroups')
       .doc('groups')
       .get();
-    if (doc.exists) {
-      const data = doc.data();
+
+    if (docSnap.exists) {
+      const data = docSnap.data();
       collectionGroups = data.groupNames || [];
       all = data.allNames || [];
-      // Store groups in AsyncStorage
+
       await AsyncStorage.setItem(
         'collectionGroups',
         JSON.stringify(collectionGroups),
       );
       await AsyncStorage.setItem('allGroups', JSON.stringify(all));
+
       return {collectionGroups, all};
+    } else {
+      console.error('Document not found in Firestore');
+      return {collectionGroups: [], all: []};
     }
-    console.error('Document not found in Firestore');
-    return {collectionGroups: [], all: []};
   } catch (error) {
     console.error('Error fetching collection groups:', error);
     throw error;
@@ -52,18 +55,20 @@ const initializeGroups = async () => {
 
 const fetchAndStoreData = async collectionName => {
   try {
-    const snapshot = await firestore().collection(collectionName).get();
-    const data = snapshot.docs.map(doc => ({
+    const querySnapshot = await firestore().collection(collectionName).get();
+    const data = querySnapshot.docs.map(doc => ({
       ...doc.data(),
       id: doc.id,
       collectionName,
     }));
+
     if (collectionName !== 'saved') {
       await AsyncStorage.setItem(
         `${DATA_KEY_PREFIX}${collectionName}`,
         JSON.stringify(data),
       );
     }
+
     return data;
   } catch (error) {
     console.error(`Error fetching ${collectionName}:`, error);
