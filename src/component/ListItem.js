@@ -39,10 +39,16 @@ const ListItem = ({item, themeColors, onItemPress}) => {
           </Text>
         </View>
         <View style={styles.detailsContainer}>
-          <Text style={[styles.title, {color: themeColors.text}]}>{title}</Text>
+          <Text
+            style={[styles.title, {color: themeColors.text}]}
+            numberOfLines={1}
+            ellipsizeMode="tail">
+            {title}
+          </Text>
           <Text
             style={[styles.content, {color: themeColors.text}]}
-            numberOfLines={1}>
+            numberOfLines={1}
+            ellipsizeMode="tail">
             {content.split('\n')[0]}
           </Text>
         </View>
@@ -89,6 +95,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 20,
+    height: 40,
   },
   detailsContainer: {
     flex: 1,
@@ -96,6 +103,7 @@ const styles = StyleSheet.create({
   title: {
     fontWeight: 'bold',
     fontSize: 16,
+    marginBottom: 4,
   },
   content: {
     fontSize: 14,
