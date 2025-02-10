@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useMemo, useCallback} from 'react';
 import {
   Text,
   View,
@@ -11,9 +11,23 @@ import {
   useColorScheme,
 } from 'react-native';
 import {Card} from 'react-native-elements';
+import PropTypes from 'prop-types';
 import {colors} from '../theme/Theme';
 
 const {width} = Dimensions.get('window');
+
+const getTagType = title => {
+  switch (title) {
+    case 'Tags':
+      return 'tirtankar';
+    case 'Artists':
+      return 'artists';
+    case '24 Tirthenkar':
+      return 'collections';
+    default:
+      return 'tags';
+  }
+};
 
 const ItemGrid = ({navigation, title, data, redirect, layout}) => {
   const systemTheme = useColorScheme();
@@ -22,12 +36,14 @@ const ItemGrid = ({navigation, title, data, redirect, layout}) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const isSingleLayout = layout === 'single';
 
-  // Sorting data
-  const sortedData = data.sort((a, b) => a.numbering - b.numbering);
+  // Memoize sorted data
+  const sortedData = useMemo(
+    () => [...data].sort((a, b) => a.numbering - b.numbering),
+    [data],
+  );
 
-  // Define item width dynamically
   const numColumns = isSingleLayout ? 1 : 3;
-  const itemWidth = (width - (isSingleLayout ? 0 : 35)) / 3; // Adjust based on layout
+  const itemWidth = (width - (isSingleLayout ? 0 : 35)) / 3;
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -35,66 +51,61 @@ const ItemGrid = ({navigation, title, data, redirect, layout}) => {
       duration: 500,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [fadeAnim]);
 
-  const handlePress = item => {
-    navigation.navigate(redirect, {
-      collectionName: item.name,
-      Tags: (() => {
-        switch (title) {
-          case 'Tags':
-            return 'tirtankar';
-          case 'Artists':
-            return 'artists';
-          case '24 Tirthenkar':
-            return 'collections';
-          default:
-            return 'tags';
-        }
-      })(),
-      title: item.displayName || item.name,
-    });
-  };
+  const handlePress = useCallback(
+    item => {
+      navigation.navigate(redirect, {
+        collectionName: item.name,
+        Tags: getTagType(title),
+        title: item.displayName || item.name,
+      });
+    },
+    [navigation, redirect, title],
+  );
 
-  const handleMorePress = () => {
+  const handleMorePress = useCallback(() => {
     navigation.navigate('FullGrid', {
       data: sortedData,
       title,
       redirect,
     });
-  };
+  }, [navigation, sortedData, title, redirect]);
 
-  const renderItem = ({item}) => (
-    <Animated.View style={[styles.itemContainer, {opacity: fadeAnim}]}>
-      <TouchableOpacity
-        onPress={() => handlePress(item)}
-        style={styles.touchableItem}>
-        {item.picture ? (
-          <Image
-            source={{uri: item.picture}}
-            style={[styles.imageStyle, {width: itemWidth, height: itemWidth}]}
-            resizeMode="cover"
-          />
-        ) : (
-          <View
-            style={[
-              styles.placeholderImage,
-              {
-                backgroundColor: themeColors.surface,
-                width: itemWidth,
-                height: itemWidth,
-              },
-            ]}>
-            <Text style={[styles.placeholderText, {color: themeColors.text}]}>
-              {item.name.charAt(0)}
-            </Text>
-          </View>
-        )}
-        <Text style={[styles.itemText, {color: themeColors.text}]}>
-          {item.displayName || item.name}
-        </Text>
-      </TouchableOpacity>
-    </Animated.View>
+  const renderItem = useCallback(
+    ({item}) => (
+      <Animated.View style={[styles.itemContainer, {opacity: fadeAnim}]}>
+        <TouchableOpacity
+          onPress={() => handlePress(item)}
+          style={styles.touchableItem}>
+          {item.picture ? (
+            <Image
+              source={{uri: item.picture}}
+              style={[styles.imageStyle, {width: itemWidth, height: itemWidth}]}
+              resizeMode="cover"
+            />
+          ) : (
+            <View
+              style={[
+                styles.placeholderImage,
+                {
+                  backgroundColor: themeColors.surface,
+                  width: itemWidth,
+                  height: itemWidth,
+                },
+              ]}>
+              <Text style={[styles.placeholderText, {color: themeColors.text}]}>
+                {item.name.charAt(0)}
+              </Text>
+            </View>
+          )}
+          <Text style={[styles.itemText, {color: themeColors.text}]}>
+            {item.displayName || item.name}
+          </Text>
+        </TouchableOpacity>
+      </Animated.View>
+    ),
+    [fadeAnim, handlePress, itemWidth, themeColors],
   );
 
   return (
@@ -185,4 +196,19 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ItemGrid;
+ItemGrid.propTypes = {
+  navigation: PropTypes.object.isRequired,
+  title: PropTypes.string.isRequired,
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string.isRequired,
+      displayName: PropTypes.string,
+      picture: PropTypes.string,
+      numbering: PropTypes.number.isRequired,
+    }),
+  ).isRequired,
+  redirect: PropTypes.string.isRequired,
+  layout: PropTypes.oneOf(['single', 'grid']).isRequired,
+};
+
+export default React.memo(ItemGrid);

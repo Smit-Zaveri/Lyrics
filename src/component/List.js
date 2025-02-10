@@ -28,9 +28,9 @@ const List = ({route}) => {
   const [selectedTags, setSelectedTags] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [numberedFilteredLyrics, setNumberedFilteredLyrics] = useState([]);
 
   const themeColors = isDarkMode ? colors.dark : colors.light;
-
   useEffect(() => {
     setIsDarkMode(systemTheme === 'dark');
   }, [systemTheme]);
@@ -126,9 +126,15 @@ const List = ({route}) => {
   );
 
   const handleItemPress = item => {
+    // Create a new array with updated numbering for filtered items
+    const numberedFilteredLyrics = filteredLyrics.map((lyric, index) => ({
+      ...lyric,
+      numbering: index + 1,
+    }));
+
     navigation.navigate('Details', {
-      Lyrics: lyrics,
-      itemNumberingparas: item.numbering.toString(),
+      Lyrics: numberedFilteredLyrics,
+      itemNumberingparas: (numberedFilteredLyrics.findIndex(lyric => lyric.id === item.id) + 1).toString(),
     });
     setHeader(true);
   };
@@ -168,7 +174,10 @@ const List = ({route}) => {
 
         {/* Lyrics List */}
         <FlatList
-          contentContainerStyle={{backgroundColor: themeColors.background}}
+          contentContainerStyle={{
+            backgroundColor: themeColors.background,
+            paddingBottom: 100
+          }}
           data={filteredLyrics}
           keyExtractor={item => item.id?.toString()}
           renderItem={({item}) => (
