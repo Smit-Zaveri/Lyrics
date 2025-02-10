@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import firestore from '@react-native-firebase/firestore';
+import { collection, getDocs, doc, getDoc } from '@firebase/firestore';
+import { db } from '../firebase/config';
 import NetInfo from '@react-native-community/netinfo';
 
 const DATA_KEY_PREFIX = 'cachedData_';
@@ -8,12 +9,10 @@ let all = [];
 
 const fetchCollectionGroups = async () => {
   try {
-    const docSnap = await firestore()
-      .collection('collectionGroups')
-      .doc('groups')
-      .get();
+    const docRef = doc(db, 'collectionGroups', 'groups');
+    const docSnap = await getDoc(docRef);
 
-    if (docSnap.exists) {
+    if (docSnap.exists()) {
       const data = docSnap.data();
       collectionGroups = data.groupNames || [];
       all = data.allNames || [];
@@ -55,7 +54,8 @@ const initializeGroups = async () => {
 
 const fetchAndStoreData = async collectionName => {
   try {
-    const querySnapshot = await firestore().collection(collectionName).get();
+    const collectionRef = collection(db, collectionName);
+    const querySnapshot = await getDocs(collectionRef);
     const data = querySnapshot.docs.map(doc => ({
       ...doc.data(),
       id: doc.id,

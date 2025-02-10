@@ -1,39 +1,20 @@
-import { initializeApp } from 'firebase/app';
-import { 
-  getFirestore, 
-  collection, 
-  getDocs,
-  doc,
-  getDoc 
-} from 'firebase/firestore';
+import { initializeApp, getApps, getApp } from '@firebase/app';
+import { getFirestore } from '@firebase/firestore';
 
-// Your firebase config object
 const firebaseConfig = {
-  // ...your existing config
+  apiKey: "AIzaSyDFcLgJhkdaPY1ra5LIrqRERJJ3-WIyBTk",
+  authDomain: "jain-stavan-86cb6.firebaseapp.com",
+  databaseURL: "https://jain-stavan-86cb6-default-rtdb.firebaseio.com",
+  projectId: "jain-stavan-86cb6",
+  storageBucket: "jain-stavan-86cb6",
+  messagingSenderId: "285813640279",
+  appId: "1:285813640279:android:391d7080512f1ed79b6712"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+// Initialize Firebase only if it hasn't been initialized
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Example of how to fetch documents
-export const fetchDocuments = async (collectionName) => {
-  const querySnapshot = await getDocs(collection(db, collectionName));
-  return querySnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  }));
-};
+// Initialize Firestore
+export const db = getFirestore(app);
 
-// Example of how to get a single document
-export const getDocument = async (collectionName, docId) => {
-  const docRef = doc(db, collectionName, docId);
-  const docSnap = await getDoc(docRef);
-  
-  if (docSnap.exists()) {
-    return { id: docSnap.id, ...docSnap.data() };
-  }
-  return null;
-};
-
-export { db };
+export default app;
