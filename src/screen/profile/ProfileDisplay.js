@@ -45,6 +45,14 @@ Join the community of music lovers and elevate your listening experience today! 
 
   return (
     <View style={[styles.container, {backgroundColor: themeColors.background}]}>
+      {/* Add Settings Button */}
+      <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
+        <View style={styles.item}>
+          <Icon name="settings" color={themeColors.primary} size={25} />
+          <Text style={[styles.text, {color: themeColors.text}]}>Settings</Text>
+        </View>
+      </TouchableOpacity>
+
       {/* Saved Lyrics Button */}
       <TouchableOpacity onPress={() => navigation.navigate('SavedLyrics')}>
         <View style={styles.item}>

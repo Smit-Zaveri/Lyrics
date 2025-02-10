@@ -8,6 +8,7 @@ import Suggestion from './Suggestion';
 import { colors } from '../../theme/Theme';
 import Search from '../../component/Search';
 import List from '../../component/List';
+import Settings from './Settings';
 
 const Stack = createNativeStackNavigator();
 
@@ -100,6 +101,21 @@ const Profile = () => {
         name="Search"
         component={Search}
         options={{
+          headerStyle: {
+            backgroundColor: themeColors.primary,
+          },
+          headerTintColor: '#fff',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+            fontSize: 20,
+          },
+        }}
+      />
+      <Stack.Screen
+        name="Settings"
+        component={Settings}
+        options={{
+          headerTitle: 'Settings',
           headerStyle: {
             backgroundColor: themeColors.primary,
           },

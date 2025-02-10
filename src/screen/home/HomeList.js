@@ -56,7 +56,7 @@ const HomeList = () => {
     item => () => {
       navigation.navigate('List', {
         collectionName: item.name,
-        Tags: 'tirtankar',
+        Tags: 'tags',
         title: item.displayName || item.name,
       });
     },
