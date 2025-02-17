@@ -102,10 +102,11 @@ const getFromAsyncStorage = async collectionName => {
 
     const allData = await Promise.all(all.map(getFromAsyncStorage));
     return allData.flat().filter(item => {
-      const tags = item.tags || [];
+      if (!item) return false;
+      const tags = Array.isArray(item.tags) ? item.tags : [];
       const artist = item.artist || '';
       return (
-        tags.some(tag => tag.toLowerCase() === collectionName.toLowerCase()) ||
+        tags.some(tag => tag?.toLowerCase() === collectionName.toLowerCase()) ||
         artist.toLowerCase().includes(collectionName.toLowerCase())
       );
     });

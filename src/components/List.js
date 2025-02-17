@@ -38,9 +38,12 @@ const List = ({ route }) => {
       ),
     );
 
-    return filteredItems.sort(
-      (a, b) => Number(a.numbering) - Number(b.numbering),
-    );
+    // Preserve original numbering while sorting by filtered order
+    return filteredItems.map((item, index) => ({
+      ...item,
+      displayNumbering: item.numbering, // Keep original numbering for display
+      filteredIndex: index + 1, // Add filtered index for navigation
+    }));
   };
 
   const loadData = async () => {
@@ -119,15 +122,11 @@ const List = ({ route }) => {
   );
 
   const handleItemPress = item => {
-    // Create a new array with updated numbering for filtered items
-    const numberedFilteredLyrics = filteredLyrics.map((lyric, index) => ({
-      ...lyric,
-      numbering: index + 1,
-    }));
-
+    const filteredLyrics = filterAndSortLyrics(selectedTags, lyrics);
+    // Pass the entire filtered array and current item's filtered index
     navigation.navigate('Details', {
-      Lyrics: numberedFilteredLyrics,
-      itemNumberingparas: (numberedFilteredLyrics.findIndex(lyric => lyric.id === item.id) + 1).toString(),
+      Lyrics: filteredLyrics,
+      itemNumberingparas: item.filteredIndex,  // Remove toString() as we'll handle it in DetailPage
     });
     setHeader(true);
   };
@@ -171,11 +170,11 @@ const List = ({ route }) => {
             backgroundColor: themeColors.background,
             paddingBottom: 100
           }}
-          data={filteredLyrics}
+          data={filterAndSortLyrics(selectedTags, lyrics)}
           keyExtractor={item => item.id?.toString()}
           renderItem={({item}) => (
             <ListItem
-              item={item}
+              item={{...item, numbering: item.displayNumbering}} // Use original numbering for display
               themeColors={themeColors}
               onItemPress={handleItemPress}
             />

@@ -106,7 +106,7 @@ const DetailPage = ({ route, navigation }) => {
     numbering => {
       try {
         const foundSong = Lyrics.find(
-          song => song.numbering === parseInt(numbering, 10)
+          song => song.filteredIndex === numbering
         );
         return foundSong;
       } catch (error) {
@@ -119,7 +119,7 @@ const DetailPage = ({ route, navigation }) => {
 
   const headerOptions = useMemo(
     () => ({
-      title: `${song?.numbering}. ${song?.title}`,
+      title: `${song?.displayNumbering}. ${song?.title}`,  // Use displayNumbering instead of numbering
       headerRight: () => (
         <CustomMaterialMenu
           menuText="Menu"
@@ -193,16 +193,14 @@ const DetailPage = ({ route, navigation }) => {
         }),
       ]).start(() => {
         setItemNumbering(prev => {
-          const currentNumber = parseInt(prev, 10);
-          const sortedNumberings = Lyrics.map(song => song.numbering).sort((a, b) => a - b);
-          const currentIndex = sortedNumberings.indexOf(currentNumber);
+          const currentIndex = parseInt(prev, 10);
           let newIndex = currentIndex + toValue;
-          if (newIndex < 0) {
-            newIndex = sortedNumberings.length - 1;
-          } else if (newIndex >= sortedNumberings.length) {
-            newIndex = 0;
+          if (newIndex < 1) {
+            newIndex = Lyrics.length;
+          } else if (newIndex > Lyrics.length) {
+            newIndex = 1;
           }
-          return sortedNumberings[newIndex].toString();
+          return newIndex;
         });
         slideAnim.setValue(0);
         opacityAnim.setValue(1);

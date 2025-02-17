@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import {Card} from 'react-native-elements';
 import PropTypes from 'prop-types';
@@ -32,15 +33,23 @@ const ItemGrid = ({navigation, title, data, redirect, layout}) => {
   const { themeColors } = useContext(ThemeContext);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const isSingleLayout = layout === 'single';
+  const windowDimensions = useWindowDimensions();
 
-  // Memoize sorted data
+  const getNumColumns = () => {
+    if (isSingleLayout) return 1;
+    if (windowDimensions.width < 400) return 2;
+    return 3;
+  };
+
+  const numColumns = getNumColumns();
+  const spacing = 16;
+  const totalPadding = spacing * (numColumns + 1);
+  const itemWidth = (windowDimensions.width - totalPadding) / 3;
+
   const sortedData = useMemo(
     () => [...data].sort((a, b) => a.numbering - b.numbering),
     [data],
   );
-
-  const numColumns = isSingleLayout ? 1 : 3;
-  const itemWidth = (width - (isSingleLayout ? 0 : 35)) / 3;
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -71,89 +80,93 @@ const ItemGrid = ({navigation, title, data, redirect, layout}) => {
 
   const renderItem = useCallback(
     ({item}) => (
-      <Animated.View style={[styles.itemContainer, {opacity: fadeAnim}]}>
-        <TouchableOpacity
-          onPress={() => handlePress(item)}
-          style={styles.touchableItem}>
-          {item.picture ? (
-            <Image
-              source={{uri: item.picture}}
-              style={[styles.imageStyle, {width: itemWidth, height: itemWidth}]}
-              resizeMode="cover"
-            />
-          ) : (
-            <View
-              style={[
-                styles.placeholderImage,
-                {
-                  backgroundColor: themeColors.surface,
-                  width: itemWidth,
-                  height: itemWidth,
-                },
-              ]}>
-              <Text style={[styles.placeholderText, {color: themeColors.text}]}>
-                {item.name.charAt(0)}
-              </Text>
-            </View>
-          )}
-          <Text style={[styles.itemText, {color: themeColors.text}]}>
-            {item.displayName || item.name}
-          </Text>
-        </TouchableOpacity>
-      </Animated.View>
+      <View style={styles.itemWrapper}>
+        <Animated.View style={[styles.itemContainer, {opacity: fadeAnim}]}>
+          <TouchableOpacity onPress={() => handlePress(item)}>
+            {item.picture ? (
+              <Image
+                source={{uri: item.picture}}
+                style={[styles.imageStyle, {width: itemWidth, height: itemWidth}]}
+                resizeMode="cover"
+              />
+            ) : (
+              <View
+                style={[
+                  styles.placeholderImage,
+                  {
+                    backgroundColor: themeColors.surface,
+                    width: itemWidth,
+                    height: itemWidth,
+                  },
+                ]}>
+                <Text style={[styles.placeholderText, {color: themeColors.text}]}>
+                  {item.name.charAt(0)}
+                </Text>
+              </View>
+            )}
+            <Text 
+              style={[styles.itemText, {color: themeColors.text}]}
+              numberOfLines={2}
+              ellipsizeMode="tail"
+            >
+              {item.displayName || item.name}
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
     ),
     [fadeAnim, handlePress, itemWidth, themeColors],
   );
 
   return (
-    <Card
-      containerStyle={[
-        styles.cardStyle,
-        {backgroundColor: themeColors.background},
-      ]}>
-      <View style={styles.cardHeadingStyle}>
-        {isSingleLayout && (
-          <Text
-            style={[styles.cardHeadingTextStyle, {color: themeColors.text}]}>
+    <View style={styles.container}>
+      {isSingleLayout && (
+        <View style={styles.cardHeadingStyle}>
+          <Text style={[styles.cardHeadingTextStyle, {color: themeColors.text}]}>
             {title}
           </Text>
-        )}
-        {isSingleLayout && (
           <TouchableOpacity onPress={handleMorePress}>
             <Text style={[styles.moreLink, {color: themeColors.link}]}>
               MORE
             </Text>
           </TouchableOpacity>
-        )}
-      </View>
+        </View>
+      )}
       <FlatList
         style={styles.flatListStyle}
+        contentContainerStyle={isSingleLayout ? styles.horizontalContent : styles.gridContent}
         showsHorizontalScrollIndicator={false}
         horizontal={isSingleLayout}
+        numColumns={isSingleLayout ? 1 : numColumns}
         data={sortedData}
         renderItem={renderItem}
         keyExtractor={(item, index) => index.toString()}
-        numColumns={numColumns}
-        contentContainerStyle={
-          isSingleLayout ? styles.horizontalContent : styles.gridContent
-        }
+        key={numColumns}
       />
-    </Card>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  cardStyle: {
-    paddingHorizontal: 12,
-    margin: 0,
+  container: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  itemWrapper: {
+    flex: 1,
+    padding: 8,
+  },
+  itemContainer: {
+    alignItems: 'center',
   },
   cardHeadingStyle: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   cardHeadingTextStyle: {
-    paddingLeft: 10,
     fontWeight: 'bold',
     fontSize: 18,
   },
@@ -162,15 +175,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   flatListStyle: {
-    marginHorizontal: -10,
-  },
-  itemContainer: {
-    margin: 5,
-    alignItems: 'center',
+    flex: 1,
   },
   imageStyle: {
-    marginBottom: 10,
     borderRadius: 100,
+    marginBottom: 8,
   },
   placeholderImage: {
     justifyContent: 'center',
@@ -184,12 +193,13 @@ const styles = StyleSheet.create({
   itemText: {
     fontWeight: '200',
     textAlign: 'center',
+    marginTop: 4,
   },
   horizontalContent: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
   },
   gridContent: {
-    padding: 10,
+    padding: 8,
   },
 });
 
