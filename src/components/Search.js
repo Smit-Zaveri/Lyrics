@@ -149,7 +149,12 @@ const Search = ({route}) => {
     }).filter(({ score }) => score > 0);
     
     scoredLyrics.sort((a, b) => b.score - a.score);
-    return scoredLyrics.map(obj => obj.item);
+    // Add filtered index to search results
+    return scoredLyrics.map((obj, index) => ({
+      ...obj.item,
+      displayNumbering: obj.item.numbering,
+      filteredIndex: index + 1
+    }));
   }, [lyrics, searchQuery]);
 
   // Update the search query when a suggestion is tapped.
@@ -157,11 +162,15 @@ const Search = ({route}) => {
     setSearchQuery(suggestion);
   };
 
-  // Navigate to the details view for a lyric.
+  // Navigate to the details view for a lyric with proper filtered index
   const handleItemPress = item => {
+    const searchResults = filteredLyrics.map((lyric, index) => ({
+      ...lyric,
+      filteredIndex: index + 1
+    }));
     navigation.navigate('Details', {
-      Lyrics: lyrics,
-      itemNumberingparas: item.numbering.toString(),
+      Lyrics: searchResults,
+      itemNumberingparas: item.filteredIndex
     });
   };
 
