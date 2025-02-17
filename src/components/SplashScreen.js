@@ -17,7 +17,7 @@ const SplashScreen = () => {
   // Determine logo source based on the current theme
   const logoSource =
     currentTheme === 'dark'
-      ? require('../assets/logo_black.png')
+      ? require('../assets/logo.png')
       : require('../assets/logo_black.png');
 
   useEffect(() => {

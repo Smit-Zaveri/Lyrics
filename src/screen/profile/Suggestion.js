@@ -1,16 +1,14 @@
-import React, { useState, useEffect, useCallback, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   Text,
   View,
   StyleSheet,
-  TouchableOpacity,
   TextInput,
-  ActivityIndicator,
-  FlatList,
 } from 'react-native';
 import { Controller, useForm } from 'react-hook-form';
 import dayjs from 'dayjs';
-import firestore from '@react-native-firebase/firestore';
+import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../firebase/config';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { Button } from 'react-native-paper';
 import { ThemeContext } from '../../../App';
@@ -69,7 +67,6 @@ const Suggestion = () => {
   });
 
   const [date, setDate] = useState(dayjs());
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [collections, setCollections] = useState([]);
   const [collectionDropdownOpen, setCollectionDropdownOpen] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState(null);
@@ -78,7 +75,8 @@ const Suggestion = () => {
   useEffect(() => {
     const fetchCollections = async () => {
       try {
-        const snapshot = await firestore().collection('collections').get();
+        const collectionsRef = collection(db, 'collections');
+        const snapshot = await getDocs(collectionsRef);
         const collectionData = snapshot.docs.map(doc => ({
           label: doc.data().displayName || doc.data().name,
           value: doc.data().name,
@@ -95,11 +93,12 @@ const Suggestion = () => {
   const onSubmit = async data => {
     setIsSubmitting(true);
     try {
-      await firestore().collection('suggestions').add({
+      const suggestionsRef = collection(db, 'suggestions');
+      await addDoc(suggestionsRef, {
         ...data,
         publishDate: date.toDate(),
         status: 'pending',
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: serverTimestamp(),
       });
       reset();
       setSelectedCollection(null);
@@ -132,6 +131,23 @@ const Suggestion = () => {
             }}
             placeholderStyle={{
               color: themeColors.placeholder,
+            }}
+            dropDownContainerStyle={{
+              backgroundColor: themeColors.surface,
+              borderColor: themeColors.border,
+            }}
+            theme={themeColors.background === '#1E1E2F' ? 'DARK' : 'LIGHT'}
+            listItemContainerStyle={{
+              backgroundColor: themeColors.surface,
+            }}
+            selectedItemContainerStyle={{
+              backgroundColor: themeColors.cardBackground,
+            }}
+            selectedItemLabelStyle={{
+              color: themeColors.text,
+            }}
+            listItemLabelStyle={{
+              color: themeColors.text,
             }}
             listMode="SCROLLVIEW"
           />
