@@ -14,11 +14,10 @@ const SplashScreen = () => {
   const fadeOutAnimation = useRef(new Animated.Value(1)).current;
   const { currentTheme, themeColors } = useContext(ThemeContext);
 
-  // Determine logo source based on the current theme
   const logoSource =
     currentTheme === 'dark'
-      ? require('../assets/logo.png')
-      : require('../assets/logo_black.png');
+      ? require('../assets/logo.png')  // white logo for dark theme
+      : require('../assets/logo_black.png');  // black logo for light theme
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {

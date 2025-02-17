@@ -45,7 +45,7 @@ const CategoryDisplay = ({navigation}) => {
           flexGrow: 1, 
           paddingVertical: 10,
           paddingHorizontal: 5,
-          minHeight: Dimensions.get('window').height * 0.9
+          minHeight: Dimensions.get('window').height * 0.5
         }}
         showsVerticalScrollIndicator={true}
       >
