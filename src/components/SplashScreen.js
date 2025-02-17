@@ -1,27 +1,24 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import {
   View,
   Text,
   Animated,
   StyleSheet,
   Image,
-  useColorScheme,
 } from 'react-native';
-import {colors} from '../theme/Theme';
+import { ThemeContext } from '../../App';
+
 const SplashScreen = () => {
   const [alignSecond, setAlignSecond] = useState(false);
   const fadeInAnimation = useRef(new Animated.Value(0)).current;
   const fadeOutAnimation = useRef(new Animated.Value(1)).current;
-  const systemTheme = useColorScheme();
+  const { currentTheme, themeColors } = useContext(ThemeContext);
 
   // Determine logo source based on the current theme
   const logoSource =
-    systemTheme === 'dark'
+    currentTheme === 'dark'
       ? require('../assets/logo_black.png')
       : require('../assets/logo_black.png');
-
-  // Get active colors based on the current theme
-  const activeColors = colors[systemTheme];
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -37,46 +34,42 @@ const SplashScreen = () => {
       toValue: 1,
       duration: 1000,
       useNativeDriver: true,
-    }).start(({finished}) => {
-      if (finished) {
-        setTimeout(() => {
-          fadeOut();
-        }, 2000); // Delay before fading out
-      }
-    });
+    }).start();
   };
 
   const fadeOut = () => {
     Animated.timing(fadeOutAnimation, {
       toValue: 0,
-      duration: 500,
+      duration: 1000,
       useNativeDriver: true,
     }).start();
   };
 
   return (
-    <View
-      style={[styles.container, {backgroundColor: activeColors.background}]}>
-      <Animated.Image
-        source={logoSource}
-        style={[styles.logo, {opacity: fadeInAnimation}]}
-      />
-      {alignSecond && (
-        <Animated.View style={{opacity: fadeOutAnimation}}>
-          <Text style={[styles.text, {color: activeColors.text}]}>
-            Jain Dhun
-          </Text>
-        </Animated.View>
-      )}
+    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <Animated.View
+        style={[
+          styles.logoContainer,
+          {
+            opacity: alignSecond ? fadeInAnimation : fadeOutAnimation,
+          },
+        ]}>
+        <Image source={logoSource} style={styles.logo} resizeMode="contain" />
+        <Text style={[styles.text, { color: themeColors.text }]}>
+          Jain Dhun
+        </Text>
+      </Animated.View>
     </View>
   );
 };
 
-export default SplashScreen;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoContainer: {
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -90,3 +83,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
+export default SplashScreen;

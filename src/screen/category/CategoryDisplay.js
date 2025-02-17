@@ -1,18 +1,14 @@
-import React, {useEffect, useState} from 'react';
-import {View, Dimensions, useColorScheme} from 'react-native';
+import React, { useContext, useEffect, useState } from 'react';
+import {View, Dimensions} from 'react-native';
 import ItemGrid from '../../components/ItemGrid';
 import {getFromAsyncStorage} from '../../config/DataService';
-import {colors} from '../../theme/Theme'; // Assuming you have a theme file with colors
+import { ThemeContext } from '../../../App';
 
 const CategoryDisplay = ({navigation}) => {
+  const { themeColors } = useContext(ThemeContext);
   const [tirthData, setTirthData] = useState([]);
   const [artistData, setArtistData] = useState([]);
   const [tirtankarData, setTirtankarData] = useState([]);
-
-  const systemTheme = useColorScheme(); // Detect system theme
-  const [isDarkMode, setIsDarkMode] = useState(systemTheme === 'dark'); // Set theme based on system preference
-
-  const themeColors = isDarkMode ? colors.dark : colors.light; // Use theme colors based on the theme mode
 
   const loadData = async () => {
     try {
@@ -30,10 +26,6 @@ const CategoryDisplay = ({navigation}) => {
   useEffect(() => {
     loadData();
   }, []);
-
-  useEffect(() => {
-    setIsDarkMode(systemTheme === 'dark');
-  }, [systemTheme]);
 
   return (
     <View style={{flex: 1, backgroundColor: themeColors.background}}>

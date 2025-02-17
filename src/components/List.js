@@ -1,27 +1,25 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import {
   FlatList,
   SafeAreaView,
   RefreshControl,
   View,
   ActivityIndicator,
-  useColorScheme,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-import {getFromAsyncStorage} from '../config/DataService';
-import {colors} from '../theme/Theme';
+import { getFromAsyncStorage } from '../config/DataService';
 import TagItem from './TagItem';
 import ListItem from './ListItem';
 import EmptyList from './EmptyList';
+import { ThemeContext } from '../../App';
 
-const List = ({route}) => {
-  const {collectionName, Tags, title} = route.params;
+const List = ({ route }) => {
+  const { collectionName, Tags, title } = route.params;
   const navigation = useNavigation();
+  const { themeColors } = useContext(ThemeContext);
 
-  const systemTheme = useColorScheme();
-  const [isDarkMode, setIsDarkMode] = useState(systemTheme === 'dark');
   const [header, setHeader] = useState(true);
   const [lyrics, setLyrics] = useState([]);
   const [tags, setTags] = useState([]);
@@ -29,11 +27,6 @@ const List = ({route}) => {
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [numberedFilteredLyrics, setNumberedFilteredLyrics] = useState([]);
-
-  const themeColors = isDarkMode ? colors.dark : colors.light;
-  useEffect(() => {
-    setIsDarkMode(systemTheme === 'dark');
-  }, [systemTheme]);
 
   const filterAndSortLyrics = (tags, lyrics) => {
     const filteredItems = lyrics.filter(item =>
@@ -154,7 +147,7 @@ const List = ({route}) => {
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: themeColors.background}}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
       <View style={{flexGrow: 0, flexShrink: 0}}>
         {/* Tag List */}
         <FlatList

@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useMemo, useCallback} from 'react';
+import React, {useEffect, useRef, useMemo, useCallback, useContext} from 'react';
 import {
   Text,
   View,
@@ -8,11 +8,10 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
-  useColorScheme,
 } from 'react-native';
 import {Card} from 'react-native-elements';
 import PropTypes from 'prop-types';
-import {colors} from '../theme/Theme';
+import { ThemeContext } from '../../App';
 
 const {width} = Dimensions.get('window');
 
@@ -30,9 +29,7 @@ const getTagType = title => {
 };
 
 const ItemGrid = ({navigation, title, data, redirect, layout}) => {
-  const systemTheme = useColorScheme();
-  const isDarkMode = systemTheme === 'dark';
-  const themeColors = isDarkMode ? colors.dark : colors.light;
+  const { themeColors } = useContext(ThemeContext);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const isSingleLayout = layout === 'single';
 

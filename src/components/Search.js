@@ -4,6 +4,7 @@ import React, {
   useRef,
   useCallback,
   useMemo,
+  useContext,
 } from 'react';
 import {
   SafeAreaView,
@@ -15,7 +16,6 @@ import {
   Modal,
   StyleSheet,
   Pressable,
-  useColorScheme, // added useColorScheme import
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {Searchbar, List, Portal, Provider} from 'react-native-paper';
@@ -23,6 +23,7 @@ import {getFromAsyncStorage} from '../config/DataService';
 import {colors} from '../theme/Theme';
 import EmptyList from './EmptyList';
 import ListItem from './ListItem';
+import { ThemeContext } from '../../App';
 
 // Precompiled regex patterns for suggestion fixes
 const camelCaseRegex = /([a-z])([A-Z])/g;
@@ -34,10 +35,7 @@ const escapeRegExp = string => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const Search = ({route}) => {
   const navigation = useNavigation();
   const searchbarRef = useRef(null);
-  const systemTheme = useColorScheme();
-  const isDarkMode = systemTheme === 'dark';
-  // Assume your theme object has more properties (e.g. card, text, placeholder) defined
-  const themeColors = isDarkMode ? colors.dark : colors.light;
+  const { currentTheme, themeColors } = useContext(ThemeContext);
   const {collectionName} = route.params;
 
   const [lyrics, setLyrics] = useState([]);
@@ -87,16 +85,19 @@ const Search = ({route}) => {
       fields.forEach(field => {
         const text = lyric[field];
         if (Array.isArray(text)) {
-          text.forEach(item => addWordsToSet(item, wordSet));
+          text.forEach(item => item && addWordsToSet(item, wordSet));
         } else if (typeof text === 'string') {
           addWordsToSet(text, wordSet);
         }
       });
     });
-    // Chain replacements to fix camelCase and Devanagari combinations
-    const fixedSuggestions = Array.from(wordSet).map(word =>
-      word.replace(camelCaseRegex, '$1 $2').replace(devanagariRegex, '$1 $2'),
-    );
+    
+    const fixedSuggestions = Array.from(wordSet)
+      .filter(Boolean)
+      .map(word => word
+        .replace(camelCaseRegex, '$1 $2')
+        .replace(devanagariRegex, '$1 $2')
+      );
     setSuggestions(fixedSuggestions);
   };
 
@@ -119,26 +120,34 @@ const Search = ({route}) => {
     const terms = searchQuery.split(/\s+/).filter(Boolean);
     const lowerCaseQuery = searchQuery.toLowerCase();
     const scoredLyrics = lyrics.map(item => {
-      // Include numbering as a searchable field by converting to string
-      const fields = [item.title, item.content, ...(item.tags || []), item.numbering.toString()]
-        .map(field => field ? field.toLowerCase() : '');
+      // Include numbering as a searchable field and safely handle tags
+      const fieldsToSearch = [
+        item.title || '',
+        item.content || '',
+        ...(Array.isArray(item.tags) ? item.tags : []),
+        item.numbering?.toString() || ''
+      ].map(field => (field ? field.toLowerCase() : ''));
+      
       let bonus = 0;
-      fields.forEach(field => {
+      fieldsToSearch.forEach(field => {
         if (field.includes(lowerCaseQuery)) {
           bonus = Math.max(bonus, 5);
         } else if (terms.every(term => field.includes(term.toLowerCase()))) {
           bonus = Math.max(bonus, 3);
         }
       });
+      
       let termMatches = 0;
       terms.forEach(term => {
-        if (fields.some(field => field.includes(term.toLowerCase()))) {
+        if (fieldsToSearch.some(field => field.includes(term.toLowerCase()))) {
           termMatches++;
         }
       });
+      
       const score = bonus + termMatches;
       return { item, score };
     }).filter(({ score }) => score > 0);
+    
     scoredLyrics.sort((a, b) => b.score - a.score);
     return scoredLyrics.map(obj => obj.item);
   }, [lyrics, searchQuery]);

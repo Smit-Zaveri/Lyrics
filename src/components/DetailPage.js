@@ -1,11 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useLayoutEffect,
-  useRef,
-} from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, useContext, useLayoutEffect } from 'react';
 import {
   ScrollView,
   Text,
@@ -13,7 +6,6 @@ import {
   Linking,
   Animated,
   Easing,
-  useColorScheme,
   PanResponder,
   StyleSheet,
   TouchableOpacity,
@@ -26,6 +18,7 @@ import CustomMaterialMenu from './CustomMaterialMenu';
 import { colors } from '../theme/Theme';
 import Slider from '@react-native-community/slider';
 import Share from 'react-native-share';
+import { ThemeContext } from '../../App';
 
 // --- Error Boundary Component ---
 class ErrorBoundary extends React.Component {
@@ -53,9 +46,8 @@ class ErrorBoundary extends React.Component {
 
 // --- DetailPage Component ---
 const DetailPage = ({ route, navigation }) => {
+  const { themeColors } = useContext(ThemeContext);
   const { itemNumberingparas, Lyrics } = route.params;
-  const systemTheme = useColorScheme();
-  const themeColors = systemTheme === 'dark' ? colors.dark : colors.light;
 
   const [itemNumbering, setItemNumbering] = useState(itemNumberingparas);
   const [song, setSong] = useState(null);

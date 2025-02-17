@@ -1,31 +1,24 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React from 'react';
-import { useColorScheme } from 'react-native';
+import React, { useContext } from 'react';
 import List from '../../components/List';
 import DetailPage from '../../components/DetailPage';
 import Search from '../../components/Search';
-import { colors } from '../../theme/Theme';
 import HomeList from './HomeList';
+import { ThemeContext } from '../../../App';
 
 const Stack = createNativeStackNavigator();
 
-
 const HomeStack = () => {
-  // Get system color scheme (either 'light' or 'dark')
-  const systemTheme = useColorScheme();
-
-  // Select the appropriate theme colors based on system theme
-  const themeColors = systemTheme === 'dark' ? colors.dark : colors.light;
-
+  const { themeColors } = useContext(ThemeContext);
 
   return (
     <Stack.Navigator
       initialRouteName="HomeList"
       screenOptions={{
         headerStyle: {
-          backgroundColor: themeColors.primary, // Dynamic header background based on theme
+          backgroundColor: themeColors.primary,
         },
-        headerTintColor: '#fff', // Keep header text white
+        headerTintColor: '#fff',
         headerTitleStyle: {
           fontWeight: 'bold',
           fontSize: 20,
@@ -36,28 +29,12 @@ const HomeStack = () => {
         name="HomeList"
         component={HomeList}
         options={{
-          title: 'Jain Dhun',
+          headerTitle: 'Jain Dhun',
         }}
       />
-      <Stack.Screen
-        name="List"
-        component={List}
-      />
-
-      <Stack.Screen
-        name="Details"
-        component={DetailPage}
-        options={{
-          title: 'Details',
-        }}
-      />
-      <Stack.Screen
-        name="Search"
-        component={Search}
-        options={{
-          title: 'Search',
-        }}
-      />
+      <Stack.Screen name="List" component={List} />
+      <Stack.Screen name="Search" component={Search} />
+      <Stack.Screen name="Details" component={DetailPage} />
     </Stack.Navigator>
   );
 };

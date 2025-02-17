@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import {
   FlatList,
   Text,
@@ -7,18 +7,15 @@ import {
   SafeAreaView,
   Pressable,
   ActivityIndicator,
-  useColorScheme,
   RefreshControl,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {colors} from '../../theme/Theme';
 import {getFromAsyncStorage, refreshAllData} from '../../config/DataService';
+import { ThemeContext } from '../../../App';
 
 const HomeList = () => {
-  const systemTheme = useColorScheme();
   const navigation = useNavigation();
-
-  const themeColors = systemTheme === 'dark' ? colors.dark : colors.light;
+  const { themeColors } = useContext(ThemeContext);
 
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);

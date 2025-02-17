@@ -1,31 +1,23 @@
-import React, {useState, useEffect} from 'react';
-import {useColorScheme} from 'react-native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import React, { useContext } from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import CategoryDisplay from './CategoryDisplay';
 import List from '../../components/List';
 import DetailPage from '../../components/DetailPage';
 import Search from '../../components/Search';
 import FullGridDisplay from './FullGridDisplay';
-import {colors} from '../../theme/Theme'; // Import theme colors
+import { ThemeContext } from '../../../App';
 
 const Stack = createNativeStackNavigator();
 
 const Category = () => {
-  const systemTheme = useColorScheme(); // Detect system theme
-  const [isDarkMode, setIsDarkMode] = useState(systemTheme === 'dark'); // Initialize state based on theme
-
-  const themeColors = isDarkMode ? colors.dark : colors.light; // Use dark or light theme
-
-  useEffect(() => {
-    setIsDarkMode(systemTheme === 'dark');
-  }, [systemTheme]);
+  const { themeColors } = useContext(ThemeContext);
 
   // Dynamic header styles based on theme
   const getHeaderStyle = () => ({
     headerStyle: {
-      backgroundColor: themeColors.primary, // Dark or default color
+      backgroundColor: themeColors.primary,
     },
-    headerTintColor: '#fff', // Keep white text in both themes
+    headerTintColor: '#fff',
     headerTitleStyle: {
       fontWeight: 'bold',
       fontSize: 20,
@@ -39,7 +31,7 @@ const Category = () => {
         component={CategoryDisplay}
         options={{
           headerTitle: 'Category',
-          ...getHeaderStyle(), // Apply dynamic header styles
+          ...getHeaderStyle(),
         }}
       />
       <Stack.Screen
@@ -47,30 +39,23 @@ const Category = () => {
         component={FullGridDisplay}
         options={({route}) => ({
           headerTitle: route.params.title,
-          headerStyle: {backgroundColor: themeColors.primary},
-          headerTintColor: '#fff',
+          ...getHeaderStyle(),
         })}
       />
       <Stack.Screen
         name="List"
         component={List}
-        options={{
-          ...getHeaderStyle(), // Apply dynamic header styles
-        }}
+        options={getHeaderStyle}
       />
       <Stack.Screen
         name="Search"
         component={Search}
-        options={{
-          ...getHeaderStyle(), // Apply dynamic header styles
-        }}
+        options={getHeaderStyle}
       />
       <Stack.Screen
         name="Details"
         component={DetailPage}
-        options={{
-          ...getHeaderStyle(), // Apply dynamic header styles
-        }}
+        options={getHeaderStyle}
       />
     </Stack.Navigator>
   );

@@ -1,13 +1,11 @@
-import React from 'react';
-import {View, StyleSheet, useColorScheme} from 'react-native';
+import React, { useContext } from 'react';
+import { View, StyleSheet } from 'react-native';
 import ItemGrid from '../../components/ItemGrid';
-import {colors} from '../../theme/Theme';
+import { ThemeContext } from '../../../App';
 
 const FullGrid = ({route, navigation}) => {
   const {data, title, redirect} = route.params;
-  const systemTheme = useColorScheme();
-  const isDarkMode = systemTheme === 'dark';
-  const themeColors = isDarkMode ? colors.dark : colors.light;
+  const { themeColors } = useContext(ThemeContext);
 
   return (
     <View style={[styles.container, {backgroundColor: themeColors.background}]}>

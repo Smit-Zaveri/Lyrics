@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef, useCallback} from 'react';
+import React, {useState, useEffect, useRef, useCallback, useContext} from 'react';
 import firestore from '@react-native-firebase/firestore';
 import {
   View,
@@ -13,8 +13,10 @@ import {
 } from 'react-native';
 import {Menu, MenuItem} from 'react-native-material-menu';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { ThemeContext } from '../../App';
 
-const CustomMaterialMenu = ({isIcon, menuText, textStyle, item, theme}) => {
+const CustomMaterialMenu = ({isIcon, menuText, textStyle, item}) => {
+  const { themeColors } = useContext(ThemeContext);
   const [visible, setVisible] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportText, setReportText] = useState('');
@@ -84,28 +86,21 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item, theme}) => {
 
   return (
     <View>
-      <Menu
-        visible={visible}
-        style={{backgroundColor: theme.background}}
-        anchor={
-          isIcon ? (
-            <TouchableOpacity onPress={showMenu}>
-              <MaterialCommunityIcons
-                name="dots-vertical"
-                color={theme.iconColor || '#fff'}
-                size={26}
-              />
-            </TouchableOpacity>
-          ) : (
-            <Text
-              onPress={showMenu}
-              style={[textStyle, {color: theme.background}]}>
-              {menuText}
-            </Text>
-          )
-        }
-        onRequestClose={hideMenu}>
-        <MenuItem onPress={openReportPopup} textStyle={{color: theme.text}}>
+      {isIcon ? (
+        <TouchableOpacity onPress={showMenu}>
+          <MaterialCommunityIcons
+            name="dots-vertical"
+            size={24}
+            color="#fff"
+          />
+        </TouchableOpacity>
+      ) : (
+        <Text onPress={showMenu} style={textStyle}>
+          {menuText}
+        </Text>
+      )}
+      <Menu visible={visible} onRequestClose={hideMenu}>
+        <MenuItem onPress={openReportPopup} textStyle={{color: themeColors.text}}>
           Report
         </MenuItem>
       </Menu>
@@ -125,7 +120,7 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item, theme}) => {
               left: '50%',
               width: '80%',
               maxWidth: 300,
-              backgroundColor: theme.surface,
+              backgroundColor: themeColors.surface,
               borderRadius: 20,
               padding: 20,
               transform: [
@@ -139,7 +134,7 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item, theme}) => {
               style={{
                 marginBottom: 13,
                 fontSize: 20,
-                color: theme.text,
+                color: themeColors.text,
                 fontWeight: 'bold',
               }}>
               Report Lyrics:
@@ -148,7 +143,7 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item, theme}) => {
               style={{marginBottom: 10}}
               contentContainerStyle={{
                 borderColor: '#ccc',
-                backgroundColor: theme.background,
+                backgroundColor: themeColors.background,
                 borderRadius: 10,
               }}>
               <TextInput
@@ -156,13 +151,13 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item, theme}) => {
                 value={reportText}
                 onChangeText={setReportText}
                 placeholder="Enter your report"
-                placeholderTextColor={theme.placeholder || '#888'}
+                placeholderTextColor={themeColors.placeholder}
                 multiline
                 autoFocus
                 style={{
                   flex: 1,
-                  backgroundColor: theme.inputBackground || '#f0f0f0',
-                  color: theme.inputText || '#000',
+                  backgroundColor: themeColors.inputBackground || '#f0f0f0',
+                  color: themeColors.inputText || '#000',
                   padding: 10,
                   borderRadius: 8,
                 }}
@@ -170,7 +165,7 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item, theme}) => {
             </ScrollView>
             <Pressable
               style={({pressed}) => ({
-                backgroundColor: pressed ? '#673ae2' : theme.primary,
+                backgroundColor: pressed ? '#673ae2' : themeColors.primary,
                 borderRadius: 10,
                 alignItems: 'center',
                 justifyContent: 'center',

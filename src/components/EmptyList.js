@@ -1,10 +1,10 @@
-import React from 'react';
-import { View, Text, StyleSheet, useColorScheme } from 'react-native';
+import React, { useContext } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { ThemeContext } from '../../App';
 import { colors } from '../theme/Theme';
 
 const EmptyList = () => {
-  const systemTheme = useColorScheme(); // Hook to detect system theme
-  const themeColors = systemTheme === 'dark' ? colors.dark : colors.light;
+  const { themeColors } = useContext(ThemeContext);
 
   return (
     <View style={styles.emptyListContainer}>

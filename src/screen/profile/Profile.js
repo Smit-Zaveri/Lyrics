@@ -1,22 +1,19 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React, { useEffect, useState } from 'react';
-import { useColorScheme } from 'react-native';
+import React, { useEffect, useState, useContext } from 'react';
 import DetailPage from '../../components/DetailPage';
 import ProfileDisplay from './ProfileDisplay';
 import Suggestion from './Suggestion';
-import { colors } from '../../theme/Theme';
 import Search from '../../components/Search';
 import List from '../../components/List';
 import Settings from './Settings';
+import { ThemeContext } from '../../../App';
 
 const Stack = createNativeStackNavigator();
 
 const Profile = () => {
   const [savedLyrics, setSavedLyrics] = useState([]);
-  const systemTheme = useColorScheme();
-  const isDarkMode = systemTheme === 'dark';
-  const themeColors = isDarkMode ? colors.dark : colors.light;
+  const { themeColors } = useContext(ThemeContext);
 
   const fetchSavedLyrics = async () => {
     try {
@@ -35,97 +32,23 @@ const Profile = () => {
   }, []);
 
   return (
-    <Stack.Navigator initialRouteName="ProfileDisplay">
-      <Stack.Screen
-        name="ProfileDisplay"
-        component={ProfileDisplay}
-        options={{
-          headerTitle: 'Profile',
-          headerStyle: {
-            backgroundColor: themeColors.primary,
-          },
-          headerTintColor: '#fff',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-            fontSize: 20,
-          },
-        }}
-      />
-
-      <Stack.Screen
-        name="SavedLyrics"
-        component={List}
-        initialParams={{ collectionName: "saved", Tags: "tags" }}
-        options={{
-          headerTitle: 'Saved Lyrics',
-          headerStyle: {
-            backgroundColor: themeColors.primary,
-          },
-          headerTintColor: '#fff',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-            fontSize: 20,
-          },
-        }}
-      />
-      <Stack.Screen
-        name="Suggestion"
-        component={Suggestion}
-        options={{
-          headerTitle: 'Suggestion',
-          headerStyle: {
-            backgroundColor: themeColors.primary,
-          },
-          headerTintColor: '#fff',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-            fontSize: 20,
-          },
-        }}
-      />
-      <Stack.Screen
-        name="Details"
-        component={DetailPage}
-        options={{
-          headerStyle: {
-            backgroundColor: themeColors.primary,
-          },
-          headerTintColor: '#fff',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-            fontSize: 20,
-          },
-        }}
-      />
-      <Stack.Screen
-        name="Search"
-        component={Search}
-        options={{
-          headerStyle: {
-            backgroundColor: themeColors.primary,
-          },
-          headerTintColor: '#fff',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-            fontSize: 20,
-          },
-        }}
-      />
-      <Stack.Screen
-        name="Settings"
-        component={Settings}
-        options={{
-          headerTitle: 'Settings',
-          headerStyle: {
-            backgroundColor: themeColors.primary,
-          },
-          headerTintColor: '#fff',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-            fontSize: 20,
-          },
-        }}
-      />
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: themeColors.primary,
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+          fontSize: 20,
+        },
+      }}>
+      <Stack.Screen name="ProfileDisplay" component={ProfileDisplay} options={{ headerTitle: 'Profile' }} />
+      <Stack.Screen name="SavedLyrics" component={List} initialParams={{ collectionName: "saved", Tags: "tags" }} />
+      <Stack.Screen name="Suggestion" component={Suggestion} />
+      <Stack.Screen name="Details" component={DetailPage} />
+      <Stack.Screen name="Search" component={Search} />
+      <Stack.Screen name="Settings" component={Settings} />
     </Stack.Navigator>
   );
 };

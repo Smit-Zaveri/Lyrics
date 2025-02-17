@@ -1,21 +1,18 @@
-import React, {useState} from 'react';
+import React, { useState, useContext } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  useColorScheme,
   Share,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {colors} from '../../theme/Theme';
 import { refreshAllData } from '../../config/DataService';
+import { ThemeContext } from '../../../App';
 
 const ProfileDisplay = ({navigation}) => {
   const [refreshMessage, setRefreshMessage] = useState('');
-  const systemTheme = useColorScheme();
-  const isDarkMode = systemTheme === 'dark';
-  const themeColors = isDarkMode ? colors.dark : colors.light;
+  const { themeColors } = useContext(ThemeContext);
 
   const handleRefresh = async () => {
     await refreshAllData();
