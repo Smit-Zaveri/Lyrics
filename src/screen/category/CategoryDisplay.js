@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {View, Dimensions, useColorScheme} from 'react-native';
-import ItemGrid from '../../component/ItemGrid';
+import ItemGrid from '../../components/ItemGrid';
 import {getFromAsyncStorage} from '../../config/DataService';
 import {colors} from '../../theme/Theme'; // Assuming you have a theme file with colors
 

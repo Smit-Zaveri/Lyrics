@@ -2,9 +2,9 @@ import React, {useState, useEffect} from 'react';
 import {useColorScheme} from 'react-native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import CategoryDisplay from './CategoryDisplay';
-import List from '../../component/List';
-import DetailPage from '../../component/DetailPage';
-import Search from '../../component/Search';
+import List from '../../components/List';
+import DetailPage from '../../components/DetailPage';
+import Search from '../../components/Search';
 import FullGridDisplay from './FullGridDisplay';
 import {colors} from '../../theme/Theme'; // Import theme colors
 

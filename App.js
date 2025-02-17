@@ -3,7 +3,7 @@ import {StatusBar, useColorScheme} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createMaterialBottomTabNavigator} from '@react-navigation/material-bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import SplashScreen from './src/component/SplashScreen';
+import SplashScreen from './src/components/SplashScreen';
 import HomeStack from './src/screen/home/HomeStack';
 import Profile from './src/screen/profile/Profile';
 import Category from './src/screen/category/Category';

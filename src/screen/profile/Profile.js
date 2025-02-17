@@ -2,12 +2,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import { useColorScheme } from 'react-native';
-import DetailPage from '../../component/DetailPage';
+import DetailPage from '../../components/DetailPage';
 import ProfileDisplay from './ProfileDisplay';
 import Suggestion from './Suggestion';
 import { colors } from '../../theme/Theme';
-import Search from '../../component/Search';
-import List from '../../component/List';
+import Search from '../../components/Search';
+import List from '../../components/List';
 import Settings from './Settings';
 
 const Stack = createNativeStackNavigator();

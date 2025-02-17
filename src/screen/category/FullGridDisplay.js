@@ -1,6 +1,6 @@
 import React from 'react';
 import {View, StyleSheet, useColorScheme} from 'react-native';
-import ItemGrid from '../../component/ItemGrid';
+import ItemGrid from '../../components/ItemGrid';
 import {colors} from '../../theme/Theme';
 
 const FullGrid = ({route, navigation}) => {

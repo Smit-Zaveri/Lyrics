@@ -1,7 +1,7 @@
 import React from 'react';
 import {Pressable, View, Text, StyleSheet} from 'react-native';
 
-const ListItem = ({item, themeColors, onItemPress}) => {
+const ListItem = ({item, themeColors, onItemPress, searchTerms, highlightFunction}) => {
   const {numbering, title, content, publishDate, newFlag} = item;
   const currentDate = new Date();
   const publishDateTime = publishDate?.seconds
@@ -43,13 +43,17 @@ const ListItem = ({item, themeColors, onItemPress}) => {
             style={[styles.title, {color: themeColors.text}]}
             numberOfLines={1}
             ellipsizeMode="tail">
-            {title}
+            {highlightFunction && searchTerms
+              ? highlightFunction(title, searchTerms)
+              : title}
           </Text>
           <Text
             style={[styles.content, {color: themeColors.text}]}
             numberOfLines={1}
             ellipsizeMode="tail">
-            {content.split('\n')[0]}
+            {highlightFunction && searchTerms
+              ? highlightFunction(content, searchTerms)
+              : content.split('\n')[0]}
           </Text>
         </View>
       </View>

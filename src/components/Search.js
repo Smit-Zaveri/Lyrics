@@ -15,12 +15,14 @@ import {
   Modal,
   StyleSheet,
   Pressable,
+  useColorScheme, // added useColorScheme import
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {Searchbar, List, Portal, Provider} from 'react-native-paper';
 import {getFromAsyncStorage} from '../config/DataService';
 import {colors} from '../theme/Theme';
 import EmptyList from './EmptyList';
+import ListItem from './ListItem';
 
 // Precompiled regex patterns for suggestion fixes
 const camelCaseRegex = /([a-z])([A-Z])/g;
@@ -111,25 +113,34 @@ const Search = ({route}) => {
     setSearchQuery(text);
   }, []);
 
-  // Compute filtered lyrics based on searchQuery and cached lyrics.
-  // Returns an empty array when searchQuery is empty.
+  // Updated filtering logic to add bonus if all search terms appear in the same field, including numbering
   const filteredLyrics = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const terms = searchQuery.split(/\s+/).filter(Boolean);
     const lowerCaseQuery = searchQuery.toLowerCase();
-    return lyrics.filter(item => {
-      const fields = [item.title, item.content, ...(item.tags || [])];
-      // Check if the entire query or any individual term matches a field.
-      const phraseMatch = fields.some(field =>
-        field?.toLowerCase().includes(lowerCaseQuery),
-      );
-      const individualMatch = terms.some(term =>
-        fields.some(field =>
-          field?.toLowerCase().includes(term.toLowerCase()),
-        ),
-      );
-      return phraseMatch || individualMatch;
-    });
+    const scoredLyrics = lyrics.map(item => {
+      // Include numbering as a searchable field by converting to string
+      const fields = [item.title, item.content, ...(item.tags || []), item.numbering.toString()]
+        .map(field => field ? field.toLowerCase() : '');
+      let bonus = 0;
+      fields.forEach(field => {
+        if (field.includes(lowerCaseQuery)) {
+          bonus = Math.max(bonus, 5);
+        } else if (terms.every(term => field.includes(term.toLowerCase()))) {
+          bonus = Math.max(bonus, 3);
+        }
+      });
+      let termMatches = 0;
+      terms.forEach(term => {
+        if (fields.some(field => field.includes(term.toLowerCase()))) {
+          termMatches++;
+        }
+      });
+      const score = bonus + termMatches;
+      return { item, score };
+    }).filter(({ score }) => score > 0);
+    scoredLyrics.sort((a, b) => b.score - a.score);
+    return scoredLyrics.map(obj => obj.item);
   }, [lyrics, searchQuery]);
 
   // Update the search query when a suggestion is tapped.
@@ -149,20 +160,17 @@ const Search = ({route}) => {
     loadLyrics();
   }, [loadLyrics]);
 
-  // Highlight matching search terms in the provided text.
+  // Updated highlightSearchTerms to use the first line that contains any search term (matchingLine logic) like the old behavior
   const highlightSearchTerms = (text, terms) => {
     if (!text) return null;
-    // Escape terms to safely build the regex pattern.
+    const lines = text.split('\n');
+    const matchingLine = lines.find(line => terms.some(term => line.toLowerCase().includes(term.toLowerCase())));
+    const lineToProcess = matchingLine || lines[0];
     const escapedTerms = terms.map(term => escapeRegExp(term));
-    // Create a regex that will capture the search terms (global flag is fine for splitting)
     const regex = new RegExp(`(${escapedTerms.join('|')})`, 'gi');
-    const parts = text.split(regex);
+    const parts = lineToProcess.split(regex);
     return parts.map((part, index) => {
-      // Because the split returns exactly the matched terms, we can check if the part
-      // equals any of the search terms (ignoring case)
-      const isMatch = terms.some(
-        term => term.toLowerCase() === part.toLowerCase(),
-      );
+      const isMatch = terms.some(term => term.toLowerCase() === part.toLowerCase());
       return isMatch ? (
         <Text key={index} style={styles.highlight}>
           {part}
@@ -173,32 +181,17 @@ const Search = ({route}) => {
     });
   };
 
-  // Render each lyric item.
+  // Update renderItem function to use ListItem component for consistent styling
   const renderItem = ({item}) => {
     const terms = searchQuery.split(' ').filter(Boolean);
-    const matchingLine =
-      item.content
-        .split('\n')
-        .find(line =>
-          terms.some(term =>
-            line.toLowerCase().includes(term.toLowerCase()),
-          ),
-        ) || item.content.split('\n')[0];
-
     return (
-      <Pressable onPress={() => handleItemPress(item)} style={styles.itemContainer}>
-        <View style={styles.leftContainer}>
-          <Text style={styles.numberingText}>{item.numbering}</Text>
-          <View style={styles.detailsContainer}>
-            <Text style={[styles.title, {color: themeColors.text}]}>
-              {highlightSearchTerms(item.title, terms)}
-            </Text>
-            <Text style={[styles.content, {color: themeColors.subText}]} numberOfLines={1}>
-              {highlightSearchTerms(matchingLine, terms)}
-            </Text>
-          </View>
-        </View>
-      </Pressable>
+      <ListItem
+        item={item}
+        themeColors={themeColors}
+        onItemPress={handleItemPress}
+        searchTerms={terms}
+        highlightFunction={highlightSearchTerms}
+      />
     );
   };
 
@@ -231,9 +224,10 @@ const Search = ({route}) => {
           ref={searchbarRef}
           onChangeText={handleSearch}
           value={searchQuery}
-          style={[styles.searchbar, {backgroundColor: themeColors.inputBackground}]}
+          iconColor={themeColors.text}
+          style={[styles.searchbar, {backgroundColor: themeColors.cardBackground}]}
           inputStyle={{fontSize: 16, color: themeColors.text}}
-          placeholderTextColor={themeColors.placeholder}
+          placeholderTextColor={themeColors.text}
         />
         {!!searchQuery.trim() && filteredSuggestions.length > 0 && (
           <View style={[styles.suggestionsContainer, {backgroundColor: themeColors.card}]}>
@@ -287,7 +281,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   suggestionsContainer: {
-    maxHeight: 150,
+    maxHeight: 250,
     marginTop: 5,
     borderRadius: 10,
     paddingVertical: 4,

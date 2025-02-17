@@ -1,9 +1,9 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { useColorScheme } from 'react-native';
-import List from '../../component/List';
-import DetailPage from '../../component/DetailPage';
-import Search from '../../component/Search';
+import List from '../../components/List';
+import DetailPage from '../../components/DetailPage';
+import Search from '../../components/Search';
 import { colors } from '../../theme/Theme';
 import HomeList from './HomeList';
 
