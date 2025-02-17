@@ -117,38 +117,41 @@ const Search = ({route}) => {
   // Updated filtering logic to add bonus if all search terms appear in the same field, including numbering
   const filteredLyrics = useMemo(() => {
     if (!searchQuery.trim()) return [];
+    
     const terms = searchQuery.split(/\s+/).filter(Boolean);
     const lowerCaseQuery = searchQuery.toLowerCase();
+    
     const scoredLyrics = lyrics.map(item => {
-      // Include numbering as a searchable field and safely handle tags
-      const fieldsToSearch = [
-        item.title || '',
-        item.content || '',
-        ...(Array.isArray(item.tags) ? item.tags : []),
-        item.numbering?.toString() || ''
-      ].map(field => (field ? field.toLowerCase() : ''));
+      let score = 0;
       
-      let bonus = 0;
-      fieldsToSearch.forEach(field => {
-        if (field.includes(lowerCaseQuery)) {
-          bonus = Math.max(bonus, 5);
-        } else if (terms.every(term => field.includes(term.toLowerCase()))) {
-          bonus = Math.max(bonus, 3);
+      // Helper function to check term matches
+      const checkTermMatches = (field, weight) => {
+        if (!field) return 0;
+        const lowerField = field.toLowerCase();
+        // Exact match bonus
+        if (lowerField.includes(lowerCaseQuery)) {
+          score += 10 * weight;
         }
-      });
+        // Individual terms bonus
+        const matchingTerms = terms.filter(term => 
+          lowerField.includes(term.toLowerCase())
+        ).length;
+        score += matchingTerms * weight;
+      };
+
+      // Prioritize matches: Title (highest), Content (medium), Tags (lowest)
+      checkTermMatches(item.title, 10);     // Title matches get 10x weight
+      checkTermMatches(item.content, 5);    // Content matches get 5x weight
+      if (Array.isArray(item.tags)) {
+        item.tags.forEach(tag => checkTermMatches(tag, 2)); // Tag matches get 2x weight
+      }
       
-      let termMatches = 0;
-      terms.forEach(term => {
-        if (fieldsToSearch.some(field => field.includes(term.toLowerCase()))) {
-          termMatches++;
-        }
-      });
-      
-      const score = bonus + termMatches;
       return { item, score };
     }).filter(({ score }) => score > 0);
     
+    // Sort by score in descending order
     scoredLyrics.sort((a, b) => b.score - a.score);
+    
     // Add filtered index to search results
     return scoredLyrics.map((obj, index) => ({
       ...obj.item,
