@@ -139,6 +139,16 @@ const Search = ({route}) => {
         score += matchingTerms * weight;
       };
 
+      // Add numbering search
+      const numberQuery = parseInt(searchQuery);
+      if (!isNaN(numberQuery)) {
+        // Check both order and numbering properties
+        const itemNumber = item.order || item.numbering;
+        if (itemNumber === numberQuery) {
+          score += 100; // High priority for exact number matches
+        }
+      }
+
       // Prioritize matches: Title (highest), Content (medium), Tags (lowest)
       checkTermMatches(item.title, 10);     // Title matches get 10x weight
       checkTermMatches(item.content, 5);    // Content matches get 5x weight
@@ -155,7 +165,7 @@ const Search = ({route}) => {
     // Add filtered index to search results
     return scoredLyrics.map((obj, index) => ({
       ...obj.item,
-      displayNumbering: obj.item.numbering,
+      displayNumbering: obj.item.order || obj.item.numbering,
       filteredIndex: index + 1
     }));
   }, [lyrics, searchQuery]);
