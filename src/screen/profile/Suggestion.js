@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import {
   Text,
   View,
   StyleSheet,
   TextInput,
+  Modal,
+  TouchableOpacity,
+  Animated,
 } from 'react-native';
 import { Controller, useForm } from 'react-hook-form';
 import dayjs from 'dayjs';
@@ -12,6 +15,8 @@ import { db } from '../../firebase/config';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { Button } from 'react-native-paper';
 import { ThemeContext } from '../../../App';
+import NetInfo from '@react-native-community/netinfo';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const InputField = ({
   control,
@@ -49,6 +54,9 @@ const InputField = ({
 
 const Suggestion = () => {
   const { themeColors } = useContext(ThemeContext);
+  const [alertModal, setAlertModal] = useState({ visible: false, type: null, message: '' });
+  const alertAnimation = useRef(new Animated.Value(0)).current;
+  const scaleAnimation = useRef(new Animated.Value(0.3)).current;
 
   const {
     control,
@@ -59,7 +67,6 @@ const Suggestion = () => {
   } = useForm({
     defaultValues: {
       title: '',
-      artistName: '',
       content: '',
       publishDate: '',
       collection: '',
@@ -71,6 +78,50 @@ const Suggestion = () => {
   const [collectionDropdownOpen, setCollectionDropdownOpen] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const showAlert = (type, message) => {
+    setAlertModal({ visible: true, type, message });
+    Animated.parallel([
+      Animated.spring(alertAnimation, {
+        toValue: 1,
+        useNativeDriver: true,
+        bounciness: 10,
+      }),
+      Animated.spring(scaleAnimation, {
+        toValue: 1,
+        useNativeDriver: true,
+        bounciness: 12,
+      }),
+    ]).start();
+
+    if (type === 'success') {
+      setTimeout(() => closeAlertModal(), 2000);
+    }
+  };
+
+  const closeAlertModal = () => {
+    Animated.parallel([
+      Animated.timing(alertAnimation, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnimation, {
+        toValue: 0.3,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setAlertModal({ visible: false, type: null, message: '' }));
+  };
+
+  const checkInternet = async () => {
+    const netInfo = await NetInfo.fetch();
+    if (!netInfo.isConnected) {
+      showAlert('error', 'Please check your internet connection and try again.');
+      return false;
+    }
+    return true;
+  };
 
   useEffect(() => {
     const fetchCollections = async () => {
@@ -91,9 +142,11 @@ const Suggestion = () => {
   }, []);
 
   const onSubmit = async data => {
+    if (!(await checkInternet())) return;
+    
     setIsSubmitting(true);
     try {
-      const suggestionsRef = collection(db, 'suggestions');
+      const suggestionsRef = collection(db, 'suggestions_new');
       await addDoc(suggestionsRef, {
         ...data,
         publishDate: date.toDate(),
@@ -102,8 +155,10 @@ const Suggestion = () => {
       });
       reset();
       setSelectedCollection(null);
+      showAlert('success', 'Your suggestion has been submitted successfully!');
     } catch (error) {
       console.error('Error submitting suggestion:', error);
+      showAlert('error', 'Failed to submit suggestion. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -164,13 +219,6 @@ const Suggestion = () => {
 
         <InputField
           control={control}
-          name="artistName"
-          placeholder="Artist name"
-          themeColors={themeColors}
-        />
-
-        <InputField
-          control={control}
           name="content"
           placeholder="Content"
           rules={{required: true}}
@@ -188,9 +236,94 @@ const Suggestion = () => {
           onPress={handleSubmit(onSubmit)}
           style={[styles.submitButton, { backgroundColor: themeColors.primary }]}
           loading={isSubmitting}>
-          Submit Suggestion
+          {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
         </Button>
       </View>
+
+      {/* Alert Modal */}
+      <Modal transparent visible={alertModal.visible} onRequestClose={closeAlertModal}>
+        <TouchableOpacity
+          activeOpacity={1}
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+          onPress={closeAlertModal}
+        >
+          <Animated.View
+            style={{
+              width: '80%',
+              maxWidth: 300,
+              backgroundColor: themeColors.surface,
+              borderRadius: 20,
+              padding: 20,
+              elevation: 5,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+              transform: [
+                { scale: scaleAnimation },
+                {
+                  translateY: alertAnimation.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [20, 0],
+                  }),
+                },
+              ],
+              opacity: alertAnimation,
+            }}
+          >
+            <View style={{ alignItems: 'center' }}>
+              <Animated.View
+                style={{
+                  transform: [
+                    {
+                      scale: alertAnimation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.5, 1],
+                      }),
+                    },
+                  ],
+                }}
+              >
+                {alertModal.type === 'success' ? (
+                  <Icon name="check-circle" size={60} color={themeColors.primary} />
+                ) : (
+                  <Icon name="error" size={60} color="#F44336" />
+                )}
+              </Animated.View>
+              <Text
+                style={{
+                  marginTop: 15,
+                  marginBottom: 10,
+                  fontSize: 22,
+                  color: themeColors.text,
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  letterSpacing: 0.5,
+                }}
+              >
+                {alertModal.type === 'success' ? 'Success!' : 'Error'}
+              </Text>
+              <Text
+                style={{
+                  color: themeColors.text,
+                  textAlign: 'center',
+                  marginBottom: 15,
+                  fontSize: 16,
+                  opacity: 0.9,
+                  lineHeight: 22,
+                }}
+              >
+                {alertModal.message}
+              </Text>
+            </View>
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
