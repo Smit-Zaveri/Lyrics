@@ -1,5 +1,4 @@
-import React, {useState, useEffect, useRef, useCallback, useContext} from 'react';
-import firestore from '@react-native-firebase/firestore';
+import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import {
   View,
   Text,
@@ -7,19 +6,31 @@ import {
   Modal,
   TextInput,
   Pressable,
-  ToastAndroid,
   ScrollView,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
-import {Menu, MenuItem} from 'react-native-material-menu';
+import NetInfo from '@react-native-community/netinfo';
+import { collection, addDoc } from 'firebase/firestore';
+import { Menu, MenuItem } from 'react-native-material-menu';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import { ThemeContext } from '../../App';
+import { db } from '../firebase/config';
 
-const CustomMaterialMenu = ({isIcon, menuText, textStyle, item}) => {
+const CustomMaterialMenu = ({ isIcon, menuText, textStyle, item }) => {
   const { themeColors } = useContext(ThemeContext);
   const [visible, setVisible] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportText, setReportText] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Combined alert modal state for both success and error
+  const [alertModal, setAlertModal] = useState({ visible: false, type: null, message: '' });
+
+  // Shared animations for alert modal
+  const alertAnimation = useRef(new Animated.Value(0)).current;
+  const scaleAnimation = useRef(new Animated.Value(0.3)).current;
 
   const textInputRef = useRef(null);
   const slideAnimation = useRef(new Animated.Value(0)).current;
@@ -28,7 +39,7 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item}) => {
   const showMenu = useCallback(() => setVisible(true), []);
 
   const animateModal = useCallback(
-    toValue => {
+    (toValue) => {
       Animated.timing(slideAnimation, {
         toValue,
         duration: 300,
@@ -40,11 +51,55 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item}) => {
     [slideAnimation],
   );
 
+  // Unified alert function for both success and error cases
+  const showAlert = (type, message) => {
+    setAlertModal({ visible: true, type, message });
+    Animated.parallel([
+      Animated.spring(alertAnimation, {
+        toValue: 1,
+        useNativeDriver: true,
+        bounciness: 10,
+      }),
+      Animated.spring(scaleAnimation, {
+        toValue: 1,
+        useNativeDriver: true,
+        bounciness: 12,
+      }),
+    ]).start();
+
+    // Auto-close success alerts after 2 seconds
+    if (type === 'success') {
+      setTimeout(() => closeAlertModal(), 2000);
+    }
+  };
+
+  const closeAlertModal = () => {
+    Animated.parallel([
+      Animated.timing(alertAnimation, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnimation, {
+        toValue: 0.3,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setAlertModal({ visible: false, type: null, message: '' }));
+  };
+
+  const checkInternet = async () => {
+    const netInfo = await NetInfo.fetch();
+    if (!netInfo.isConnected) {
+      showAlert('error', 'Please check your internet connection and try again.');
+      return false;
+    }
+    return true;
+  };
+
   useEffect(() => {
     if (showReportModal) {
       animateModal(1);
-      const timer = setTimeout(() => textInputRef.current?.focus(), 300);
-      return () => clearTimeout(timer);
     }
   }, [showReportModal, animateModal]);
 
@@ -54,25 +109,33 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item}) => {
     hideMenu();
   }, [hideMenu]);
 
-  const submitReport = useCallback(() => {
+  const submitReport = useCallback(async () => {
     if (!reportText.trim()) {
-      ToastAndroid.show(
-        'Please enter a report before submitting!',
-        ToastAndroid.SHORT,
-      );
+      showAlert('error', 'Please enter a report before submitting!');
       return;
     }
 
-    const {id, title} = item;
-    firestore()
-      .collection('reports')
-      .add({lyricsId: id, lyricsTitle: title, reportText})
-      .then(() => {
-        ToastAndroid.show('Report submitted successfully!', ToastAndroid.SHORT);
-        animateModal(0);
-      })
-      .catch(error => console.warn('Error submitting report:', error));
-  }, [reportText, item, animateModal]);
+    if (!(await checkInternet())) return;
+
+    setIsSubmitting(true);
+    try {
+      const { id, title } = item;
+      const reportsRef = collection(db, 'reports');
+      await addDoc(reportsRef, {
+        lyricsId: id,
+        lyricsTitle: title,
+        reportText,
+        timestamp: new Date(),
+      });
+      showAlert('success', 'Your report has been submitted successfully!');
+      setReportText('');
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      showAlert('error', 'Failed to submit report. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [reportText, item]);
 
   const modalAnimation = slideAnimation.interpolate({
     inputRange: [0, 1],
@@ -88,11 +151,7 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item}) => {
     <View>
       {isIcon ? (
         <TouchableOpacity onPress={showMenu}>
-          <MaterialCommunityIcons
-            name="dots-vertical"
-            size={24}
-            color="#fff"
-          />
+          <MaterialCommunityIcons name="dots-vertical" size={24} color="#fff" />
         </TouchableOpacity>
       ) : (
         <Text onPress={showMenu} style={textStyle}>
@@ -100,7 +159,7 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item}) => {
         </Text>
       )}
       <Menu visible={visible} onRequestClose={hideMenu}>
-        <MenuItem onPress={openReportPopup} textStyle={{color: themeColors.text}}>
+        <MenuItem onPress={openReportPopup} textStyle={{ color: '#333333', fontWeight: 'bold' }}>
           Report
         </MenuItem>
       </Menu>
@@ -108,11 +167,14 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item}) => {
       <Modal
         transparent
         visible={showReportModal}
-        onRequestClose={() => animateModal(0)}>
+        onRequestClose={() => animateModal(0)}
+        onShow={() => textInputRef.current?.focus()}  // Focuses the TextInput immediately when modal shows
+      >
         <TouchableOpacity
           activeOpacity={1}
-          style={{flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)'}}
-          onPress={() => animateModal(0)}>
+          style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+          onPress={() => animateModal(0)}
+        >
           <Animated.View
             style={{
               position: 'absolute',
@@ -123,29 +185,28 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item}) => {
               backgroundColor: themeColors.surface,
               borderRadius: 20,
               padding: 20,
-              transform: [
-                {translateX: -150},
-                {translateY: -100},
-                {translateY: modalAnimation},
-              ],
+              transform: [{ translateX: -150 }, { translateY: -100 }, { translateY: modalAnimation }],
               opacity: modalOpacityAnimation,
-            }}>
+            }}
+          >
             <Text
               style={{
                 marginBottom: 13,
                 fontSize: 20,
                 color: themeColors.text,
                 fontWeight: 'bold',
-              }}>
+              }}
+            >
               Report Lyrics:
             </Text>
             <ScrollView
-              style={{marginBottom: 10}}
+              style={{ marginBottom: 10 }}
               contentContainerStyle={{
                 borderColor: '#ccc',
                 backgroundColor: themeColors.background,
                 borderRadius: 10,
-              }}>
+              }}
+            >
               <TextInput
                 ref={textInputRef}
                 value={reportText}
@@ -153,7 +214,6 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item}) => {
                 placeholder="Enter your report"
                 placeholderTextColor={themeColors.placeholder}
                 multiline
-                autoFocus
                 style={{
                   flex: 1,
                   backgroundColor: themeColors.inputBackground || '#f0f0f0',
@@ -164,17 +224,110 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item}) => {
               />
             </ScrollView>
             <Pressable
-              style={({pressed}) => ({
-                backgroundColor: pressed ? '#673ae2' : themeColors.primary,
+              disabled={isSubmitting}
+              style={({ pressed }) => ({
+                backgroundColor: isSubmitting ? '#999' : pressed ? '#673ae2' : themeColors.primary,
                 borderRadius: 10,
                 alignItems: 'center',
                 justifyContent: 'center',
                 paddingVertical: 10,
                 paddingHorizontal: 20,
+                flexDirection: 'row',
               })}
-              onPress={submitReport}>
-              <Text style={{color: '#fff', fontWeight: 'bold'}}>Submit</Text>
+              onPress={submitReport}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator size="small" color="#fff" style={{ marginRight: 10 }} />
+              ) : null}
+              <Text style={{ color: '#fff', fontWeight: 'bold' }}>
+                {isSubmitting ? 'Submitting...' : 'Submit'}
+              </Text>
             </Pressable>
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Combined Alert Modal for both Success and Error */}
+      <Modal transparent visible={alertModal.visible} onRequestClose={closeAlertModal}>
+        <TouchableOpacity
+          activeOpacity={1}
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+          onPress={closeAlertModal}
+        >
+          <Animated.View
+            style={{
+              width: '80%',
+              maxWidth: 300,
+              backgroundColor: themeColors.surface,
+              borderRadius: 20,
+              padding: 20,
+              elevation: 5,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+              transform: [
+                { scale: scaleAnimation },
+                {
+                  translateY: alertAnimation.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [20, 0],
+                  }),
+                },
+              ],
+              opacity: alertAnimation,
+            }}
+          >
+            <View style={{ alignItems: 'center' }}>
+              <Animated.View
+                style={{
+                  transform: [
+                    {
+                      scale: alertAnimation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.5, 1],
+                      }),
+                    },
+                  ],
+                }}
+              >
+                {alertModal.type === 'success' ? (
+                  <Icon name="check-circle" size={60} color={themeColors.primary} />
+                ) : (
+                  <Icon name="error" size={60} color="#F44336" />
+                )}
+              </Animated.View>
+              <Text
+                style={{
+                  marginTop: 15,
+                  marginBottom: 10,
+                  fontSize: 22,
+                  color: themeColors.text,
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  letterSpacing: 0.5,
+                }}
+              >
+                {alertModal.type === 'success' ? 'Success!' : 'Error'}
+              </Text>
+              <Text
+                style={{
+                  color: themeColors.text,
+                  textAlign: 'center',
+                  marginBottom: 15,
+                  fontSize: 16,
+                  opacity: 0.9,
+                  lineHeight: 22,
+                }}
+              >
+                {alertModal.message}
+              </Text>
+            </View>
           </Animated.View>
         </TouchableOpacity>
       </Modal>
