@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import {View, ScrollView, Dimensions} from 'react-native';
+import {View, ScrollView, Dimensions, RefreshControl} from 'react-native';
 import ItemGrid from '../../components/ItemGrid';
 import {getFromAsyncStorage} from '../../config/DataService';
 import { ThemeContext } from '../../../App';
@@ -9,6 +9,7 @@ const CategoryDisplay = ({navigation}) => {
   const [tirthData, setTirthData] = useState([]);
   const [artistData, setArtistData] = useState([]);
   const [tirtankarData, setTirtankarData] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const formatData = (data, startIndex = 0) => {
     if (!Array.isArray(data)) return [];
@@ -34,6 +35,11 @@ const CategoryDisplay = ({navigation}) => {
     }
   };
 
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    loadData().finally(() => setRefreshing(false));
+  }, []);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -48,6 +54,14 @@ const CategoryDisplay = ({navigation}) => {
           minHeight: Dimensions.get('window').height * 0.5
         }}
         showsVerticalScrollIndicator={true}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[themeColors.primary]}
+            tintColor={themeColors.primary}
+          />
+        }
       >
         <ItemGrid
           navigation={navigation}
