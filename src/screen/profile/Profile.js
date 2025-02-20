@@ -7,6 +7,7 @@ import Suggestion from './Suggestion';
 import Search from '../../components/Search';
 import List from '../../components/List';
 import Settings from './Settings';
+import Collections from './Collections';
 import { ThemeContext } from '../../../App';
 
 const Stack = createNativeStackNavigator();
@@ -44,8 +45,10 @@ const Profile = () => {
         },
       }}>
       <Stack.Screen name="ProfileDisplay" component={ProfileDisplay} options={{ headerTitle: 'Profile' }} />
+      <Stack.Screen name="Collections" component={Collections} options={{ headerTitle: 'My Collections' }} />
       <Stack.Screen name="SavedLyrics" component={List} initialParams={{ collectionName: "saved", Tags: "tags" }} />
       <Stack.Screen name="Suggestion" component={Suggestion} />
+      <Stack.Screen name="List" component={List} />
       <Stack.Screen name="Details" component={DetailPage} />
       <Stack.Screen name="Search" component={Search} />
       <Stack.Screen name="Settings" component={Settings} />

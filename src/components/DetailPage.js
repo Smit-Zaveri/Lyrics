@@ -9,6 +9,9 @@ import {
   PanResponder,
   StyleSheet,
   TouchableOpacity,
+  Modal,
+  TextInput,
+  FlatList,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FAB } from '@rneui/themed';
@@ -66,6 +69,11 @@ const DetailPage = ({ route, navigation }) => {
   // States to handle slider seeking
   const [isSeeking, setIsSeeking] = useState(false);
   const [seekValue, setSeekValue] = useState(0);
+
+  const [collections, setCollections] = useState([]);
+  const [showCollectionsModal, setShowCollectionsModal] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState('');
+  const slideUpAnim = useRef(new Animated.Value(0)).current;
 
   const scrollViewRef = useRef(null);
   const progressIntervalRef = useRef(null);
@@ -226,41 +234,22 @@ const DetailPage = ({ route, navigation }) => {
 
   const [fabAnim] = useState(new Animated.Value(1));
 
-  const handleFABClick = async () => {
-    try {
-      setIsSaved(prevSaved => !prevSaved);
-      Animated.sequence([
-        Animated.timing(fabAnim, {
-          toValue: 0.7,
-          duration: 150,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(fabAnim, {
-          toValue: 1,
-          duration: 150,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]).start();
+  const handleFABClick = () => {
+    setShowCollectionsModal(true);
+    Animated.spring(slideUpAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 50,
+      friction: 8
+    }).start();
+  };
 
-      const savedData = await AsyncStorage.getItem('cachedData_saved');
-      let savedLyrics = savedData !== null ? JSON.parse(savedData) : [];
-      if (isSaved) {
-        savedLyrics = savedLyrics.filter(lyric => lyric.id !== song?.id);
-        savedLyrics = savedLyrics.map((lyric, index) => ({
-          ...lyric,
-          numbering: index + 1,
-        }));
-      } else {
-        const newNumbering = savedLyrics.length + 1;
-        let updatedSong = { ...song, numbering: newNumbering };
-        savedLyrics.push(updatedSong);
-      }
-      await AsyncStorage.setItem('cachedData_saved', JSON.stringify(savedLyrics));
-    } catch (error) {
-      console.error('Error handling FAB click:', error);
-    }
+  const closeCollectionsModal = () => {
+    Animated.timing(slideUpAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true
+    }).start(() => setShowCollectionsModal(false));
   };
 
   const openYouTubeApp = () => {
@@ -402,6 +391,73 @@ const DetailPage = ({ route, navigation }) => {
     })();
   }, []);
 
+  // Load collections on mount
+  useEffect(() => {
+    loadCollections();
+  }, []);
+
+  const loadCollections = async () => {
+    try {
+      const savedCollections = await AsyncStorage.getItem('user_collections');
+      if (savedCollections) {
+        setCollections(JSON.parse(savedCollections));
+      }
+    } catch (error) {
+      console.error('Error loading collections:', error);
+    }
+  };
+
+  const createNewCollection = async () => {
+    if (!newCollectionName.trim()) return;
+
+    try {
+      const newCollection = {
+        id: Date.now().toString(),
+        name: newCollectionName.trim(),
+        songs: []
+      };
+      const updatedCollections = [...collections, newCollection];
+      await AsyncStorage.setItem('user_collections', JSON.stringify(updatedCollections));
+      setCollections(updatedCollections);
+      setNewCollectionName('');
+    } catch (error) {
+      console.error('Error creating collection:', error);
+    }
+  };
+
+  const toggleSongInCollection = async (collectionId) => {
+    try {
+      const updatedCollections = collections.map(collection => {
+        if (collection.id === collectionId) {
+          const songExists = collection.songs.some(s => s.id === song.id);
+          if (songExists) {
+            // Remove song and reorder remaining songs
+            collection.songs = collection.songs
+              .filter(s => s.id !== song.id)
+              .map((s, index) => ({
+                ...s,
+                order: index + 1
+              }));
+          } else {
+            // Add song with next order number
+            collection.songs = [
+              ...collection.songs,
+              {
+                ...song,
+                order: collection.songs.length + 1
+              }
+            ];
+          }
+        }
+        return collection;
+      });
+      await AsyncStorage.setItem('user_collections', JSON.stringify(updatedCollections));
+      setCollections(updatedCollections);
+    } catch (error) {
+      console.error('Error updating collection:', error);
+    }
+  };
+
   if (!song) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: themeColors.background }}>
@@ -509,13 +565,91 @@ const DetailPage = ({ route, navigation }) => {
       )}
       <FAB
         style={{ transform: [{ scale: fabAnim }] }}
-        icon={() => (
-          <MaterialCommunityIcons name={isSaved ? 'heart' : 'heart-outline'} color="#fff" size={25} />
-        )}
+        icon={() => {
+          const isInAnyCollection = collections.some(collection => 
+            collection.songs?.some(s => s.id === song?.id)
+          );
+          return (
+            <MaterialCommunityIcons 
+              name={isInAnyCollection ? 'bookmark' : 'bookmark-outline'} 
+              color="#fff" 
+              size={25} 
+            />
+          );
+        }}
         color={themeColors.primary}
         placement="right"
         onPress={handleFABClick}
       />
+
+      <Modal
+        visible={showCollectionsModal}
+        transparent
+        animationType="none"
+        onRequestClose={closeCollectionsModal}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={closeCollectionsModal}
+        >
+          <Animated.View
+            style={[
+              styles.collectionsModal,
+              {
+                backgroundColor: themeColors.surface,
+                transform: [{
+                  translateY: slideUpAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [600, 0]
+                  })
+                }]
+              }
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: themeColors.text }]}>Save to Collection</Text>
+            </View>
+
+            <View style={styles.newCollectionInput}>
+              <TextInput
+                style={[styles.input, { color: themeColors.text, borderColor: themeColors.border }]}
+                placeholder="Create new collection..."
+                placeholderTextColor={themeColors.placeholder}
+                value={newCollectionName}
+                onChangeText={setNewCollectionName}
+              />
+              <TouchableOpacity
+                style={[styles.createButton, { backgroundColor: themeColors.primary }]}
+                onPress={createNewCollection}
+              >
+                <Text style={{ color: '#fff' }}>Create</Text>
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={collections}
+              keyExtractor={item => item.id}
+              renderItem={({ item }) => {
+                const isSavedInCollection = item.songs?.some(s => s.id === song?.id);
+                return (
+                  <TouchableOpacity
+                    style={[styles.collectionItem, { borderBottomColor: themeColors.border }]}
+                    onPress={() => toggleSongInCollection(item.id)}
+                  >
+                    <Text style={[styles.collectionName, { color: themeColors.text }]}>{item.name}</Text>
+                    <MaterialCommunityIcons
+                      name={isSavedInCollection ? 'check-circle' : 'circle-outline'}
+                      size={24}
+                      color={isSavedInCollection ? themeColors.primary : themeColors.text}
+                    />
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -549,6 +683,52 @@ const styles = StyleSheet.create({
     color: 'red',
     marginTop: 5,
     fontSize: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  collectionsModal: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  newCollectionInput: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginRight: 10,
+  },
+  createButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    justifyContent: 'center',
+  },
+  collectionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  collectionName: {
+    fontSize: 16,
   },
 });
 

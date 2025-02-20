@@ -50,13 +50,15 @@ Join the community of music lovers and elevate your listening experience today! 
         </View>
       </TouchableOpacity>
 
-      {/* Saved Lyrics Button */}
-      <TouchableOpacity onPress={() => navigation.navigate('SavedLyrics')}>
+      {/* Collections Button */}
+      <TouchableOpacity onPress={() => navigation.navigate('Collections')}>
         <View style={styles.item}>
-          <Icon name="favorite" color={themeColors.primary} size={25} />
-          <Text style={[styles.text, {color: themeColors.text}]}>Saved</Text>
+          <Icon name="collections-bookmark" color={themeColors.primary} size={25} />
+          <Text style={[styles.text, {color: themeColors.text}]}>My Collections</Text>
         </View>
       </TouchableOpacity>
+
+      
 
       {/* Suggestion Button */}
       <TouchableOpacity onPress={() => navigation.navigate('Suggestion')}>

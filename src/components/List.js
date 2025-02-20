@@ -16,7 +16,7 @@ import EmptyList from './EmptyList';
 import { ThemeContext } from '../../App';
 
 const List = ({ route }) => {
-  const { collectionName, Tags, title } = route.params;
+  const { collectionName, Tags, title, customLyrics } = route.params;
   const navigation = useNavigation();
   const { themeColors } = useContext(ThemeContext);
 
@@ -32,17 +32,24 @@ const List = ({ route }) => {
     const filteredItems = lyrics.filter(item =>
       tags.every(
         selectedTag =>
-          item.tags.some(
+          item.tags?.some(
             tag => tag.toLowerCase() === selectedTag.toLowerCase(),
-          ) || item.collectionName.toLowerCase() === selectedTag.toLowerCase(),
+          ) || item.collectionName?.toLowerCase() === selectedTag.toLowerCase(),
       ),
     );
 
-    // Preserve original numbering while sorting by filtered order
-    return filteredItems.map((item, index) => ({
+    // Sort by order if it exists, otherwise use existing logic
+    const sortedItems = filteredItems.sort((a, b) => {
+      if (a.order && b.order) {
+        return a.order - b.order;
+      }
+      return (a.numbering || 0) - (b.numbering || 0);
+    });
+
+    return sortedItems.map((item, index) => ({
       ...item,
-      displayNumbering: item.numbering, // Keep original numbering for display
-      filteredIndex: index + 1, // Add filtered index for navigation
+      displayNumbering: item.order || item.numbering,
+      filteredIndex: index + 1,
     }));
   };
 
@@ -51,36 +58,44 @@ const List = ({ route }) => {
       setIsLoading(true);
       setRefreshing(true);
 
-      const fetchedDataTags = await getFromAsyncStorage(Tags);
-      const fetchedDataLyrics = await getFromAsyncStorage(collectionName);
+      if (customLyrics) {
+        // If we have custom lyrics (from a collection), use those
+        setLyrics(customLyrics);
+        setTags([]);
+      } else {
+        // Otherwise load from AsyncStorage as before
+        const fetchedDataTags = await getFromAsyncStorage(Tags);
+        const fetchedDataLyrics = await getFromAsyncStorage(collectionName);
 
-      const tagsArray = Array.isArray(fetchedDataTags) ? fetchedDataTags : [];
-      const sortedTags = [...tagsArray].sort(
-        (a, b) => (a.numbering || 0) - (b.numbering || 0),
-      );
+        const tagsArray = Array.isArray(fetchedDataTags) ? fetchedDataTags : [];
+        const sortedTags = [...tagsArray].sort(
+          (a, b) => (a.numbering || 0) - (b.numbering || 0),
+        );
 
-      const allLyrics = Array.isArray(fetchedDataLyrics)
-        ? fetchedDataLyrics
-        : [];
-      const hasValidOrder = allLyrics.every(
-        (item, index, arr) =>
-          item.order !== undefined &&
-          item.order !== null &&
-          typeof item.order === 'number' &&
-          arr.filter(({order}) => order === item.order).length === 1,
-      );
+        const allLyrics = Array.isArray(fetchedDataLyrics)
+          ? fetchedDataLyrics
+          : [];
+        
+        const hasValidOrder = allLyrics.every(
+          (item, index, arr) =>
+            item.order !== undefined &&
+            item.order !== null &&
+            typeof item.order === 'number' &&
+            arr.filter(({order}) => order === item.order).length === 1,
+        );
 
-      const lyricsWithNumbering = hasValidOrder
-        ? allLyrics
-            .sort((a, b) => a.order - b.order)
-            .map(item => ({...item, numbering: item.order}))
-        : allLyrics.map((item, index) => ({
-            ...item,
-            numbering: index + 1,
-          }));
+        const lyricsWithNumbering = hasValidOrder
+          ? allLyrics
+              .sort((a, b) => a.order - b.order)
+              .map(item => ({...item, numbering: item.order}))
+          : allLyrics.map((item, index) => ({
+              ...item,
+              numbering: index + 1,
+            }));
 
-      setLyrics(lyricsWithNumbering);
-      setTags(sortedTags);
+        setLyrics(lyricsWithNumbering);
+        setTags(sortedTags);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -148,21 +163,23 @@ const List = ({ route }) => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
       <View style={{flexGrow: 0, flexShrink: 0}}>
-        {/* Tag List */}
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={tags}
-          keyExtractor={item => item.id?.toString()}
-          renderItem={({item}) => (
-            <TagItem
-              item={item}
-              selectedTags={selectedTags}
-              onTagPress={handleTagPress}
-              themeColors={themeColors}
-            />
-          )}
-        />
+        {/* Only show tags if not using customLyrics */}
+        {!customLyrics && (
+          <FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={tags}
+            keyExtractor={item => item.id?.toString()}
+            renderItem={({item}) => (
+              <TagItem
+                item={item}
+                selectedTags={selectedTags}
+                onTagPress={handleTagPress}
+                themeColors={themeColors}
+              />
+            )}
+          />
+        )}
 
         {/* Lyrics List */}
         <FlatList
