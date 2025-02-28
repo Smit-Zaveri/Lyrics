@@ -1,6 +1,6 @@
 {
   "name": "@lyrics/lyrics",
-  "version": "0.0.1",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "android:release": "cd android && gradlew.bat installRelease",
@@ -8,7 +8,8 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "version-bump": "node scripts/version-bump.js"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.1.1",
