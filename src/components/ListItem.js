@@ -2,7 +2,7 @@ import React from 'react';
 import {Pressable, View, Text, StyleSheet} from 'react-native';
 
 const ListItem = ({item, themeColors, onItemPress, searchTerms, highlightFunction}) => {
-  const {numbering, title, content, publishDate, newFlag} = item;
+  const {numbering, order, title, content, publishDate, newFlag} = item;
   const currentDate = new Date();
   const publishDateTime = publishDate?.seconds
     ? new Date(publishDate.seconds * 1000)
@@ -13,6 +13,17 @@ const ListItem = ({item, themeColors, onItemPress, searchTerms, highlightFunctio
     : null;
 
   const isNew = newFlag && timeDiff !== null && timeDiff >= 0 && timeDiff < 7;
+
+  // Get display number safely handling null values
+  const getDisplayNumber = () => {
+    if (order !== null && order !== undefined) {
+      return order.toString();
+    } else if (numbering !== null && numbering !== undefined) {
+      return numbering.toString();
+    } else {
+      return "-"; // Default value when both are null/undefined
+    }
+  };
 
   return (
     <Pressable
@@ -35,7 +46,7 @@ const ListItem = ({item, themeColors, onItemPress, searchTerms, highlightFunctio
                 borderColor: themeColors.primary, // Border color
               },
             ]}>
-            {numbering.toString()}
+            {getDisplayNumber()}
           </Text>
         </View>
         <View style={styles.detailsContainer}>

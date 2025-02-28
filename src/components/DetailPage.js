@@ -471,10 +471,9 @@ const DetailPage = ({ route, navigation }) => {
       {
         translateX: slideAnim.interpolate({
           inputRange: [-1, 0, 1],
-          outputRange: [-100, 0, 100],
+          outputRange: [1, 0, -1],
         }),
       },
-      { scale: scaleAnim },
     ],
     opacity: opacityAnim,
   };
