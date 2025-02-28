@@ -7,9 +7,9 @@ import {
   Modal,
   TouchableOpacity,
   Animated,
+  ScrollView,
 } from 'react-native';
 import { Controller, useForm } from 'react-hook-form';
-import dayjs from 'dayjs';
 import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -32,23 +32,40 @@ const InputField = ({
       control={control}
       rules={rules}
       render={({field: {onChange, onBlur, value}}) => (
-        <TextInput
-          style={[
-            styles.input,
-            multiline && styles.textArea,
-            {backgroundColor: themeColors.surface, color: themeColors.text},
-          ]}
-          placeholder={placeholder}
-          placeholderTextColor={themeColors.placeholder}
-          onBlur={onBlur}
-          onChangeText={onChange}
-          value={value}
-          multiline={multiline}
-          numberOfLines={numberOfLines}
-        />
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={[
+              styles.input,
+              multiline && styles.textArea,
+              {
+                backgroundColor: themeColors.surface, 
+                color: themeColors.text, 
+                borderColor: themeColors.border,
+                borderWidth: 1,
+              },
+            ]}
+            placeholder={placeholder}
+            placeholderTextColor={themeColors.placeholder}
+            onBlur={onBlur}
+            onChangeText={onChange}
+            value={value}
+            multiline={multiline}
+            numberOfLines={numberOfLines}
+          />
+        </View>
       )}
       name={name}
     />
+  );
+};
+
+const ErrorMessage = ({ message, show }) => {
+  if (!show) return null;
+  return (
+    <View style={styles.errorContainer}>
+      <Icon name="error-outline" size={14} color="#ff4d4d" style={styles.errorIcon} />
+      <Text style={styles.error}>{message}</Text>
+    </View>
   );
 };
 
@@ -68,15 +85,14 @@ const Suggestion = () => {
     defaultValues: {
       title: '',
       content: '',
-      publishDate: '',
       collection: '',
     },
+    mode: 'onBlur',
   });
 
-  const [date, setDate] = useState(dayjs());
   const [collections, setCollections] = useState([]);
   const [collectionDropdownOpen, setCollectionDropdownOpen] = useState(false);
-  const [selectedCollection, setSelectedCollection] = useState(null);
+  const [selectedCollection, setSelectedCollection] = useState('other');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const showAlert = (type, message) => {
@@ -129,7 +145,7 @@ const Suggestion = () => {
         const collectionsRef = collection(db, 'collections');
         const snapshot = await getDocs(collectionsRef);
         const collectionData = snapshot.docs.map(doc => ({
-          label: doc.data().displayName || doc.data().name,
+          label: doc.data().displayName  + ' (' + doc.data().name + ')'  || doc.data().name,
           value: doc.data().name,
         }));
         setCollections(collectionData);
@@ -148,13 +164,10 @@ const Suggestion = () => {
     try {
       const suggestionsRef = collection(db, 'suggestions_new');
       await addDoc(suggestionsRef, {
-        ...data,
-        publishDate: date.toDate(),
-        status: 'pending',
-        createdAt: serverTimestamp(),
+        ...data
       });
       reset();
-      setSelectedCollection(null);
+      setSelectedCollection("other");
       showAlert('success', 'Your suggestion has been submitted successfully!');
     } catch (error) {
       console.error('Error submitting suggestion:', error);
@@ -165,9 +178,14 @@ const Suggestion = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+    <ScrollView 
+      style={[styles.container, { backgroundColor: themeColors.background }]}
+      contentContainerStyle={styles.contentContainer}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.form}>
-        {collections.length > 0 && (
+        <View style={styles.fieldWrapper}>
+          <Text style={[styles.fieldLabel, { color: themeColors.text }]}>Collection</Text>
           <DropDownPicker
             open={collectionDropdownOpen}
             value={selectedCollection}
@@ -177,19 +195,26 @@ const Suggestion = () => {
             onChangeValue={(value) => {
               setValue('collection', value);
             }}
+            placeholder="Select a collection"
             style={{
               backgroundColor: themeColors.surface,
               borderColor: themeColors.border,
+              borderWidth: 1,
+              borderRadius: 8,
             }}
             textStyle={{
               color: themeColors.text,
+              fontSize: 16,
             }}
             placeholderStyle={{
               color: themeColors.placeholder,
+              fontSize: 16,
             }}
             dropDownContainerStyle={{
               backgroundColor: themeColors.surface,
               borderColor: themeColors.border,
+              borderWidth: 1,
+              borderRadius: 8,
             }}
             theme={themeColors.background === '#1E1E2F' ? 'DARK' : 'LIGHT'}
             listItemContainerStyle={{
@@ -200,41 +225,57 @@ const Suggestion = () => {
             }}
             selectedItemLabelStyle={{
               color: themeColors.text,
+              fontWeight: 'bold',
             }}
             listItemLabelStyle={{
               color: themeColors.text,
             }}
+            zIndex={3000}
+            zIndexInverse={1000}
             listMode="SCROLLVIEW"
           />
-        )}
+          <ErrorMessage message="Please select a collection" show={errors.collection || (!selectedCollection && errors.collection)} />
+        </View>
 
-        <InputField
-          control={control}
-          name="title"
-          placeholder="Title"
-          rules={{required: true}}
-          themeColors={themeColors}
-        />
-        {errors.title && <Text style={styles.error}>Title is required.</Text>}
+        <View style={styles.fieldWrapper}>
+          <Text style={[styles.fieldLabel, { color: themeColors.text }]}>Title</Text>
+          <InputField
+            control={control}
+            name="title"
+            placeholder="Enter a title for your suggestion"
+            rules={{ required: 'Title is required' }}
+            themeColors={themeColors}
+          />
+          <ErrorMessage message={errors.title?.message || "Title is required"} show={errors.title} />
+        </View>
 
-        <InputField
-          control={control}
-          name="content"
-          placeholder="Content"
-          rules={{required: true}}
-          multiline
-          numberOfLines={4}
-          themeColors={themeColors}
-        />
-        {errors.content && (
-          <Text style={styles.error}>Content is required.</Text>
-        )}
+        <View style={styles.fieldWrapper}>
+          <Text style={[styles.fieldLabel, { color: themeColors.text }]}>Content</Text>
+          <InputField
+            control={control}
+            name="content"
+            placeholder="Describe your suggestion in detail"
+            rules={{ required: 'Content is required' }}
+            multiline
+            numberOfLines={6}
+            themeColors={themeColors}
+          />
+          <ErrorMessage message={errors.content?.message || "Content is required"} show={errors.content} />
+        </View>
 
         <Button
           mode="contained"
           disabled={isSubmitting}
-          onPress={handleSubmit(onSubmit)}
+          onPress={handleSubmit(data => {
+            // Validate all required fields
+            if (!data.collection) {
+              setValue('collection', '', { shouldValidate: true });
+              return showAlert('error', 'Please fill in all required fields');
+            }
+            onSubmit(data);
+          })}
           style={[styles.submitButton, { backgroundColor: themeColors.primary }]}
+          labelStyle={styles.buttonLabel}
           loading={isSubmitting}>
           {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
         </Button>
@@ -244,39 +285,28 @@ const Suggestion = () => {
       <Modal transparent visible={alertModal.visible} onRequestClose={closeAlertModal}>
         <TouchableOpacity
           activeOpacity={1}
-          style={{
-            flex: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
+          style={styles.modalOverlay}
           onPress={closeAlertModal}
         >
           <Animated.View
-            style={{
-              width: '80%',
-              maxWidth: 300,
-              backgroundColor: themeColors.surface,
-              borderRadius: 20,
-              padding: 20,
-              elevation: 5,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.25,
-              shadowRadius: 3.84,
-              transform: [
-                { scale: scaleAnimation },
-                {
-                  translateY: alertAnimation.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [20, 0],
-                  }),
-                },
-              ],
-              opacity: alertAnimation,
-            }}
+            style={[
+              styles.modalContent,
+              {
+                backgroundColor: themeColors.surface,
+                transform: [
+                  { scale: scaleAnimation },
+                  {
+                    translateY: alertAnimation.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [20, 0],
+                    }),
+                  },
+                ],
+                opacity: alertAnimation,
+              },
+            ]}
           >
-            <View style={{ alignItems: 'center' }}>
+            <View style={styles.modalInner}>
               <Animated.View
                 style={{
                   transform: [
@@ -296,27 +326,12 @@ const Suggestion = () => {
                 )}
               </Animated.View>
               <Text
-                style={{
-                  marginTop: 15,
-                  marginBottom: 10,
-                  fontSize: 22,
-                  color: themeColors.text,
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  letterSpacing: 0.5,
-                }}
+                style={[styles.alertTitle, { color: themeColors.text }]}
               >
                 {alertModal.type === 'success' ? 'Success!' : 'Error'}
               </Text>
               <Text
-                style={{
-                  color: themeColors.text,
-                  textAlign: 'center',
-                  marginBottom: 15,
-                  fontSize: 16,
-                  opacity: 0.9,
-                  lineHeight: 22,
-                }}
+                style={[styles.alertMessage, { color: themeColors.text }]}
               >
                 {alertModal.message}
               </Text>
@@ -324,45 +339,116 @@ const Suggestion = () => {
           </Animated.View>
         </TouchableOpacity>
       </Modal>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  contentContainer: {
     padding: 20,
+    paddingBottom: 40,
+  },
+  headerContainer: {
+    marginBottom: 30,
+    alignItems: 'center',
   },
   form: {
-    gap: 15,
+    gap: 25,
+  },
+  formTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  formSubtitle: {
+    fontSize: 16,
+    opacity: 0.7,
+    textAlign: 'center',
+  },
+  fieldLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    letterSpacing: 0.5,
+  },
+  fieldWrapper: {
+    marginBottom: 5,
+  },
+  inputContainer: {
+    marginTop: 5,
   },
   input: {
-    borderRadius: 5,
-    padding: 10,
-    marginTop: 5,
+    borderRadius: 8,
+    padding: 14,
+    fontSize: 16,
   },
   textArea: {
-    height: 100,
+    height: 150,
     textAlignVertical: 'top',
   },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    marginLeft: 4,
+  },
+  errorIcon: {
+    marginRight: 5,
+  },
   error: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: 5,
-  },
-  dateButton: {
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 20,
-  },
-  dateButtonText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontSize: 16,
+    color: '#ff4d4d',
+    fontSize: 13,
   },
   submitButton: {
     marginTop: 20,
-    borderRadius: 5,
+    borderRadius: 8,
+    paddingVertical: 6,
+    elevation: 2,
+  },
+  buttonLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+    paddingVertical: 2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '80%',
+    maxWidth: 300,
+    borderRadius: 20,
+    padding: 24,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  modalInner: {
+    alignItems: 'center',
+  },
+  alertTitle: {
+    marginTop: 15,
+    marginBottom: 10,
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  alertMessage: {
+    textAlign: 'center',
+    marginBottom: 15,
+    fontSize: 16,
+    opacity: 0.9,
+    lineHeight: 22,
   },
 });
 
