@@ -28,17 +28,35 @@ const HomeList = () => {
     }
     try {
       const collections = await getFromAsyncStorage('collections');
-      if (collections) {
-        setData(collections.sort((a, b) => a.numbering - b.numbering));
+      if (collections && collections.length > 0) {
+        // Make sure collections is an array before sorting
+        const sortedCollections = [...collections].sort((a, b) => 
+          (a.numbering || 0) - (b.numbering || 0)
+        );
+        setData(sortedCollections);
       } else {
-        await refreshAllData();
-        const refreshedCollections = await getFromAsyncStorage('collections');
-        setData(refreshedCollections.sort((a, b) => a.numbering - b.numbering));
+        const isConnected = await refreshAllData();
+        if (isConnected) {
+          const refreshedCollections = await getFromAsyncStorage('collections');
+          // Make sure refreshedCollections is an array before sorting
+          if (refreshedCollections && refreshedCollections.length > 0) {
+            const sortedCollections = [...refreshedCollections].sort((a, b) => 
+              (a.numbering || 0) - (b.numbering || 0)
+            );
+            setData(sortedCollections);
+          } else {
+            setData([]);
+          }
+        } else {
+          // No internet connection and no cached data
+          setData([]);
+          setError("No internet connection. Please connect to the internet and try again.");
+        }
       }
-      setError(null);
     } catch (error) {
       console.error('Error loading data:', error);
-      setError(error.message);
+      setError(`Error loading data: ${error.message}`);
+      setData([]);
     } finally {
       setIsLoading(false);
       if (isRefresh) setRefreshing(false);
@@ -104,6 +122,11 @@ const HomeList = () => {
       <View
         style={[styles.centered, {backgroundColor: themeColors.background}]}>
         <Text style={{color: themeColors.error}}>{error}</Text>
+        <Pressable
+          onPress={() => loadData(true)}
+          style={[styles.retryButton, {backgroundColor: themeColors.primary}]}>
+          <Text style={styles.retryText}>Retry</Text>
+        </Pressable>
       </View>
     );
   }
@@ -111,23 +134,31 @@ const HomeList = () => {
   return (
     <SafeAreaView
       style={[styles.flex, {backgroundColor: themeColors.background}]}>
-      <FlatList
-        contentContainerStyle={{backgroundColor: themeColors.background}}
-        data={data}
-        keyExtractor={item => item.id.toString()}
-        renderItem={renderItem}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => loadData(true)}
-          />
-        }
-        getItemLayout={(data, index) => ({
-          length: 70,
-          offset: 70 * index,
-          index,
-        })}
-      />
+      {data.length > 0 ? (
+        <FlatList
+          contentContainerStyle={{backgroundColor: themeColors.background}}
+          data={data}
+          keyExtractor={item => item.id.toString()}
+          renderItem={renderItem}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => loadData(true)}
+            />
+          }
+          getItemLayout={(data, index) => ({
+            length: 70,
+            offset: 70 * index,
+            index,
+          })}
+        />
+      ) : (
+        <View style={[styles.centered, {backgroundColor: themeColors.background}]}>
+          <Text style={{color: themeColors.text}}>
+            No collections available. Pull down to refresh.
+          </Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -156,7 +187,13 @@ const styles = StyleSheet.create({
   },
   detailsContainer: {flex: 1},
   title: {fontWeight: 'bold', fontSize: 16},
-  error: {color: 'red'},
+  retryButton: {
+    marginTop: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  retryText: {color: '#fff', fontWeight: 'bold'},
 });
 
 export default HomeList;

@@ -35,20 +35,39 @@ const fetchCollectionGroups = async () => {
 };
 
 const loadGroupsFromStorage = async () => {
-  const storedGroups = await AsyncStorage.getItem('collectionGroups');
-  const storedAll = await AsyncStorage.getItem('allGroups');
-  if (storedGroups && storedAll) {
-    collectionGroups = JSON.parse(storedGroups);
-    all = JSON.parse(storedAll);
-    return true;
+  try {
+    const storedGroups = await AsyncStorage.getItem('collectionGroups');
+    const storedAll = await AsyncStorage.getItem('allGroups');
+    if (storedGroups && storedAll) {
+      collectionGroups = JSON.parse(storedGroups);
+      all = JSON.parse(storedAll);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Error loading groups from storage:', error);
+    return false;
   }
-  return false;
 };
 
 const initializeGroups = async () => {
-  const loadedFromStorage = await loadGroupsFromStorage();
-  if (!loadedFromStorage) {
-    await fetchCollectionGroups();
+  try {
+    const loadedFromStorage = await loadGroupsFromStorage();
+    if (!loadedFromStorage) {
+      const netInfo = await NetInfo.fetch();
+      if (netInfo.isConnected) {
+        await fetchCollectionGroups();
+      } else {
+        // Set to empty arrays if not available in storage and offline
+        collectionGroups = [];
+        all = [];
+      }
+    }
+  } catch (error) {
+    console.error('Error initializing groups:', error);
+    // Ensure we have safe defaults even on error
+    collectionGroups = [];
+    all = [];
   }
 };
 
@@ -79,28 +98,27 @@ const fetchAndStoreData = async collectionName => {
 const getFromAsyncStorage = async collectionName => {
   try {
     if (collectionGroups.length === 0) {
-      const netInfo = await NetInfo.fetch();
-      if (netInfo.isConnected) {
-        await initializeGroups();
-      } else {
-        return null;
-      }
+      await initializeGroups();
     }
 
     if (collectionName === 'all') {
-      return Promise.all(all.map(getFromAsyncStorage)).then(data =>
-        data.flat(),
+      const results = await Promise.all(
+        all.map(name => getFromAsyncStorage(name).catch(() => [])),
       );
+      return results.flat().filter(Boolean);
     }
 
     if (collectionGroups.includes(collectionName)) {
       const data = await AsyncStorage.getItem(
         `${DATA_KEY_PREFIX}${collectionName}`,
       );
-      return data ? JSON.parse(data) : null;
+      return data ? JSON.parse(data) : [];
     }
 
-    const allData = await Promise.all(all.map(getFromAsyncStorage));
+    const allData = await Promise.all(
+      all.map(name => getFromAsyncStorage(name).catch(() => [])),
+    );
+    
     return allData.flat().filter(item => {
       if (!item) return false;
       const tags = Array.isArray(item.tags) ? item.tags : [];
@@ -112,14 +130,28 @@ const getFromAsyncStorage = async collectionName => {
     });
   } catch (error) {
     console.error(`Error retrieving ${collectionName}:`, error);
-    throw error;
+    // Return empty array instead of null when there's an error
+    return [];
   }
 };
 
 const refreshAllData = async () => {
-  const netInfo = await NetInfo.fetch();
-  if (netInfo.isConnected) {
-    await Promise.all(collectionGroups.map(fetchAndStoreData));
+  try {
+    const netInfo = await NetInfo.fetch();
+    if (netInfo.isConnected) {
+      await initializeGroups();
+      await Promise.all(collectionGroups.map(name => 
+        fetchAndStoreData(name).catch(err => {
+          console.error(`Error refreshing ${name}:`, err);
+          return [];
+        })
+      ));
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Error refreshing all data:', error);
+    return false;
   }
 };
 

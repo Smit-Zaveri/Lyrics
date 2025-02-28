@@ -46,10 +46,18 @@ const ItemGrid = ({navigation, title, data, redirect, layout}) => {
   const totalPadding = spacing * (numColumns + 1);
   const itemWidth = (windowDimensions.width - totalPadding) / 3;
 
-  const sortedData = useMemo(
-    () => [...data].sort((a, b) => a.numbering - b.numbering),
-    [data],
-  );
+  const sortedData = useMemo(() => {
+    // Ensure data is a valid array before sorting
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return [];
+    }
+    return [...data].sort((a, b) => {
+      // Handle cases where numbering could be undefined
+      const numA = a.numbering !== undefined ? a.numbering : 0;
+      const numB = b.numbering !== undefined ? b.numbering : 0;
+      return numA - numB;
+    });
+  }, [data]);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -100,7 +108,7 @@ const ItemGrid = ({navigation, title, data, redirect, layout}) => {
                   },
                 ]}>
                 <Text style={[styles.placeholderText, {color: themeColors.text}]}>
-                  {item.name.charAt(0)}
+                  {item.name && item.name.charAt(0)}
                 </Text>
               </View>
             )}
@@ -132,17 +140,25 @@ const ItemGrid = ({navigation, title, data, redirect, layout}) => {
           </TouchableOpacity>
         </View>
       )}
-      <FlatList
-        style={styles.flatListStyle}
-        contentContainerStyle={isSingleLayout ? styles.horizontalContent : styles.gridContent}
-        showsHorizontalScrollIndicator={false}
-        horizontal={isSingleLayout}
-        numColumns={isSingleLayout ? 1 : numColumns}
-        data={sortedData}
-        renderItem={renderItem}
-        keyExtractor={(item, index) => index.toString()}
-        key={numColumns}
-      />
+      {sortedData.length > 0 ? (
+        <FlatList
+          style={styles.flatListStyle}
+          contentContainerStyle={isSingleLayout ? styles.horizontalContent : styles.gridContent}
+          showsHorizontalScrollIndicator={false}
+          horizontal={isSingleLayout}
+          numColumns={isSingleLayout ? 1 : numColumns}
+          data={sortedData}
+          renderItem={renderItem}
+          keyExtractor={(item, index) => index.toString()}
+          key={numColumns}
+        />
+      ) : (
+        <View style={styles.emptyContainer}>
+          <Text style={[styles.emptyText, {color: themeColors.text}]}>
+            No items available
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -201,6 +217,16 @@ const styles = StyleSheet.create({
   gridContent: {
     padding: 8,
   },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  emptyText: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
 });
 
 ItemGrid.propTypes = {
@@ -211,11 +237,16 @@ ItemGrid.propTypes = {
       name: PropTypes.string.isRequired,
       displayName: PropTypes.string,
       picture: PropTypes.string,
-      numbering: PropTypes.number.isRequired,
+      numbering: PropTypes.number,
     }),
-  ).isRequired,
+  ),
   redirect: PropTypes.string.isRequired,
   layout: PropTypes.oneOf(['single', 'grid']).isRequired,
+};
+
+// Set default props to prevent errors with null data
+ItemGrid.defaultProps = {
+  data: [],
 };
 
 export default React.memo(ItemGrid);
