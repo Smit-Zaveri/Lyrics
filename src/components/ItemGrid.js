@@ -29,7 +29,13 @@ const getTagType = title => {
   }
 };
 
-const ItemGrid = ({navigation, title, data, redirect, layout}) => {
+const ItemGrid = ({
+  navigation,
+  title,
+  data = [], // Default parameter instead of defaultProps
+  redirect,
+  layout
+}) => {
   const { themeColors } = useContext(ThemeContext);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const isSingleLayout = layout === 'single';
@@ -196,6 +202,7 @@ const styles = StyleSheet.create({
   imageStyle: {
     borderRadius: 100,
     marginBottom: 8,
+    backgroundColor:'#E0E0E0'
   },
   placeholderImage: {
     justifyContent: 'center',
@@ -242,11 +249,6 @@ ItemGrid.propTypes = {
   ),
   redirect: PropTypes.string.isRequired,
   layout: PropTypes.oneOf(['single', 'grid']).isRequired,
-};
-
-// Set default props to prevent errors with null data
-ItemGrid.defaultProps = {
-  data: [],
 };
 
 export default React.memo(ItemGrid);
