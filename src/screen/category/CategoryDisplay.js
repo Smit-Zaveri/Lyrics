@@ -3,9 +3,11 @@ import {View, ScrollView, Dimensions, RefreshControl} from 'react-native';
 import ItemGrid from '../../components/ItemGrid';
 import {getFromAsyncStorage} from '../../config/DataService';
 import { ThemeContext } from '../../../App';
+import { LanguageContext } from '../../context/LanguageContext';
 
 const CategoryDisplay = ({navigation}) => {
   const { themeColors } = useContext(ThemeContext);
+  const { getString, language } = useContext(LanguageContext); // Add language here
   const [tirthData, setTirthData] = useState([]);
   const [artistData, setArtistData] = useState([]);
   const [tirtankarData, setTirtankarData] = useState([]);
@@ -13,12 +15,20 @@ const CategoryDisplay = ({navigation}) => {
 
   const formatData = (data, startIndex = 0) => {
     if (!Array.isArray(data)) return [];
-    return data.map((item, index) => ({
-      ...item,
-      name: item.name || item.displayName || '',
-      displayName: item.displayName || item.name || '',
-      numbering: item.numbering || startIndex + index + 1,
-    }));
+    return data.map((item, index) => {
+      // Get localized display name if available
+      let displayName = item.displayName;
+      if (Array.isArray(item.displayName)) {
+        displayName = getString(item.displayName);
+      }
+      
+      return {
+        ...item,
+        name: item.name || displayName || '',
+        displayName: displayName || item.name || '',
+        numbering: item.numbering || startIndex + index + 1,
+      };
+    });
   };
 
   const loadData = async () => {
@@ -42,7 +52,14 @@ const CategoryDisplay = ({navigation}) => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [language]); // Add language dependency to refresh data when language changes
+
+  // Get localized section titles
+  const titles = {
+    tirth: ['તીર્થ', 'तीर्थ', 'Tirth'],
+    tirthankar: ['24 તીર્થંકર', '24 तीर्थंकर', '24 Tirthankar'],
+    artist: ['કલાકારો', 'कलाकार', 'Artists']
+  };
 
   return (
     <View style={{flex: 1, backgroundColor: themeColors.background}}>
@@ -64,25 +81,31 @@ const CategoryDisplay = ({navigation}) => {
         }
       >
         <ItemGrid
+          key={`tirth-${language}`}
           navigation={navigation}
           redirect={'List'}
-          title="Tirth"
+          title={titles.tirth}
           data={tirthData}
           layout="single"
+          language={language} // Add language prop
         />
         <ItemGrid
+          key={`tirthankar-${language}`}
           navigation={navigation}
           redirect={'List'}
-          title="24 Tirthenkar"
+          title={titles.tirthankar}
           data={tirtankarData}
           layout="single"
+          language={language} // Add language prop
         />
         <ItemGrid
+          key={`artist-${language}`}
           navigation={navigation}
           redirect={'List'}
-          title="Artist"
+          title={titles.artist}
           data={artistData}
           layout="single"
+          language={language} // Add language prop
         />
       </ScrollView>
     </View>

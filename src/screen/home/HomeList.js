@@ -12,10 +12,12 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import {getFromAsyncStorage, refreshAllData} from '../../config/DataService';
 import { ThemeContext } from '../../../App';
+import { LanguageContext } from '../../context/LanguageContext';
 
 const HomeList = () => {
   const navigation = useNavigation();
   const { themeColors } = useContext(ThemeContext);
+  const { getString } = useContext(LanguageContext);
 
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,46 +69,67 @@ const HomeList = () => {
     loadData();
   }, [loadData]);
 
+  // Get localized display name based on the user's language preference
+  const getLocalizedDisplayName = (item) => {
+    // Check if displayName is an array for multi-language support
+    if (Array.isArray(item.displayName)) {
+      return getString(item.displayName);
+    }
+    
+    // Fallback to the regular displayName if it exists
+    if (item.displayName) {
+      return item.displayName;
+    }
+    
+    // Final fallback to the collection name
+    return item.name;
+  };
+
   const handleItemPress = useCallback(
     item => () => {
+      const localizedDisplayName = getLocalizedDisplayName(item);
       navigation.navigate('List', {
         collectionName: item.name,
         Tags: 'tags',
-        title: item.displayName || item.name,
+        title: localizedDisplayName,
       });
     },
-    [navigation],
+    [navigation, getString],
   );
 
-  const renderItem = ({item}) => (
-    <Pressable
-      onPress={handleItemPress(item)}
-      style={({pressed}) => [
-        styles.itemContainer,
-        {
-          backgroundColor: pressed
-            ? themeColors.surface
-            : themeColors.background,
-        },
-      ]}>
-      <View style={styles.leftContainer}>
-        <View style={styles.numberingContainer}>
-          <Text
-            style={[
-              styles.numberingText,
-              {backgroundColor: themeColors.primary, color: '#fff'},
-            ]}>
-            {item.numbering}
-          </Text>
+  const renderItem = ({item}) => {
+    const displayName = getLocalizedDisplayName(item);
+    
+    return (
+      <Pressable
+        onPress={handleItemPress(item)}
+        style={({pressed}) => [
+          styles.itemContainer,
+          {
+            backgroundColor: pressed
+              ? themeColors.surface
+              : themeColors.background,
+          },
+        ]}>
+        <View style={styles.leftContainer}>
+          <View style={styles.numberingContainer}>
+            <Text
+              style={[
+                styles.numberingText,
+                {backgroundColor: themeColors.primary, color: '#fff'},
+              ]}>
+              {item.numbering}
+            </Text>
+          </View>
+          <View style={styles.detailsContainer}>
+            <Text style={[styles.title, {color: themeColors.text}]}>
+              {displayName}
+            </Text>
+          </View>
         </View>
-        <View style={styles.detailsContainer}>
-          <Text style={[styles.title, {color: themeColors.text}]}>
-            {item.displayName}
-          </Text>
-        </View>
-      </View>
-    </Pressable>
-  );
+      </Pressable>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -174,16 +197,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   leftContainer: {flexDirection: 'row', alignItems: 'center', flex: 1},
-  numberingContainer: {justifyContent: 'center', alignItems: 'center'},
+  numberingContainer: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
   numberingText: {
-    marginRight: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    width: 40,
+    height: 40,
+    lineHeight: 40,
+    fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
     borderRadius: 20,
-    width: 40,
-    height: 40,
+    overflow: 'hidden',
   },
   detailsContainer: {flex: 1},
   title: {fontWeight: 'bold', fontSize: 16},

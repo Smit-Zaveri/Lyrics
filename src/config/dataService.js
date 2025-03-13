@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { collection, getDocs, doc, getDoc } from '@firebase/firestore';
 import { db } from '../firebase/config';
 import NetInfo from '@react-native-community/netinfo';
+import { LANGUAGES } from '../context/LanguageContext';
 
 const DATA_KEY_PREFIX = 'cachedData_';
 let collectionGroups = [];
@@ -95,7 +96,7 @@ const fetchAndStoreData = async collectionName => {
   }
 };
 
-const getFromAsyncStorage = async collectionName => {
+const getFromAsyncStorage = async (collectionName, languageIndex = LANGUAGES.ENGLISH) => {
   try {
     if (collectionGroups.length === 0) {
       await initializeGroups();
@@ -103,7 +104,7 @@ const getFromAsyncStorage = async collectionName => {
 
     if (collectionName === 'all') {
       const results = await Promise.all(
-        all.map(name => getFromAsyncStorage(name).catch(() => [])),
+        all.map(name => getFromAsyncStorage(name, languageIndex).catch(() => [])),
       );
       return results.flat().filter(Boolean);
     }
@@ -116,16 +117,24 @@ const getFromAsyncStorage = async collectionName => {
     }
 
     const allData = await Promise.all(
-      all.map(name => getFromAsyncStorage(name).catch(() => [])),
+      all.map(name => getFromAsyncStorage(name, languageIndex).catch(() => [])),
     );
     
     return allData.flat().filter(item => {
       if (!item) return false;
+      
+      // Handle tags for filtering
       const tags = Array.isArray(item.tags) ? item.tags : [];
-      const artist = item.artist || '';
+      
+      // Handle artist which could be a string or potentially an array in the future
+      let artistMatches = false;
+      if (typeof item.artist === 'string') {
+        artistMatches = item.artist.toLowerCase().includes(collectionName.toLowerCase());
+      }
+      
       return (
         tags.some(tag => tag?.toLowerCase() === collectionName.toLowerCase()) ||
-        artist.toLowerCase().includes(collectionName.toLowerCase())
+        artistMatches
       );
     });
   } catch (error) {
@@ -133,6 +142,52 @@ const getFromAsyncStorage = async collectionName => {
     // Return empty array instead of null when there's an error
     return [];
   }
+};
+
+// Get content in the user's preferred language
+const getContentInLanguage = (item, languageIndex = LANGUAGES.ENGLISH) => {
+  if (!item) return null;
+  
+  // Create a copy of the item to avoid mutating the original
+  const processedItem = {...item};
+  
+  // Process title - convert from array to string based on language
+  if (Array.isArray(processedItem.title)) {
+    if (languageIndex >= 0 && languageIndex < processedItem.title.length) {
+      processedItem.titleDisplay = processedItem.title[languageIndex];
+    } else {
+      // Fallback to first non-empty title
+      processedItem.titleDisplay = processedItem.title.find(t => t) || '';
+    }
+  } else if (typeof processedItem.title === 'string') {
+    // Handle legacy data format
+    processedItem.titleDisplay = processedItem.title;
+  } else {
+    processedItem.titleDisplay = '';
+  }
+  
+  // Process content - convert from array to string based on language
+  if (Array.isArray(processedItem.content)) {
+    if (languageIndex >= 0 && languageIndex < processedItem.content.length) {
+      processedItem.contentDisplay = processedItem.content[languageIndex];
+    } else {
+      // Fallback to first non-empty content
+      processedItem.contentDisplay = processedItem.content.find(c => c) || '';
+    }
+  } else if (typeof processedItem.content === 'string') {
+    // Handle legacy data format
+    processedItem.contentDisplay = processedItem.content;
+  } else {
+    processedItem.contentDisplay = '';
+  }
+  
+  return processedItem;
+};
+
+// Get data with content in the specified language
+const getLocalizedData = async (collectionName, languageIndex = LANGUAGES.ENGLISH) => {
+  const data = await getFromAsyncStorage(collectionName);
+  return data.map(item => getContentInLanguage(item, languageIndex));
 };
 
 const refreshAllData = async () => {
@@ -158,6 +213,8 @@ const refreshAllData = async () => {
 export {
   fetchAndStoreData,
   getFromAsyncStorage,
+  getContentInLanguage,
+  getLocalizedData,
   refreshAllData,
   initializeGroups,
 };

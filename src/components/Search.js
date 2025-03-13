@@ -24,27 +24,28 @@ import {colors} from '../theme/Theme';
 import EmptyList from './EmptyList';
 import ListItem from './ListItem';
 import { ThemeContext } from '../../App';
+import { LanguageContext } from '../context/LanguageContext';
 
 // Precompiled regex patterns for suggestion fixes
 const camelCaseRegex = /([a-z])([A-Z])/g;
 const devanagariRegex = /([a-zA-Z])([\u0A80-\u0AFF])/g;
 
 // Helper function to escape regex special characters in search terms
-const escapeRegExp = string => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRegex = term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const Search = ({route}) => {
-  const navigation = useNavigation();
-  const searchbarRef = useRef(null);
-  const { currentTheme, themeColors } = useContext(ThemeContext);
   const {collectionName} = route.params;
+  const navigation = useNavigation();
+  const { themeColors } = useContext(ThemeContext);
+  const { getString } = useContext(LanguageContext);
+  const searchbarRef = useRef(null);
 
+  const [searchQuery, setSearchQuery] = useState('');
   const [lyrics, setLyrics] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Focus the Searchbar after a short delay when the component mounts
   useEffect(() => {
     const focusTimeout = setTimeout(() => {
       searchbarRef.current?.focus();
@@ -52,167 +53,192 @@ const Search = ({route}) => {
     return () => clearTimeout(focusTimeout);
   }, []);
 
-  // Load lyrics from storage and update suggestions.
-  const loadLyrics = useCallback(async () => {
-    setLoading(true);
-    setRefreshing(true);
+  // Function to get content in the user's selected language
+  const getLocalizedContent = (item) => {
+    if (!item) return '';
+    
+    // Handle array-based content structure
+    if (Array.isArray(item.content)) {
+      return getString(item.content);
+    }
+    
+    // Fallback to string-based content for backward compatibility
+    return item.content;
+  };
+
+  // Function to get title in the user's selected language
+  const getLocalizedTitle = (item) => {
+    if (!item) return '';
+    
+    // Handle array-based title structure
+    if (Array.isArray(item.title)) {
+      return getString(item.title);
+    }
+    
+    // Fallback to string-based title for backward compatibility
+    return item.title;
+  };
+
+  // Get suggestions based on the lyrics data
+  const generateSuggestions = useCallback(lyricsData => {
+    const suggestions = new Set();
+    lyricsData.forEach(item => {
+      // Add words from all language versions of title
+      if (Array.isArray(item.title)) {
+        item.title.forEach(titleVersion => {
+          if (titleVersion) {
+            titleVersion.split(' ').forEach(word => {
+              if (word.length > 2) {
+                suggestions.add(word);
+              }
+            });
+          }
+        });
+      } else if (item.title) {
+        item.title.split(' ').forEach(word => {
+          if (word.length > 2) {
+            suggestions.add(word);
+          }
+        });
+      }
+
+      // Add words from all language versions of content
+      if (Array.isArray(item.content)) {
+        item.content.forEach(contentVersion => {
+          if (contentVersion) {
+            contentVersion.split(' ').forEach(word => {
+              if (word.length > 2) {
+                suggestions.add(word);
+              }
+            });
+          }
+        });
+      } else if (item.content) {
+        item.content.split(' ').forEach(word => {
+          if (word.length > 2) {
+            suggestions.add(word);
+          }
+        });
+      }
+
+      // Add words from all language versions of tags
+      if (Array.isArray(item.tags)) {
+        item.tags.forEach(tag => {
+          if (Array.isArray(tag)) {
+            tag.forEach(tagVersion => {
+              if (tagVersion && tagVersion.length > 2) {
+                suggestions.add(tagVersion);
+              }
+            });
+          } else if (tag && tag.length > 2) {
+            suggestions.add(tag);
+          }
+        });
+      }
+    });
+
+    return Array.from(suggestions);
+  }, [getString]);
+
+  const loadData = useCallback(async () => {
     try {
-      const fetchedLyrics = await getFromAsyncStorage(collectionName);
-      const lyricsArray = Array.isArray(fetchedLyrics) ? fetchedLyrics : [];
-      const lyricsWithIndex = lyricsArray.map((item, index) => ({
-        ...item,
-        numbering: index + 1,
-      }));
-      setLyrics(lyricsWithIndex);
-      cacheSuggestions(lyricsWithIndex);
+      setLoading(true);
+      const fetchedData = await getFromAsyncStorage(collectionName);
+      if (fetchedData) {
+        setLyrics(fetchedData);
+        const newSuggestions = generateSuggestions(fetchedData);
+        setSuggestions(newSuggestions);
+      }
     } catch (error) {
-      console.error('Error loading lyrics:', error);
+      console.error('Error loading data:', error);
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
-  }, [collectionName]);
+  }, [collectionName, generateSuggestions]);
 
   useEffect(() => {
-    loadLyrics();
-  }, [collectionName, loadLyrics]);
+    loadData();
+  }, [loadData]);
 
-  // Cache suggestions by extracting words from selected fields
-  const cacheSuggestions = lyricsData => {
-    const wordSet = new Set();
-    lyricsData.forEach(lyric => {
-      const fields = ['title', 'content', 'artist', 'tags'];
-      fields.forEach(field => {
-        const text = lyric[field];
-        if (Array.isArray(text)) {
-          text.forEach(item => item && addWordsToSet(item, wordSet));
-        } else if (typeof text === 'string') {
-          addWordsToSet(text, wordSet);
-        }
-      });
-    });
-    
-    const fixedSuggestions = Array.from(wordSet)
-      .filter(Boolean)
-      .map(word => word
-        .replace(camelCaseRegex, '$1 $2')
-        .replace(devanagariRegex, '$1 $2')
-      );
-    setSuggestions(fixedSuggestions);
-  };
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    loadData().finally(() => setRefreshing(false));
+  }, [loadData]);
 
-  const addWordsToSet = (text, wordSet) => {
-    text
-      .split(/\s+/)
-      .map(word => word.trim().replace(/[^ઁ-૱\u0A80-\u0AFFa-zA-Z0-9]/g, ''))
-      .filter(Boolean)
-      .forEach(word => wordSet.add(word));
-  };
-
-  // Only update search query; filtering is derived via useMemo below.
-  const handleSearch = useCallback(text => {
-    setSearchQuery(text);
-  }, []);
-
-  // Updated filtering logic to add bonus if all search terms appear in the same field, including numbering
   const filteredLyrics = useMemo(() => {
     if (!searchQuery.trim()) return [];
-    
-    const terms = searchQuery.split(/\s+/).filter(Boolean);
-    const lowerCaseQuery = searchQuery.toLowerCase();
-    
-    const scoredLyrics = lyrics.map(item => {
-      let score = 0;
-      
-      // Helper function to check term matches
-      const checkTermMatches = (field, weight) => {
-        if (!field) return 0;
-        const lowerField = field.toLowerCase();
-        // Exact match bonus
-        if (lowerField.includes(lowerCaseQuery)) {
-          score += 10 * weight;
-        }
-        // Individual terms bonus
-        const matchingTerms = terms.filter(term => 
-          lowerField.includes(term.toLowerCase())
-        ).length;
-        score += matchingTerms * weight;
-      };
 
-      // Add numbering search
-      const numberQuery = parseInt(searchQuery);
-      if (!isNaN(numberQuery)) {
-        // Check both order and numbering properties
-        const itemNumber = item.order || item.numbering;
-        if (itemNumber === numberQuery) {
-          score += 100; // High priority for exact number matches
-        }
+    const terms = searchQuery
+      .toLowerCase()
+      .trim()
+      .split(' ')
+      .filter(Boolean)
+      .map(escapeRegex);
+
+    if (terms.length === 0) return [];
+
+    const searchRegexes = terms.map(term => new RegExp(term, 'gi'));
+
+    return lyrics
+      .filter(item => {
+        // Search in all language versions of title and content
+        const allTitles = Array.isArray(item.title) ? item.title.join(' ') : item.title || '';
+        const allContent = Array.isArray(item.content) ? item.content.join(' ') : item.content || '';
+        
+        // Get tags in all languages
+        const tags = Array.isArray(item.tags) 
+          ? item.tags.map(tag => Array.isArray(tag) ? tag.join(' ') : tag).join(' ')
+          : '';
+
+        const searchableText = `${allTitles} ${allContent} ${tags}`.toLowerCase();
+
+        return searchRegexes.every(regex => searchableText.match(regex));
+      })
+      .map((item, index) => ({
+        ...item,
+        displayNumbering: item.order || item.numbering || index + 1,
+        filteredIndex: index + 1,
+      }));
+  }, [searchQuery, lyrics]);
+
+  const highlightSearchTerms = useCallback((text, searchTerms) => {
+    if (!text || !searchTerms || searchTerms.length === 0) {
+      return text;
+    }
+
+    const regex = new RegExp(
+      `(${searchTerms.map(escapeRegex).join('|')})`,
+      'gi',
+    );
+
+    return text.split(regex).map((part, index) => {
+      if (regex.test(part)) {
+        return (
+          <Text key={index} style={[styles.highlight, {color: themeColors.text}]}>
+            {part}
+          </Text>
+        );
       }
+      return part;
+    });
+  }, [themeColors]);
 
-      // Prioritize matches: Title (highest), Content (medium), Tags (lowest)
-      checkTermMatches(item.title, 10);     // Title matches get 10x weight
-      checkTermMatches(item.content, 5);    // Content matches get 5x weight
-      if (Array.isArray(item.tags)) {
-        item.tags.forEach(tag => checkTermMatches(tag, 2)); // Tag matches get 2x weight
-      }
-      
-      return { item, score };
-    }).filter(({ score }) => score > 0);
-    
-    // Sort by score in descending order
-    scoredLyrics.sort((a, b) => b.score - a.score);
-    
-    // Add filtered index to search results
-    return scoredLyrics.map((obj, index) => ({
-      ...obj.item,
-      displayNumbering: obj.item.order || obj.item.numbering,
-      filteredIndex: index + 1
-    }));
-  }, [lyrics, searchQuery]);
+  const handleSearch = query => {
+    setSearchQuery(query);
+  };
 
-  // Update the search query when a suggestion is tapped.
   const handleSuggestionClick = suggestion => {
     setSearchQuery(suggestion);
   };
 
-  // Navigate to the details view for a lyric with proper filtered index
   const handleItemPress = item => {
-    const searchResults = filteredLyrics.map((lyric, index) => ({
-      ...lyric,
-      filteredIndex: index + 1
-    }));
     navigation.navigate('Details', {
-      Lyrics: searchResults,
-      itemNumberingparas: item.filteredIndex
+      Lyrics: filteredLyrics,
+      itemNumberingparas: item.filteredIndex,
     });
   };
 
-  const onRefresh = useCallback(() => {
-    loadLyrics();
-  }, [loadLyrics]);
-
-  // Updated highlightSearchTerms to use the first line that contains any search term (matchingLine logic) like the old behavior
-  const highlightSearchTerms = (text, terms) => {
-    if (!text) return null;
-    const lines = text.split('\n');
-    const matchingLine = lines.find(line => terms.some(term => line.toLowerCase().includes(term.toLowerCase())));
-    const lineToProcess = matchingLine || lines[0];
-    const escapedTerms = terms.map(term => escapeRegExp(term));
-    const regex = new RegExp(`(${escapedTerms.join('|')})`, 'gi');
-    const parts = lineToProcess.split(regex);
-    return parts.map((part, index) => {
-      const isMatch = terms.some(term => term.toLowerCase() === part.toLowerCase());
-      return isMatch ? (
-        <Text key={index} style={styles.highlight}>
-          {part}
-        </Text>
-      ) : (
-        part
-      );
-    });
-  };
-
-  // Update renderItem function to use ListItem component for consistent styling
+  // Update renderItem to use localized content
   const renderItem = ({item}) => {
     const terms = searchQuery.split(' ').filter(Boolean);
     return (
@@ -226,7 +252,7 @@ const Search = ({route}) => {
     );
   };
 
-  // Filter suggestions based on current search query.
+  // Filter suggestions based on current search query
   const filteredSuggestions = useMemo(
     () =>
       suggestions.filter(s =>
@@ -343,25 +369,28 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 6,
-    // Background will be overridden by theme
-    backgroundColor: '#ffffff',
   },
   leftContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-  numberingText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    backgroundColor: '#6200EE',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    textAlign: 'center',
-    textAlignVertical: 'center',
+  numberingContainer: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
+  },
+  numberingText: {
+    width: 40,
+    height: 40,
+    lineHeight: 40,
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   detailsContainer: {
     flex: 1,

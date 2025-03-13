@@ -5,14 +5,17 @@ import {
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
+  ScrollView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ThemeContext } from '../../../App';
+import { LanguageContext, LANGUAGES, LANGUAGE_NAMES } from '../../../src/context/LanguageContext';
 
 const Settings = () => {
   const [fontSize, setFontSize] = useState(18);
   const { themePreference, setThemePreference, themeColors } = useContext(ThemeContext);
+  const { language, setLanguage, languageName } = useContext(LanguageContext);
 
   useEffect(() => {
     loadSettings();
@@ -40,6 +43,10 @@ const Settings = () => {
 
   const handleThemeChange = (newTheme) => {
     setThemePreference(newTheme);
+  };
+  
+  const handleLanguageChange = (langValue) => {
+    setLanguage(langValue);
   };
 
   const ThemeOption = ({ theme, label, icon }) => (
@@ -69,36 +76,73 @@ const Settings = () => {
       </Text>
     </TouchableOpacity>
   );
+  
+  const LanguageOption = ({ langValue, label }) => (
+    <TouchableOpacity
+      onPress={() => handleLanguageChange(langValue)}
+      style={[
+        styles.themeOption,
+        {
+          backgroundColor: language === langValue ? themeColors.primary : 'transparent',
+          borderColor: themeColors.border,
+        },
+      ]}>
+      <Text
+        style={[
+          styles.themeText,
+          {
+            color: language === langValue ? '#fff' : themeColors.text,
+          },
+        ]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
-      {/* Font Size Settings */}
-      <View style={[styles.listItem, { borderBottomColor: themeColors.border }]}>
-        <Text style={[styles.title, { color: themeColors.text }]}>Font Size</Text>
-        <View style={styles.controls}>
-          <TouchableOpacity
-            onPress={() => handleFontSizeChange(Math.max(12, fontSize - 2))}
-            style={styles.button}>
-            <MaterialCommunityIcons name="minus" size={20} color={themeColors.primary} />
-          </TouchableOpacity>
-          <Text style={[styles.fontValue, { color: themeColors.text }]}>{fontSize}</Text>
-          <TouchableOpacity
-            onPress={() => handleFontSizeChange(Math.min(24, fontSize + 2))}
-            style={styles.button}>
-            <MaterialCommunityIcons name="plus" size={20} color={themeColors.primary} />
-          </TouchableOpacity>
+      <ScrollView>
+        {/* Font Size Settings */}
+        <View style={[styles.listItem, { borderBottomColor: themeColors.border }]}>
+          <Text style={[styles.title, { color: themeColors.text }]}>Font Size</Text>
+          <View style={styles.controls}>
+            <TouchableOpacity
+              onPress={() => handleFontSizeChange(Math.max(12, fontSize - 2))}
+              style={styles.button}>
+              <MaterialCommunityIcons name="minus" size={20} color={themeColors.primary} />
+            </TouchableOpacity>
+            <Text style={[styles.fontValue, { color: themeColors.text }]}>{fontSize}</Text>
+            <TouchableOpacity
+              onPress={() => handleFontSizeChange(Math.min(24, fontSize + 2))}
+              style={styles.button}>
+              <MaterialCommunityIcons name="plus" size={20} color={themeColors.primary} />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
-      {/* Theme Settings */}
-      <View style={[styles.listItem, { borderBottomColor: themeColors.border }]}>
-        <Text style={[styles.title, { color: themeColors.text }]}>Theme</Text>
-        <View style={styles.themeControls}>
-          <ThemeOption theme="light" label="Light" icon="white-balance-sunny" />
-          <ThemeOption theme="dark" label="Dark" icon="moon-waning-crescent" />
-          <ThemeOption theme="system" label="System" icon="theme-light-dark" />
+        {/* Language Settings */}
+        <View style={[styles.listItem, { borderBottomColor: themeColors.border }]}>
+          <Text style={[styles.title, { color: themeColors.text }]}>Language (ભાષા / भाषा)</Text>
+          <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>
+            Current: {languageName}
+          </Text>
+          <View style={styles.languageControls}>
+            <LanguageOption langValue={LANGUAGES.GUJARATI} label={LANGUAGE_NAMES[LANGUAGES.GUJARATI]} />
+            <LanguageOption langValue={LANGUAGES.HINDI} label={LANGUAGE_NAMES[LANGUAGES.HINDI]} />
+            <LanguageOption langValue={LANGUAGES.ENGLISH} label={LANGUAGE_NAMES[LANGUAGES.ENGLISH]} />
+          </View>
         </View>
-      </View>
+
+        {/* Theme Settings */}
+        <View style={[styles.listItem, { borderBottomColor: themeColors.border }]}>
+          <Text style={[styles.title, { color: themeColors.text }]}>Theme</Text>
+          <View style={styles.themeControls}>
+            <ThemeOption theme="light" label="Light" icon="white-balance-sunny" />
+            <ThemeOption theme="dark" label="Dark" icon="moon-waning-crescent" />
+            <ThemeOption theme="system" label="System" icon="theme-light-dark" />
+          </View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -118,6 +162,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  subtitle: {
+    fontSize: 14,
+    marginTop: -8,
+  },
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -132,6 +180,12 @@ const styles = StyleSheet.create({
   themeControls: {
     flexDirection: 'row',
     gap: 10,
+    flexWrap: 'wrap',
+  },
+  languageControls: {
+    flexDirection: 'row',
+    gap: 10,
+    flexWrap: 'wrap',
   },
   themeOption: {
     flexDirection: 'row',
@@ -140,6 +194,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 20,
     borderWidth: 1,
+    marginBottom: 8,
   },
   themeText: {
     fontSize: 14,

@@ -1,55 +1,29 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo, useContext, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useRef, useContext, useCallback, useLayoutEffect } from 'react';
 import {
-  ScrollView,
-  Text,
   View,
-  Linking,
-  Animated,
-  Easing,
-  PanResponder,
+  Text,
   StyleSheet,
   TouchableOpacity,
-  Modal,
+  ScrollView,
   TextInput,
+  Modal,
   FlatList,
+  Animated,
+  PanResponder,
+  Easing,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FAB } from '@rneui/themed';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Sound from 'react-native-sound';
 import CustomMaterialMenu from './CustomMaterialMenu';
-import { colors } from '../theme/Theme';
-import Slider from '@react-native-community/slider';
-import Share from 'react-native-share';
 import { ThemeContext } from '../../App';
+import { LanguageContext } from '../context/LanguageContext';
+import { Linking } from 'react-native';
 
-// --- Error Boundary Component ---
-class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-  componentDidCatch(error, errorInfo) {
-    console.error('Error caught in ErrorBoundary:', error, errorInfo);
-  }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-          <Text style={{ color: 'red', fontSize: 16 }}>Something went wrong.</Text>
-        </View>
-      );
-    }
-    return this.props.children;
-  }
-}
-
-// --- DetailPage Component ---
-const DetailPage = ({ route, navigation }) => {
+const DetailPage = ({navigation, route}) => {
   const { themeColors } = useContext(ThemeContext);
+  const { language, getString } = useContext(LanguageContext);
   const { itemNumberingparas, Lyrics } = route.params;
 
   const [itemNumbering, setItemNumbering] = useState(itemNumberingparas);
@@ -58,6 +32,7 @@ const DetailPage = ({ route, navigation }) => {
   const [slideAnim] = useState(new Animated.Value(0));
   const [opacityAnim] = useState(new Animated.Value(1));
   const [scaleAnim] = useState(new Animated.Value(1));
+  const [fabAnim] = useState(new Animated.Value(1));
   const [isPlaying, setIsPlaying] = useState(false);
   const [sound, setSound] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -97,82 +72,123 @@ const DetailPage = ({ route, navigation }) => {
     };
   }, []);
 
-  // Cleanup audio when sound changes
+  // Function to get content in the user's selected language
+  const getLocalizedContent = (item) => {
+    if (!item) return '';
+    
+    // Handle array-based content structure
+    if (Array.isArray(item.content)) {
+      return getString(item.content);
+    }
+    
+    // Fallback to string-based content for backward compatibility
+    return item.content;
+  };
+
+  // Function to get title in the user's selected language
+  const getLocalizedTitle = (item) => {
+    if (!item) return '';
+    
+    // Handle array-based title structure
+    if (Array.isArray(item.title)) {
+      return getString(item.title);
+    }
+    
+    // Fallback to string-based title for backward compatibility
+    return item.title;
+  };
+
+  // Function to get artist in the user's selected language
+  const getLocalizedArtist = (item) => {
+    if (!item) return '';
+    
+    // Handle array-based artist structure
+    if (Array.isArray(item.artist)) {
+      return getString(item.artist);
+    }
+    
+    // Fallback to string-based artist for backward compatibility
+    return item.artist;
+  };
+
+  // Load collections on mount
   useEffect(() => {
-    return () => {
-      if (sound) {
-        sound.stop();
-        sound.release();
-        setSound(null);
-        setIsPlaying(false);
-      }
-    };
-  }, [sound]);
+    loadCollections();
+  }, []);
 
-  // Update song based on numbering
-  const setSongByNumbering = useCallback(
-    numbering => {
-      try {
-        const foundSong = Lyrics.find(
-          song => song.filteredIndex === numbering
+  const loadCollections = async () => {
+    try {
+      const savedCollections = await AsyncStorage.getItem('user_collections');
+      if (savedCollections) {
+        setCollections(JSON.parse(savedCollections));
+      }
+    } catch (error) {
+      console.error('Error loading collections:', error);
+    }
+  };
+
+  // Check if song is saved in any collection
+  const checkIfSaved = useCallback(async () => {
+    if (!song) return;
+    
+    try {
+      const savedCollections = await AsyncStorage.getItem('user_collections');
+      if (savedCollections) {
+        const collections = JSON.parse(savedCollections);
+        const isSavedInAny = collections.some(collection => 
+          collection.songs?.some(s => s.id === song.id)
         );
-        return foundSong;
-      } catch (error) {
-        console.error('Error finding song by numbering:', error);
-        return null;
+        setIsSaved(isSavedInAny);
       }
-    },
-    [Lyrics]
-  );
+    } catch (error) {
+      console.error('Error checking saved status:', error);
+    }
+  }, [song]);
 
-  const headerOptions = useMemo(
+  useEffect(() => {
+    checkIfSaved();
+  }, [song, checkIfSaved]);
+
+  // Header options with localized title
+  const headerOptions = useCallback(
     () => ({
-      title: `${song?.displayNumbering}. ${song?.title}`,  // Use displayNumbering instead of numbering
+      headerTitle: `${itemNumbering}. ${getLocalizedTitle(song)}` || '',
       headerRight: () => (
         <CustomMaterialMenu
-          menuText="Menu"
-          textStyle={{ color: themeColors.text }}
-          navigation={navigation}
+          menuText=""
           item={song}
-          route={route}
           isIcon={true}
           theme={themeColors}
         />
       ),
     }),
-    [navigation, route, song, themeColors]
+    [navigation, route, song, themeColors, getString, itemNumbering]
   );
+
+  useLayoutEffect(() => {
+    navigation.setOptions(headerOptions());
+  }, [navigation, headerOptions]);
+
+  // Set song based on current numbering
+  const setSongByNumbering = useCallback((number) => {
+    return Lyrics.find(item => item.filteredIndex === number);
+  }, [Lyrics]);
 
   useEffect(() => {
     const foundSong = setSongByNumbering(itemNumbering);
     setSong(foundSong);
   }, [itemNumbering, setSongByNumbering]);
 
-  useEffect(() => {
-    checkIfSaved();
-  }, [song]);
-
-  useLayoutEffect(() => {
-    navigation.setOptions(headerOptions);
-  }, [navigation, headerOptions]);
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (evt, gestureState) =>
-        Math.abs(gestureState.dx) > Math.abs(gestureState.dy),
-      onPanResponderRelease: (e, gestureState) => {
-        if (gestureState.dx > 50) {
-          navigateSong('prev');
-        } else if (gestureState.dx < -50) {
-          navigateSong('next');
-        }
-      },
-    })
-  ).current;
-
+  // Handle song navigation with animations
   const navigateSong = direction => {
     try {
+      // Animate FAB out
+      Animated.timing(fabAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+
       if (sound && isPlaying) {
         sound.stop();
         sound.release();
@@ -210,174 +226,62 @@ const DetailPage = ({ route, navigation }) => {
           }
           return newIndex;
         });
-        slideAnim.setValue(0);
-        opacityAnim.setValue(1);
-        scaleAnim.setValue(1);
+
+        slideAnim.setValue(toValue * -1);
+
+        Animated.parallel([
+          Animated.timing(slideAnim, {
+            toValue: 0,
+            duration: 400,
+            easing: Easing.out(Easing.exp),
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacityAnim, {
+            toValue: 1,
+            duration: 300,
+            easing: Easing.out(Easing.exp),
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleAnim, {
+            toValue: 1,
+            duration: 300,
+            easing: Easing.out(Easing.exp),
+            useNativeDriver: true,
+          }),
+          Animated.timing(fabAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]).start();
       });
     } catch (error) {
       console.error('Error navigating song:', error);
+      // Reset FAB animation if error occurs
+      Animated.timing(fabAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
     }
   };
 
-  const checkIfSaved = useCallback(async () => {
-    try {
-      const savedData = await AsyncStorage.getItem('cachedData_saved');
-      if (savedData !== null) {
-        const savedLyrics = JSON.parse(savedData);
-        const isItemSaved = savedLyrics.some(lyric => lyric.id === song?.id);
-        setIsSaved(isItemSaved);
-      }
-    } catch (error) {
-      console.error('Error checking saved song:', error);
-    }
-  }, [song]);
-
-  const [fabAnim] = useState(new Animated.Value(1));
-
-  const handleFABClick = () => {
-    setShowCollectionsModal(true);
-    Animated.spring(slideUpAnim, {
-      toValue: 1,
-      useNativeDriver: true,
-      tension: 50,
-      friction: 8
-    }).start();
-  };
-
-  const closeCollectionsModal = () => {
-    Animated.timing(slideUpAnim, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true
-    }).start(() => setShowCollectionsModal(false));
-  };
-
-  const openYouTubeApp = () => {
-    try {
-      if (sound && isPlaying) {
-        sound.stop();
-        sound.release();
-        setSound(null);
-        setIsPlaying(false);
-      }
-      Linking.openURL(song?.youtube);
-    } catch (error) {
-      console.error('Error opening YouTube app:', error);
-    }
-  };
-
-  const shareSong = async () => {
-    try {
-      const shareOptions = {
-        message: `${song.title}\n\n${song.content}\n\n${song.artist || ''}`,
-        title: song.title,
-      };
-      await Share.open(shareOptions);
-    } catch (error) {
-      console.error('Error sharing song:', error);
-    }
-  };
-
-  // Auto-scroll effect (if enabled)
-  useEffect(() => {
-    let scrollInterval;
-    if (autoScroll && scrollViewRef.current) {
-      scrollInterval = setInterval(() => {
-        scrollViewRef.current.scrollTo({
-          y: progress * 2, // adjust multiplier as needed
-          animated: true,
-        });
-      }, 100);
-    }
-    return () => clearInterval(scrollInterval);
-  }, [autoScroll, progress]);
-
-  // Helper to format seconds as mm:ss
-  const formatTime = seconds => {
-    const minutes = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
-  };
-
-  // EFFECT FOR SMOOTH PROGRESS TRACKING
-  useEffect(() => {
-    try {
-      if (isPlaying && sound) {
-        progressIntervalRef.current = setInterval(() => {
-          sound.getCurrentTime(current => {
-            // Only update progress if user is not seeking
-            if (!isSeeking) {
-              setProgress(current);
-            }
-          });
-        }, 250);
-      } else if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-        progressIntervalRef.current = null;
-      }
-    } catch (error) {
-      console.error('Error tracking progress:', error);
-    }
-    return () => {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-        progressIntervalRef.current = null;
-      }
-    };
-  }, [isPlaying, sound, isSeeking]);
-
-  // Toggle audio playback with proper progress state management
-  const toggleAudio = () => {
-    if (!song?.mp3URL) return;
-    try {
-      if (sound) {
-        if (isPlaying) {
-          sound.pause(() => {
-            setIsPlaying(false);
-          });
-        } else {
-          setIsLoading(true);
-          sound.play(success => {
-            setIsLoading(false);
-            if (!success) {
-              setAudioError('Error playing audio');
-            }
-            setIsPlaying(false);
-            sound.release();
-            setSound(null);
-          });
-          setIsPlaying(true);
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (evt, gestureState) =>
+        Math.abs(gestureState.dx) > Math.abs(gestureState.dy),
+      onPanResponderRelease: (e, gestureState) => {
+        if (gestureState.dx > 50) {
+          navigateSong('prev');
+        } else if (gestureState.dx < -50) {
+          navigateSong('next');
         }
-      } else {
-        setIsLoading(true);
-        setAudioError(null);
-        const newSound = new Sound(song.mp3URL, null, error => {
-          setIsLoading(false);
-          if (error) {
-            console.error('Error loading sound:', error);
-            setAudioError('Error loading audio');
-            return;
-          }
-          setSound(newSound);
-          setDuration(newSound.getDuration());
-          newSound.play(success => {
-            if (!success) {
-              setAudioError('Error playing audio');
-            }
-            setIsPlaying(false);
-            newSound.release();
-            setSound(null);
-          });
-          setIsPlaying(true);
-        });
-      }
-    } catch (error) {
-      console.error('Error toggling audio:', error);
-      setAudioError('Unexpected error occurred');
-    }
-  };
+      },
+    })
+  ).current;
 
-  // Load font size from AsyncStorage
+  // Load font size from storage
   useEffect(() => {
     (async () => {
       try {
@@ -391,22 +295,7 @@ const DetailPage = ({ route, navigation }) => {
     })();
   }, []);
 
-  // Load collections on mount
-  useEffect(() => {
-    loadCollections();
-  }, []);
-
-  const loadCollections = async () => {
-    try {
-      const savedCollections = await AsyncStorage.getItem('user_collections');
-      if (savedCollections) {
-        setCollections(JSON.parse(savedCollections));
-      }
-    } catch (error) {
-      console.error('Error loading collections:', error);
-    }
-  };
-
+  // Collection management
   const createNewCollection = async () => {
     if (!newCollectionName.trim()) return;
 
@@ -429,32 +318,144 @@ const DetailPage = ({ route, navigation }) => {
     try {
       const updatedCollections = collections.map(collection => {
         if (collection.id === collectionId) {
-          const songExists = collection.songs.some(s => s.id === song.id);
-          if (songExists) {
-            // Remove song and reorder remaining songs
-            collection.songs = collection.songs
-              .filter(s => s.id !== song.id)
-              .map((s, index) => ({
-                ...s,
-                order: index + 1
-              }));
+          const songIndex = collection.songs?.findIndex(s => s.id === song.id);
+          if (songIndex === -1 || songIndex === undefined) {
+            // Add song to collection
+            return {
+              ...collection,
+              songs: [...(collection.songs || []), song]
+            };
           } else {
-            // Add song with next order number
-            collection.songs = [
-              ...collection.songs,
-              {
-                ...song,
-                order: collection.songs.length + 1
-              }
-            ];
+            // Remove song from collection
+            return {
+              ...collection,
+              songs: collection.songs.filter(s => s.id !== song.id)
+            };
           }
         }
         return collection;
       });
+
       await AsyncStorage.setItem('user_collections', JSON.stringify(updatedCollections));
       setCollections(updatedCollections);
+      await checkIfSaved();
     } catch (error) {
-      console.error('Error updating collection:', error);
+      console.error('Error toggling song in collection:', error);
+    }
+  };
+
+  // Show collections modal with animation
+  const handleFABClick = () => {
+    setShowCollectionsModal(true);
+    Animated.spring(slideUpAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 50,
+      friction: 7
+    }).start();
+  };
+
+  const closeCollectionsModal = () => {
+    Animated.timing(slideUpAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true
+    }).start(() => setShowCollectionsModal(false));
+  };
+
+  // Audio playback functions
+  const togglePlayback = async () => {
+    if (!song.audio) return;
+
+    try {
+      if (sound) {
+        if (isPlaying) {
+          sound.pause();
+          setIsPlaying(false);
+        } else {
+          sound.play((success) => {
+            if (!success) {
+              setAudioError('Playback failed');
+              setIsPlaying(false);
+            }
+          });
+          setIsPlaying(true);
+        }
+      } else {
+        setIsLoading(true);
+        const newSound = new Sound(song.audio, null, (error) => {
+          setIsLoading(false);
+          if (error) {
+            setAudioError('Error loading audio');
+            return;
+          }
+          setDuration(newSound.getDuration());
+          newSound.play((success) => {
+            if (!success) {
+              setAudioError('Playback failed');
+              setIsPlaying(false);
+            }
+          });
+          setSound(newSound);
+          setIsPlaying(true);
+
+          // Start progress tracking
+          if (progressIntervalRef.current) {
+            clearInterval(progressIntervalRef.current);
+          }
+          progressIntervalRef.current = setInterval(() => {
+            newSound.getCurrentTime((seconds) => {
+              if (!isSeeking) {
+                setProgress(seconds);
+                setSeekValue(seconds);
+              }
+            });
+          }, 100);
+        });
+      }
+    } catch (error) {
+      console.error('Error handling playback:', error);
+      setAudioError('Error playing audio');
+      setIsLoading(false);
+    }
+  };
+
+  const handleSeekComplete = async (value) => {
+    setIsSeeking(false);
+    if (sound) {
+      sound.setCurrentTime(value);
+      setProgress(value);
+    }
+  };
+
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const handleAutoScroll = () => {
+    setAutoScroll(!autoScroll);
+    if (!autoScroll && scrollViewRef.current) {
+      let position = 0;
+      const interval = setInterval(() => {
+        if (!autoScroll) {
+          clearInterval(interval);
+          return;
+        }
+        position += 1;
+        scrollViewRef.current.scrollTo({ y: position, animated: true });
+      }, 100);
+    }
+  };
+
+  const openYouTubeApp = async () => {
+    if (!song?.youtube) return;
+    
+    try {
+      await Linking.openURL(song.youtube);
+    } catch (error) {
+      console.error('Error opening YouTube:', error);
     }
   };
 
@@ -471,61 +472,61 @@ const DetailPage = ({ route, navigation }) => {
       {
         translateX: slideAnim.interpolate({
           inputRange: [-1, 0, 1],
-          outputRange: [1, 0, -1],
+          outputRange: [300, 0, -300],
         }),
       },
+      { scale: scaleAnim },
     ],
     opacity: opacityAnim,
   };
 
-  // Render audio controls with a circular play/pause button and a smooth slider
+  const displayContent = getLocalizedContent(song);
+
   const renderAudioControls = () => {
-    if (!song.mp3URL) return null;
+    if (!song.audio) return null;
+
     return (
       <View style={styles.audioContainer}>
-        <TouchableOpacity
-          style={[styles.playButton, { backgroundColor: themeColors.primary }]}
-          onPress={toggleAudio}
-          disabled={isLoading}>
-          <MaterialCommunityIcons
-            name={isLoading ? 'loading' : isPlaying ? 'pause' : 'play'}
-            size={28}
-            color="#fff"
-          />
-        </TouchableOpacity>
-        <View style={styles.sliderContainer}>
-          <Text style={[styles.timeText, { color: themeColors.text }]}>
-            {formatTime(isSeeking ? seekValue : progress)}
-          </Text>
-          <Slider
-            style={styles.slider}
-            minimumValue={0}
-            maximumValue={duration}
-            value={isSeeking ? seekValue : progress}
-            disabled={isLoading || !sound}
-            onValueChange={(value) => {
-              setIsSeeking(true);
-              setSeekValue(value);
-            }}
-            onSlidingComplete={(value) => {
-              try {
-                if (sound) {
-                  sound.setCurrentTime(value);
-                  setProgress(value);
-                }
-              } catch (error) {
-                console.error('Error seeking audio:', error);
-              }
-              setIsSeeking(false);
-            }}
-            minimumTrackTintColor={themeColors.primary}
-            maximumTrackTintColor={themeColors.text}
-          />
-          <Text style={[styles.timeText, { color: themeColors.text }]}>
-            {formatTime(duration)}
-          </Text>
-        </View>
-        {audioError ? <Text style={styles.errorText}>{audioError}</Text> : null}
+        {isLoading ? (
+          <ActivityIndicator size="large" color={themeColors.primary} />
+        ) : (
+          <TouchableOpacity
+            style={[styles.playButton, { backgroundColor: themeColors.primary }]}
+            onPress={togglePlayback}
+          >
+            <MaterialCommunityIcons
+              name={isPlaying ? 'pause' : 'play'}
+              size={30}
+              color="#fff"
+            />
+          </TouchableOpacity>
+        )}
+        {audioError && (
+          <Text style={styles.errorText}>{audioError}</Text>
+        )}
+        {sound && (
+          <View style={styles.sliderContainer}>
+            <Text style={[styles.timeText, { color: themeColors.text }]}>
+              {formatTime(progress)}
+            </Text>
+            <Slider
+              style={styles.slider}
+              minimumValue={0}
+              maximumValue={duration}
+              value={seekValue}
+              onValueChange={(value) => {
+                setIsSeeking(true);
+                setSeekValue(value);
+              }}
+              onSlidingComplete={handleSeekComplete}
+              minimumTrackTintColor={themeColors.primary}
+              maximumTrackTintColor={themeColors.border}
+            />
+            <Text style={[styles.timeText, { color: themeColors.text }]}>
+              {formatTime(duration)}
+            </Text>
+          </View>
+        )}
       </View>
     );
   };
@@ -540,46 +541,55 @@ const DetailPage = ({ route, navigation }) => {
             marginBottom: song.artist ? 10 : 0,
             color: themeColors.text,
           }}>
-          {song.artist ? 'રચનાર :' : ''} {song.artist}
+          {song.artist ? 'રચનાર :' : ''} {getLocalizedArtist(song)}
         </Text>
         <ScrollView
           ref={scrollViewRef}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 30 }}>
           <Text style={{ fontSize: fontSize, color: themeColors.text }} {...panResponder.panHandlers}>
-            {song.content}
+            {displayContent}
           </Text>
         </ScrollView>
         {renderAudioControls()}
       </Animated.View>
 
       {song.youtube && (
-        <FAB
-          icon={() => <MaterialCommunityIcons name="youtube" color="#fff" size={25} />}
-          color={themeColors.primary}
-          placement="right"
-          style={{ marginBottom: 82, borderRadius: 50 }}
-          onPress={openYouTubeApp}
-        />
+        <Animated.View 
+          style={[
+            styles.fabContainer,
+            styles.youtubeFab,
+            { opacity: fabAnim, transform: [{ scale: fabAnim }] }
+          ]}
+        >
+          <TouchableOpacity
+            style={[styles.fab, { backgroundColor: themeColors.primary }]}
+            onPress={openYouTubeApp}
+          >
+            <MaterialCommunityIcons name="youtube" color="#fff" size={25} />
+          </TouchableOpacity>
+        </Animated.View>
       )}
-      <FAB
-        style={{ transform: [{ scale: fabAnim }] }}
-        icon={() => {
-          const isInAnyCollection = collections.some(collection => 
-            collection.songs?.some(s => s.id === song?.id)
-          );
-          return (
-            <MaterialCommunityIcons 
-              name={isInAnyCollection ? 'bookmark' : 'bookmark-outline'} 
-              color="#fff" 
-              size={25} 
-            />
-          );
-        }}
-        color={themeColors.primary}
-        placement="right"
-        onPress={handleFABClick}
-      />
+
+      <Animated.View 
+        style={[
+          styles.fabContainer,
+          { opacity: fabAnim, transform: [{ scale: fabAnim }] }
+        ]}
+      >
+        <TouchableOpacity
+          style={[styles.fab, { backgroundColor: themeColors.primary }]}
+          onPress={handleFABClick}
+        >
+          <MaterialCommunityIcons 
+            name={collections.some(collection => 
+              collection.songs?.some(s => s.id === song?.id)
+            ) ? 'bookmark' : 'bookmark-outline'} 
+            color="#fff" 
+            size={25} 
+          />
+        </TouchableOpacity>
+      </Animated.View>
 
       <Modal
         visible={showCollectionsModal}
@@ -664,7 +674,6 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
   },
   sliderContainer: {
     flexDirection: 'row',
@@ -707,35 +716,49 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    height: 40,
     borderWidth: 1,
     borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
     marginRight: 10,
   },
   createButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 20,
+    height: 40,
     borderRadius: 8,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   collectionItem: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
+    alignItems: 'center',
+    paddingVertical: 15,
     borderBottomWidth: 1,
   },
   collectionName: {
     fontSize: 16,
   },
+  fabContainer: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  youtubeFab: {
+    marginBottom: 80,
+  },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
 
-// --- Export wrapped with Error Boundary ---
-export default function WrappedDetailPage(props) {
-  return (
-    <ErrorBoundary>
-      <DetailPage {...props} />
-    </ErrorBoundary>
-  );
-}
+export default DetailPage;

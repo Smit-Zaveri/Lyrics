@@ -13,6 +13,7 @@ import {
 import {Card} from 'react-native-elements';
 import PropTypes from 'prop-types';
 import { ThemeContext } from '../../App';
+import { LanguageContext } from '../context/LanguageContext';
 
 const {width} = Dimensions.get('window');
 
@@ -34,9 +35,11 @@ const ItemGrid = ({
   title,
   data = [], // Default parameter instead of defaultProps
   redirect,
-  layout
+  layout,
+  language // Add language prop
 }) => {
   const { themeColors } = useContext(ThemeContext);
+  const { getString } = useContext(LanguageContext); // Remove language from context
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const isSingleLayout = layout === 'single';
   const windowDimensions = useWindowDimensions();
@@ -73,71 +76,94 @@ const ItemGrid = ({
     }).start();
   }, [fadeAnim]);
 
+  // Updated getLocalizedDisplayName to be more responsive
+  const getLocalizedDisplayName = useCallback((item) => {
+    if (!item) return '';
+    
+    if (Array.isArray(item.displayName)) {
+      const localizedName = getString(item.displayName);
+      return localizedName || item.name || '';
+    }
+    
+    return item.displayName || item.name || '';
+  }, [getString]); // Remove language dependency since getString handles it
+
+  // Update handlePress to use the latest localized name
   const handlePress = useCallback(
     item => {
       navigation.navigate(redirect, {
         collectionName: item.name,
         Tags: getTagType(title),
-        title: item.displayName || item.name,
+        title: getLocalizedDisplayName(item),
       });
     },
-    [navigation, redirect, title],
+    [navigation, redirect, title, getLocalizedDisplayName], // Updated dependencies
   );
 
   const handleMorePress = useCallback(() => {
     navigation.navigate('FullGrid', {
-      data: sortedData,
-      title,
-      redirect,
+      title: title,
+      data: data,
     });
-  }, [navigation, sortedData, title, redirect]);
+  }, [navigation, title, data]);
 
+  // Add language as a dependency to force re-render when language changes
   const renderItem = useCallback(
-    ({item}) => (
-      <View style={styles.itemWrapper}>
-        <Animated.View style={[styles.itemContainer, {opacity: fadeAnim}]}>
-          <TouchableOpacity onPress={() => handlePress(item)}>
-            {item.picture ? (
-              <Image
-                source={{uri: item.picture}}
-                style={[styles.imageStyle, {width: itemWidth, height: itemWidth}]}
-                resizeMode="cover"
-              />
-            ) : (
-              <View
-                style={[
-                  styles.placeholderImage,
-                  {
-                    backgroundColor: themeColors.surface,
-                    width: itemWidth,
-                    height: itemWidth,
-                  },
-                ]}>
-                <Text style={[styles.placeholderText, {color: themeColors.text}]}>
-                  {item.name && item.name.charAt(0)}
-                </Text>
-              </View>
-            )}
-            <Text 
-              style={[styles.itemText, {color: themeColors.text}]}
-              numberOfLines={2}
-              ellipsizeMode="tail"
-            >
-              {item.displayName || item.name}
-            </Text>
-          </TouchableOpacity>
-        </Animated.View>
-      </View>
-    ),
-    [fadeAnim, handlePress, itemWidth, themeColors],
+    ({item}) => {
+      // Move displayText calculation inside render to ensure fresh value
+      const displayText = getLocalizedDisplayName(item);
+      
+      return (
+        <View style={styles.itemWrapper}>
+          <Animated.View style={[styles.itemContainer, {opacity: fadeAnim}]}>
+            <TouchableOpacity onPress={() => handlePress(item)}>
+              {item.picture ? (
+                <Image
+                  source={{uri: item.picture}}
+                  style={[styles.imageStyle, {width: itemWidth, height: itemWidth}]}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View
+                  style={[
+                    styles.placeholderImage,
+                    {
+                      backgroundColor: themeColors.surface,
+                      width: itemWidth,
+                      height: itemWidth,
+                    },
+                  ]}>
+                  <Text style={[styles.placeholderText, {color: themeColors.text}]}>
+                    {displayText.charAt(0)}
+                  </Text>
+                </View>
+              )}
+              <Text 
+                style={[styles.itemText, {color: themeColors.text}]}
+                numberOfLines={2}
+                ellipsizeMode="tail"
+              >
+                {displayText}
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      );
+    },
+    [fadeAnim, handlePress, itemWidth, themeColors, getLocalizedDisplayName],
   );
+
+  // Get localized title if it's an array
+  const localizedTitle = useMemo(() => {
+    return Array.isArray(title) ? getString(title) : title;
+  }, [title, getString, language]); // Add language as a dependency
 
   return (
     <View style={styles.container}>
       {isSingleLayout && (
         <View style={styles.cardHeadingStyle}>
           <Text style={[styles.cardHeadingTextStyle, {color: themeColors.text}]}>
-            {title}
+            {Array.isArray(title) ? getString(title) : title}
           </Text>
           <TouchableOpacity onPress={handleMorePress}>
             <Text style={[styles.moreLink, {color: themeColors.link}]}>
@@ -155,8 +181,9 @@ const ItemGrid = ({
           numColumns={isSingleLayout ? 1 : numColumns}
           data={sortedData}
           renderItem={renderItem}
-          keyExtractor={(item, index) => index.toString()}
-          key={numColumns}
+          keyExtractor={(item, index) => `${index.toString()}-${language}`}
+          key={`${numColumns}-${language}`}
+          extraData={language}
         />
       ) : (
         <View style={styles.emptyContainer}>
@@ -238,17 +265,33 @@ const styles = StyleSheet.create({
 
 ItemGrid.propTypes = {
   navigation: PropTypes.object.isRequired,
-  title: PropTypes.string.isRequired,
+  title: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.arrayOf(PropTypes.string)
+  ]).isRequired,
   data: PropTypes.arrayOf(
     PropTypes.shape({
       name: PropTypes.string.isRequired,
-      displayName: PropTypes.string,
+      displayName: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.arrayOf(PropTypes.string)
+      ]),
       picture: PropTypes.string,
       numbering: PropTypes.number,
     }),
   ),
   redirect: PropTypes.string.isRequired,
   layout: PropTypes.oneOf(['single', 'grid']).isRequired,
+  language: PropTypes.string.isRequired, // Add language prop type
 };
 
-export default React.memo(ItemGrid);
+export default React.memo(ItemGrid, (prevProps, nextProps) => {
+  // Custom comparison function to ensure re-render on language changes
+  return (
+    prevProps.title === nextProps.title &&
+    prevProps.data === nextProps.data &&
+    prevProps.layout === nextProps.layout &&
+    prevProps.redirect === nextProps.redirect &&
+    prevProps.language === nextProps.language // Add language comparison
+  );
+});

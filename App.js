@@ -10,6 +10,8 @@ import Profile from './src/screen/profile/Profile';
 import Category from './src/screen/category/Category';
 import { LogLevel, OneSignal } from 'react-native-onesignal';
 import { colors } from './src/theme/Theme';
+import { LanguageProvider, LanguageContext } from './src/context/LanguageContext';
+import LanguageSelectionModal from './src/components/LanguageSelectionModal';
 
 // Create bottom tab navigator
 const Tab = createMaterialBottomTabNavigator();
@@ -22,11 +24,12 @@ export const ThemeContext = createContext({
   themeColors: colors.light,
 });
 
-const App = () => {
+const AppContent = () => {
   // 1. All useState hooks
   const [showSplash, setShowSplash] = useState(true);
   const [themePreference, setThemePreference] = useState('system');
   const fadeAnim = useMemo(() => new Animated.Value(1), []);
+  const { isLanguageSelected } = React.useContext(LanguageContext);
   
   // 2. useColorScheme hook (external store)
   const systemTheme = useColorScheme();
@@ -90,13 +93,11 @@ const App = () => {
         console.error('Error loading theme preference:', error);
       }
     };
-
     loadThemePreference();
     
     const timer = setTimeout(() => {
       setShowSplash(false);
     }, 2000);
-
     return () => clearTimeout(timer);
   }, []);
 
@@ -105,13 +106,10 @@ const App = () => {
       OneSignal.Debug.setLogLevel(LogLevel.Verbose);
       OneSignal.initialize('c9a87eea-dc14-4e8b-a750-b59978073d9c');
       OneSignal.Notifications.requestPermission(true);
-
       const handleNotificationClick = event => {
         console.log('OneSignal: notification clicked:', event);
       };
-
       OneSignal.Notifications.addEventListener('click', handleNotificationClick);
-
       return () => {
         OneSignal.Notifications.removeEventListener('click', handleNotificationClick);
       };
@@ -124,6 +122,7 @@ const App = () => {
     return <SplashScreen />;
   }
 
+  // Show language selection modal if language not selected yet
   return (
     <ThemeContext.Provider value={themeContextValue}>
       <NavigationContainer>
@@ -131,6 +130,7 @@ const App = () => {
           backgroundColor={themeColors.primary}
           barStyle={currentTheme === 'dark' ? 'light-content' : 'dark-content'}
         />
+        <LanguageSelectionModal visible={!isLanguageSelected} />
         <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
           <Tab.Navigator
             barStyle={{ backgroundColor: themeColors.surface }}
@@ -165,6 +165,14 @@ const App = () => {
         </Animated.View>
       </NavigationContainer>
     </ThemeContext.Provider>
+  );
+};
+
+const App = () => {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 };
 

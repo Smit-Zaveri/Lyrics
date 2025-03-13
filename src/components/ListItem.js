@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import {Pressable, View, Text, StyleSheet} from 'react-native';
+import { LanguageContext } from '../context/LanguageContext';
 
 const ListItem = ({item, themeColors, onItemPress, searchTerms, highlightFunction}) => {
+  const { getString } = useContext(LanguageContext);
   const {numbering, order, title, content, publishDate, newFlag} = item;
   const currentDate = new Date();
   const publishDateTime = publishDate?.seconds
@@ -16,14 +18,38 @@ const ListItem = ({item, themeColors, onItemPress, searchTerms, highlightFunctio
 
   // Get display number safely handling null values
   const getDisplayNumber = () => {
-    if (order !== null && order !== undefined) {
+    if (item.displayNumbering !== null && item.displayNumbering !== undefined) {
+      return item.displayNumbering.toString();
+    } else if (order !== null && order !== undefined) {
       return order.toString();
     } else if (numbering !== null && numbering !== undefined) {
       return numbering.toString();
+    } else if (item.filteredIndex !== null && item.filteredIndex !== undefined) {
+      return item.filteredIndex.toString();
     } else {
-      return "-"; // Default value when both are null/undefined
+      return "1"; // Default to 1 instead of "-"
     }
   };
+
+  // Get title text in the user's preferred language
+  const getTitle = () => {
+    if (Array.isArray(title)) {
+      return getString(title);
+    }
+    return title;
+  };
+
+  // Get content text in the user's preferred language
+  const getContent = () => {
+    if (Array.isArray(content)) {
+      const localizedContent = getString(content);
+      return localizedContent.split('\n')[0];
+    }
+    return content ? content.split('\n')[0] : '';
+  };
+
+  const displayTitle = getTitle();
+  const displayContent = getContent();
 
   return (
     <Pressable
@@ -55,16 +81,16 @@ const ListItem = ({item, themeColors, onItemPress, searchTerms, highlightFunctio
             numberOfLines={1}
             ellipsizeMode="tail">
             {highlightFunction && searchTerms
-              ? highlightFunction(title, searchTerms)
-              : title}
+              ? highlightFunction(displayTitle, searchTerms)
+              : displayTitle}
           </Text>
           <Text
             style={[styles.content, {color: themeColors.text}]}
             numberOfLines={1}
             ellipsizeMode="tail">
             {highlightFunction && searchTerms
-              ? highlightFunction(content, searchTerms)
-              : content.split('\n')[0]}
+              ? highlightFunction(displayContent, searchTerms)
+              : displayContent}
           </Text>
         </View>
       </View>
@@ -96,21 +122,21 @@ const styles = StyleSheet.create({
     flex: 1, // Ensure left side takes up most of the space
   },
   numberingContainer: {
+    width: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 12,
   },
   numberingText: {
-    marginRight: 20,
-    paddingLeft: 16,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    flex: 1,
-    fontWeight: 'bold',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 20,
+    width: 40,
     height: 40,
+    lineHeight: 40,
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   detailsContainer: {
     flex: 1,

@@ -15,11 +15,13 @@ import TagItem from './TagItem';
 import ListItem from './ListItem';
 import EmptyList from './EmptyList';
 import { ThemeContext } from '../../App';
+import { LanguageContext } from '../context/LanguageContext';
 
 const List = ({ route }) => {
   const { collectionName, Tags, title, customLyrics } = route.params;
   const navigation = useNavigation();
   const { themeColors } = useContext(ThemeContext);
+  const { getString } = useContext(LanguageContext);
 
   const [header, setHeader] = useState(true);
   const [lyrics, setLyrics] = useState([]);
@@ -42,15 +44,27 @@ const List = ({ route }) => {
       if (tags.length === 0) return true;
       
       return tags.every(selectedTag => {
-        // Ensure item.tags is an array before using .some()
+        // Handle multi-language tags
         const itemTags = Array.isArray(item.tags) ? item.tags : [];
-        const hasTag = itemTags.some(tag => 
-          tag && selectedTag && tag.toLowerCase() === selectedTag.toLowerCase()
-        );
+        const hasTag = itemTags.some(tag => {
+          if (Array.isArray(tag)) {
+            // For multi-language tags, check all variations
+            const localizedTag = getString(tag);
+            return localizedTag.toLowerCase() === selectedTag.toLowerCase();
+          }
+          return tag && selectedTag && tag.toLowerCase() === selectedTag.toLowerCase();
+        });
         
         // Check collection name match if tag not found
-        const collectionMatch = item.collectionName && selectedTag && 
-          item.collectionName.toLowerCase() === selectedTag.toLowerCase();
+        let collectionMatch = false;
+        if (item.collectionName) {
+          if (Array.isArray(item.collectionName)) {
+            const localizedName = getString(item.collectionName);
+            collectionMatch = localizedName.toLowerCase() === selectedTag.toLowerCase();
+          } else {
+            collectionMatch = item.collectionName.toLowerCase() === selectedTag.toLowerCase();
+          }
+        }
           
         return hasTag || collectionMatch;
       });
@@ -72,6 +86,55 @@ const List = ({ route }) => {
     }));
   };
 
+  const getFilteredLyrics = useCallback((items, selectedTag) => {
+    if (!selectedTag) return items;
+
+    const filteredItems = items.filter(item => {
+      // Check if item has any matching tag
+      const hasTag = item.tags?.some(tag => {
+        if (Array.isArray(tag)) {
+          const localizedTag = getString(tag);
+          return localizedTag.toLowerCase() === selectedTag.toLowerCase();
+        }
+        return tag.toLowerCase() === selectedTag.toLowerCase();
+      });
+
+      // Check if collection name matches
+      let collectionMatch = false;
+      if (item.collectionName) {
+        if (Array.isArray(item.collectionName)) {
+          const localizedName = getString(item.collectionName);
+          collectionMatch = localizedName.toLowerCase() === selectedTag.toLowerCase();
+        } else {
+          collectionMatch = item.collectionName.toLowerCase() === selectedTag.toLowerCase();
+        }
+      }
+        
+      return hasTag || collectionMatch;
+    });
+
+    // Sort items based on order or numbering
+    const sortedItems = filteredItems.sort((a, b) => {
+      // First try to sort by order
+      if (a.order !== undefined && b.order !== undefined) {
+        return a.order - b.order;
+      }
+      // Then try numbering
+      if (a.numbering !== undefined && b.numbering !== undefined) {
+        return a.numbering - b.numbering;
+      }
+      // Finally fallback to index + 1
+      return 0;
+    });
+
+    // Apply display numbering to sorted items
+    return sortedItems.map((item, index) => ({
+      ...item,
+      displayNumbering: item.order || item.numbering || index + 1,
+      filteredIndex: index + 1,
+    }));
+  }, [getString]);
+
   const loadData = async () => {
     try {
       setIsLoading(true);
@@ -87,17 +150,18 @@ const List = ({ route }) => {
         const fetchedDataTags = await getFromAsyncStorage(Tags);
         const fetchedDataLyrics = await getFromAsyncStorage(collectionName);
 
+        // Process tags with language support
         const tagsArray = Array.isArray(fetchedDataTags) ? fetchedDataTags : [];
         const sortedTags = [...tagsArray].sort((a, b) => {
           const numA = a.numbering !== undefined ? a.numbering : 0;
           const numB = b.numbering !== undefined ? b.numbering : 0;
           return numA - numB;
-        });
+        }).map(tag => ({
+          ...tag,
+          displayName: Array.isArray(tag.displayName) ? getString(tag.displayName) : tag.displayName || tag.name
+        }));
 
-        const allLyrics = Array.isArray(fetchedDataLyrics)
-          ? fetchedDataLyrics
-          : [];
-        
+        const allLyrics = Array.isArray(fetchedDataLyrics) ? fetchedDataLyrics : [];
         const hasValidOrder = allLyrics.length > 0 && allLyrics.every(
           (item, index, arr) =>
             item.order !== undefined &&
@@ -134,13 +198,19 @@ const List = ({ route }) => {
   const filteredLyrics = filterAndSortLyrics(selectedTags, lyrics);
 
   useEffect(() => {
+    // Get localized title if it's an array
+    const localizedTitle = Array.isArray(title) ? getString(title) : title;
+    
     navigation.setOptions({
-      title: title || 'List',
+      title: localizedTitle || 'List',
       headerRight: () => (
         <Icon
           name="search"
           color="#fff"
-          onPress={() => navigation.navigate('Search', {collectionName})}
+          onPress={() => navigation.navigate('Search', {
+            collectionName,
+            title: localizedTitle
+          })}
           size={26}
         />
       ),
@@ -161,7 +231,6 @@ const List = ({ route }) => {
 
   const handleItemPress = item => {
     const filteredLyrics = filterAndSortLyrics(selectedTags, lyrics);
-    // Pass the entire filtered array and current item's filtered index
     navigation.navigate('Details', {
       Lyrics: filteredLyrics,
       itemNumberingparas: item.filteredIndex,
