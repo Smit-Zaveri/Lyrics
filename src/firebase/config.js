@@ -1,14 +1,23 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
+import {
+  FIREBASE_API_KEY,
+  FIREBASE_AUTH_DOMAIN,
+  FIREBASE_DATABASE_URL,
+  FIREBASE_PROJECT_ID,
+  FIREBASE_STORAGE_BUCKET,
+  FIREBASE_MESSAGING_SENDER_ID,
+  FIREBASE_APP_ID,
+} from '@env';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDFcLgJhkdaPY1ra5LIrqRERJJ3-WIyBTk",
-  authDomain: "jain-stavan-86cb6.firebaseapp.com",
-  databaseURL: "https://jain-stavan-86cb6-default-rtdb.firebaseio.com",
-  projectId: "jain-stavan-86cb6",
-  storageBucket: "jain-stavan-86cb6",
-  messagingSenderId: "285813640279",
-  appId: "1:285813640279:android:391d7080512f1ed79b6712"
+  apiKey: FIREBASE_API_KEY,
+  authDomain: FIREBASE_AUTH_DOMAIN,
+  databaseURL: FIREBASE_DATABASE_URL,
+  projectId: FIREBASE_PROJECT_ID,
+  storageBucket: FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: FIREBASE_MESSAGING_SENDER_ID,
+  appId: FIREBASE_APP_ID
 };
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
