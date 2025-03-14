@@ -1,55 +1,54 @@
 import React, { useState, useEffect, useRef, useContext, useCallback, useLayoutEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  TextInput,
-  Modal,
-  FlatList,
-  Animated,
-  PanResponder,
-  Easing,
-} from 'react-native';
+import { View, Text, Animated, Easing } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { FAB } from '@rneui/themed';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Sound from 'react-native-sound';
 import CustomMaterialMenu from './CustomMaterialMenu';
 import { ThemeContext } from '../../App';
 import { LanguageContext } from '../context/LanguageContext';
 import { Linking } from 'react-native';
 
+// Import sub-components
+import {
+  AudioPlayer,
+  LyricsContent,
+  CollectionsModal,
+  ActionButtons,
+  NavigationHandler
+} from './DetailPageComponents';
+
 const DetailPage = ({navigation, route}) => {
   const { themeColors } = useContext(ThemeContext);
-  const { language, getString } = useContext(LanguageContext);
+  const { getString } = useContext(LanguageContext);
   const { itemNumberingparas, Lyrics } = route.params;
 
+  // Main state
   const [itemNumbering, setItemNumbering] = useState(itemNumberingparas);
   const [song, setSong] = useState(null);
-  const [isSaved, setIsSaved] = useState(false);
-  const [slideAnim] = useState(new Animated.Value(0));
-  const [opacityAnim] = useState(new Animated.Value(1));
-  const [scaleAnim] = useState(new Animated.Value(1));
-  const [fabAnim] = useState(new Animated.Value(1));
+  const [fontSize, setFontSize] = useState(18);
+  
+  // Collections state
+  const [collections, setCollections] = useState([]);
+  const [showCollectionsModal, setShowCollectionsModal] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState('');
+  
+  // Audio playback state
   const [isPlaying, setIsPlaying] = useState(false);
   const [sound, setSound] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [audioError, setAudioError] = useState(null);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [fontSize, setFontSize] = useState(18);
-  const [autoScroll, setAutoScroll] = useState(false);
-  // States to handle slider seeking
   const [isSeeking, setIsSeeking] = useState(false);
   const [seekValue, setSeekValue] = useState(0);
-
-  const [collections, setCollections] = useState([]);
-  const [showCollectionsModal, setShowCollectionsModal] = useState(false);
-  const [newCollectionName, setNewCollectionName] = useState('');
+  
+  // Animation values
+  const [slideAnim] = useState(new Animated.Value(0));
+  const [opacityAnim] = useState(new Animated.Value(1));
+  const [scaleAnim] = useState(new Animated.Value(1));
+  const [fabAnim] = useState(new Animated.Value(1));
   const slideUpAnim = useRef(new Animated.Value(0)).current;
-
+  
+  // Refs
   const scrollViewRef = useRef(null);
   const progressIntervalRef = useRef(null);
 
@@ -114,7 +113,19 @@ const DetailPage = ({navigation, route}) => {
   // Load collections on mount
   useEffect(() => {
     loadCollections();
+    loadFontSize();
   }, []);
+
+  const loadFontSize = async () => {
+    try {
+      const savedFontSize = await AsyncStorage.getItem('fontSize');
+      if (savedFontSize) {
+        setFontSize(parseInt(savedFontSize, 10));
+      }
+    } catch (error) {
+      console.error('Error loading font size:', error);
+    }
+  };
 
   const loadCollections = async () => {
     try {
@@ -127,33 +138,11 @@ const DetailPage = ({navigation, route}) => {
     }
   };
 
-  // Check if song is saved in any collection
-  const checkIfSaved = useCallback(async () => {
-    if (!song) return;
-    
-    try {
-      const savedCollections = await AsyncStorage.getItem('user_collections');
-      if (savedCollections) {
-        const collections = JSON.parse(savedCollections);
-        const isSavedInAny = collections.some(collection => 
-          collection.songs?.some(s => s.id === song.id)
-        );
-        setIsSaved(isSavedInAny);
-      }
-    } catch (error) {
-      console.error('Error checking saved status:', error);
-    }
-  }, [song]);
-
-  useEffect(() => {
-    checkIfSaved();
-  }, [song, checkIfSaved]);
-
   // Header options with localized title
   const headerOptions = useCallback(
     () => ({
-      headerTitle: `${itemNumbering}. ${getLocalizedTitle(song)}` || '',
-      headerRight: () => (
+      headerTitle: song ? `${itemNumbering}. ${getLocalizedTitle(song)}` : '',
+      headerRight: () => song && (
         <CustomMaterialMenu
           menuText=""
           item={song}
@@ -162,7 +151,7 @@ const DetailPage = ({navigation, route}) => {
         />
       ),
     }),
-    [navigation, route, song, themeColors, getString, itemNumbering]
+    [song, itemNumbering, themeColors]
   );
 
   useLayoutEffect(() => {
@@ -195,7 +184,9 @@ const DetailPage = ({navigation, route}) => {
         setSound(null);
         setIsPlaying(false);
       }
+      
       const toValue = direction === 'next' ? 1 : -1;
+      
       Animated.parallel([
         Animated.timing(slideAnim, {
           toValue: toValue,
@@ -216,6 +207,7 @@ const DetailPage = ({navigation, route}) => {
           useNativeDriver: true,
         }),
       ]).start(() => {
+        // Change to next/previous song
         setItemNumbering(prev => {
           const currentIndex = parseInt(prev, 10);
           let newIndex = currentIndex + toValue;
@@ -227,8 +219,10 @@ const DetailPage = ({navigation, route}) => {
           return newIndex;
         });
 
+        // Reset slide position for entry animation
         slideAnim.setValue(toValue * -1);
 
+        // Animate back in
         Animated.parallel([
           Animated.timing(slideAnim, {
             toValue: 0,
@@ -265,35 +259,6 @@ const DetailPage = ({navigation, route}) => {
       }).start();
     }
   };
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (evt, gestureState) =>
-        Math.abs(gestureState.dx) > Math.abs(gestureState.dy),
-      onPanResponderRelease: (e, gestureState) => {
-        if (gestureState.dx > 50) {
-          navigateSong('prev');
-        } else if (gestureState.dx < -50) {
-          navigateSong('next');
-        }
-      },
-    })
-  ).current;
-
-  // Load font size from storage
-  useEffect(() => {
-    (async () => {
-      try {
-        const savedFontSize = await AsyncStorage.getItem('fontSize');
-        if (savedFontSize) {
-          setFontSize(parseInt(savedFontSize, 10));
-        }
-      } catch (error) {
-        console.error('Error loading font size:', error);
-      }
-    })();
-  }, []);
 
   // Collection management
   const createNewCollection = async () => {
@@ -338,7 +303,6 @@ const DetailPage = ({navigation, route}) => {
 
       await AsyncStorage.setItem('user_collections', JSON.stringify(updatedCollections));
       setCollections(updatedCollections);
-      await checkIfSaved();
     } catch (error) {
       console.error('Error toggling song in collection:', error);
     }
@@ -365,7 +329,7 @@ const DetailPage = ({navigation, route}) => {
 
   // Audio playback functions
   const togglePlayback = async () => {
-    if (!song.audio) return;
+    if (!song?.audio) return;
 
     try {
       if (sound) {
@@ -420,32 +384,16 @@ const DetailPage = ({navigation, route}) => {
     }
   };
 
+  const handleSeekValueChange = (value) => {
+    setIsSeeking(true);
+    setSeekValue(value);
+  };
+
   const handleSeekComplete = async (value) => {
     setIsSeeking(false);
     if (sound) {
       sound.setCurrentTime(value);
       setProgress(value);
-    }
-  };
-
-  const formatTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  const handleAutoScroll = () => {
-    setAutoScroll(!autoScroll);
-    if (!autoScroll && scrollViewRef.current) {
-      let position = 0;
-      const interval = setInterval(() => {
-        if (!autoScroll) {
-          clearInterval(interval);
-          return;
-        }
-        position += 1;
-        scrollViewRef.current.scrollTo({ y: position, animated: true });
-      }, 100);
     }
   };
 
@@ -467,298 +415,79 @@ const DetailPage = ({navigation, route}) => {
     );
   }
 
+  // Define a specific value for translateX based on animation instead of passing Animated.Value directly
+  const translateXValue = slideAnim.interpolate({
+    inputRange: [-1, 0, 1],
+    outputRange: [-300, 0, 300],
+  });
+
   const animatedStyle = {
-    transform: [
-      {
-        translateX: slideAnim.interpolate({
-          inputRange: [-1, 0, 1],
-          outputRange: [300, 0, -300],
-        }),
-      },
-      { scale: scaleAnim },
-    ],
+    paddingHorizontal: 20,
+    paddingBottom: 20,
     opacity: opacityAnim,
-  };
-
-  const displayContent = getLocalizedContent(song);
-
-  const renderAudioControls = () => {
-    if (!song.audio) return null;
-
-    return (
-      <View style={styles.audioContainer}>
-        {isLoading ? (
-          <ActivityIndicator size="large" color={themeColors.primary} />
-        ) : (
-          <TouchableOpacity
-            style={[styles.playButton, { backgroundColor: themeColors.primary }]}
-            onPress={togglePlayback}
-          >
-            <MaterialCommunityIcons
-              name={isPlaying ? 'pause' : 'play'}
-              size={30}
-              color="#fff"
-            />
-          </TouchableOpacity>
-        )}
-        {audioError && (
-          <Text style={styles.errorText}>{audioError}</Text>
-        )}
-        {sound && (
-          <View style={styles.sliderContainer}>
-            <Text style={[styles.timeText, { color: themeColors.text }]}>
-              {formatTime(progress)}
-            </Text>
-            <Slider
-              style={styles.slider}
-              minimumValue={0}
-              maximumValue={duration}
-              value={seekValue}
-              onValueChange={(value) => {
-                setIsSeeking(true);
-                setSeekValue(value);
-              }}
-              onSlidingComplete={handleSeekComplete}
-              minimumTrackTintColor={themeColors.primary}
-              maximumTrackTintColor={themeColors.border}
-            />
-            <Text style={[styles.timeText, { color: themeColors.text }]}>
-              {formatTime(duration)}
-            </Text>
-          </View>
-        )}
-      </View>
-    );
+    transform: [
+      { translateX: translateXValue },
+      { scale: scaleAnim },
+    ]
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: themeColors.background }} {...panResponder.panHandlers}>
-      <Animated.View style={[animatedStyle, { paddingHorizontal: 20, paddingBottom: 20 }]}>
-        <Text
-          style={{
-            paddingTop: 10,
-            fontSize: song.artist ? 16 : 0,
-            marginBottom: song.artist ? 10 : 0,
-            color: themeColors.text,
-          }}>
-          {song.artist ? 'રચનાર :' : ''} {getLocalizedArtist(song)}
-        </Text>
-        <ScrollView
+    <NavigationHandler onNavigate={navigateSong}>
+      <View style={{ flex: 1, backgroundColor: themeColors.background }}>
+        {/* Lyrics Content */}
+        <LyricsContent
           ref={scrollViewRef}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 30 }}>
-          <Text style={{ fontSize: fontSize, color: themeColors.text }} {...panResponder.panHandlers}>
-            {displayContent}
-          </Text>
-        </ScrollView>
-        {renderAudioControls()}
-      </Animated.View>
-
-      {song.youtube && (
-        <Animated.View 
-          style={[
-            styles.fabContainer,
-            styles.youtubeFab,
-            { opacity: fabAnim, transform: [{ scale: fabAnim }] }
-          ]}
-        >
-          <TouchableOpacity
-            style={[styles.fab, { backgroundColor: themeColors.primary }]}
-            onPress={openYouTubeApp}
-          >
-            <MaterialCommunityIcons name="youtube" color="#fff" size={25} />
-          </TouchableOpacity>
-        </Animated.View>
-      )}
-
-      <Animated.View 
-        style={[
-          styles.fabContainer,
-          { opacity: fabAnim, transform: [{ scale: fabAnim }] }
-        ]}
-      >
-        <TouchableOpacity
-          style={[styles.fab, { backgroundColor: themeColors.primary }]}
-          onPress={handleFABClick}
-        >
-          <MaterialCommunityIcons 
-            name={collections.some(collection => 
-              collection.songs?.some(s => s.id === song?.id)
-            ) ? 'bookmark' : 'bookmark-outline'} 
-            color="#fff" 
-            size={25} 
-          />
-        </TouchableOpacity>
-      </Animated.View>
-
-      <Modal
-        visible={showCollectionsModal}
-        transparent
-        animationType="none"
-        onRequestClose={closeCollectionsModal}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={closeCollectionsModal}
-        >
-          <Animated.View
-            style={[
-              styles.collectionsModal,
-              {
-                backgroundColor: themeColors.surface,
-                transform: [{
-                  translateY: slideUpAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [600, 0]
-                  })
-                }]
-              }
-            ]}
-          >
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: themeColors.text }]}>Save to Collection</Text>
-            </View>
-
-            <View style={styles.newCollectionInput}>
-              <TextInput
-                style={[styles.input, { color: themeColors.text, borderColor: themeColors.border }]}
-                placeholder="Create new collection..."
-                placeholderTextColor={themeColors.placeholder}
-                value={newCollectionName}
-                onChangeText={setNewCollectionName}
-              />
-              <TouchableOpacity
-                style={[styles.createButton, { backgroundColor: themeColors.primary }]}
-                onPress={createNewCollection}
-              >
-                <Text style={{ color: '#fff' }}>Create</Text>
-              </TouchableOpacity>
-            </View>
-
-            <FlatList
-              data={collections}
-              keyExtractor={item => item.id}
-              renderItem={({ item }) => {
-                const isSavedInCollection = item.songs?.some(s => s.id === song?.id);
-                return (
-                  <TouchableOpacity
-                    style={[styles.collectionItem, { borderBottomColor: themeColors.border }]}
-                    onPress={() => toggleSongInCollection(item.id)}
-                  >
-                    <Text style={[styles.collectionName, { color: themeColors.text }]}>{item.name}</Text>
-                    <MaterialCommunityIcons
-                      name={isSavedInCollection ? 'check-circle' : 'circle-outline'}
-                      size={24}
-                      color={isSavedInCollection ? themeColors.primary : themeColors.text}
-                    />
-                  </TouchableOpacity>
-                );
-              }}
-            />
-          </Animated.View>
-        </TouchableOpacity>
-      </Modal>
-    </View>
+          song={song}
+          content={getLocalizedContent(song)}
+          artist={getLocalizedArtist(song)}
+          fontSize={fontSize}
+          themeColors={themeColors}
+          animated={true}
+          animatedStyle={animatedStyle}
+        />
+        
+        {/* Audio Player */}
+        <AudioPlayer
+          song={song}
+          sound={sound}
+          isPlaying={isPlaying}
+          isLoading={isLoading}
+          audioError={audioError}
+          progress={progress}
+          duration={duration}
+          seekValue={seekValue}
+          themeColors={themeColors}
+          onTogglePlayback={togglePlayback}
+          onSeekValueChange={handleSeekValueChange}
+          onSeekComplete={handleSeekComplete}
+        />
+        
+        {/* Action Buttons (FABs) */}
+        <ActionButtons
+          song={song}
+          collections={collections}
+          fabAnim={fabAnim}
+          themeColors={themeColors}
+          onBookmarkPress={handleFABClick}
+          onYoutubePress={openYouTubeApp}
+        />
+        
+        {/* Collections Modal */}
+        <CollectionsModal
+          visible={showCollectionsModal}
+          themeColors={themeColors}
+          collections={collections}
+          newCollectionName={newCollectionName}
+          slideUpAnim={slideUpAnim}
+          song={song}
+          onClose={closeCollectionsModal}
+          onNewCollectionNameChange={setNewCollectionName}
+          onCreateCollection={createNewCollection}
+          onToggleCollection={toggleSongInCollection}
+        />
+      </View>
+    </NavigationHandler>
   );
 };
-
-const styles = StyleSheet.create({
-  audioContainer: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  playButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sliderContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    paddingHorizontal: 20,
-  },
-  slider: {
-    flex: 1,
-  },
-  timeText: {
-    fontSize: 14,
-  },
-  errorText: {
-    color: 'red',
-    marginTop: 5,
-    fontSize: 12,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  collectionsModal: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    marginBottom: 20,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  newCollectionInput: {
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
-  input: {
-    flex: 1,
-    height: 40,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginRight: 10,
-  },
-  createButton: {
-    paddingHorizontal: 20,
-    height: 40,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  collectionItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-  },
-  collectionName: {
-    fontSize: 16,
-  },
-  fabContainer: {
-    position: 'absolute',
-    bottom: 16,
-    right: 16,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  youtubeFab: {
-    marginBottom: 80,
-  },
-  fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
 
 export default DetailPage;
