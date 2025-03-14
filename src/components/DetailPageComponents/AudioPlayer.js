@@ -30,9 +30,14 @@ const AudioPlayer = ({
   return (
     <View style={styles.audioContainer}>
       {isLoading ? (
-        <ActivityIndicator size="large" color={themeColors.primary} />
+        <ActivityIndicator 
+          testID="loading-indicator"
+          size="large" 
+          color={themeColors.primary} 
+        />
       ) : (
         <TouchableOpacity
+          testID="play-button"
           style={[styles.playButton, { backgroundColor: themeColors.primary }]}
           onPress={onTogglePlayback}
         >

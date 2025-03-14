@@ -155,6 +155,7 @@ const Collections = ({ navigation }) => {
             <TouchableOpacity
               style={[styles.modalButton, styles.deleteButton, { backgroundColor: '#FF5252' }]}
               onPress={confirmDeleteCollection}
+              testID="confirm-delete"
             >
               <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>Delete</Text>
             </TouchableOpacity>
@@ -197,6 +198,7 @@ const Collections = ({ navigation }) => {
           <TouchableOpacity
             onPress={() => showDeleteModal(item.id, item.name)}
             style={styles.deleteButton}
+            testID={`delete-button-${item.id}`}
           >
             <MaterialCommunityIcons name="delete-outline" size={24} color="#FF5252" />
           </TouchableOpacity>

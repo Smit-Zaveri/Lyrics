@@ -150,7 +150,7 @@ const CustomMaterialMenu = ({ isIcon, menuText, textStyle, item }) => {
   return (
     <View>
       {isIcon ? (
-        <TouchableOpacity onPress={showMenu}>
+        <TouchableOpacity onPress={showMenu} testID="menu-button">
           <MaterialCommunityIcons name="dots-vertical" size={24} color="#fff" />
         </TouchableOpacity>
       ) : (
@@ -224,6 +224,7 @@ const CustomMaterialMenu = ({ isIcon, menuText, textStyle, item }) => {
               />
             </ScrollView>
             <Pressable
+              testID="submit-report"
               disabled={isSubmitting}
               style={({ pressed }) => ({
                 backgroundColor: isSubmitting ? '#999' : pressed ? '#673ae2' : themeColors.primary,
