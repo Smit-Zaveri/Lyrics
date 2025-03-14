@@ -185,6 +185,16 @@ const ItemGrid = ({
           keyExtractor={(item, index) => `${index.toString()}-${language}`}
           key={`${numColumns}-${language}`}
           extraData={language}
+          windowSize={3}
+          maxToRenderPerBatch={6}
+          updateCellsBatchingPeriod={50}
+          removeClippedSubviews={true}
+          initialNumToRender={6}
+          getItemLayout={(data, index) => ({
+            length: itemWidth + spacing,
+            offset: (itemWidth + spacing) * index,
+            index,
+          })}
         />
       ) : (
         <View style={styles.emptyContainer}>

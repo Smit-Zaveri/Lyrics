@@ -314,8 +314,18 @@ const List = ({ route }) => {
           )}
           ListEmptyComponent={<EmptyList filteredLyrics={filteredLyrics} />}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={loadData} />
+            <RefreshControl refreshing={refreshing} onRefresh={() => loadData(true)} />
           }
+          windowSize={3}
+          maxToRenderPerBatch={8}
+          updateCellsBatchingPeriod={50}
+          getItemLayout={(data, index) => ({
+            length: 70,
+            offset: 70 * index,
+            index,
+          })}
+          removeClippedSubviews={true}
+          initialNumToRender={8}
         />
       </View>
     </SafeAreaView>

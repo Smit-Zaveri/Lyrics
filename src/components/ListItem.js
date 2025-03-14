@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import {Pressable, View, Text, StyleSheet} from 'react-native';
 import { LanguageContext } from '../context/LanguageContext';
 
-const ListItem = ({item, themeColors, onItemPress, searchTerms, highlightFunction}) => {
+const ListItem = React.memo(({item, themeColors, onItemPress, searchTerms, highlightFunction}) => {
   const { getString } = useContext(LanguageContext);
   const {numbering, order, title, content, publishDate, newFlag} = item;
   const currentDate = new Date();
@@ -105,7 +105,14 @@ const ListItem = ({item, themeColors, onItemPress, searchTerms, highlightFunctio
       )}
     </Pressable>
   );
-};
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.item.id === nextProps.item.id &&
+    prevProps.item.numbering === nextProps.item.numbering &&
+    prevProps.themeColors === nextProps.themeColors &&
+    prevProps.searchTerms === nextProps.searchTerms
+  );
+});
 
 const styles = StyleSheet.create({
   itemContainer: {
