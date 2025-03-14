@@ -9,7 +9,7 @@ const FullGrid = ({route, navigation}) => {
   const { themeColors } = useContext(ThemeContext);
   const { getString } = useContext(LanguageContext);
 
-  // Handle array-based title for multi-language support
+  // Handle array-based title for multi-language support ERROR  Error: You need to specify name or key when calling navigate with an object as the argument. See https://reactnavigation.org/docs/navigation-actions#navigate for usage., js engine: hermes
   const localizedTitle = Array.isArray(title) ? getString(title) : title;
 
   return (

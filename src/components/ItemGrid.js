@@ -104,8 +104,9 @@ const ItemGrid = ({
     navigation.navigate('FullGrid', {
       title: title,
       data: data,
+      redirect: redirect // Add the redirect parameter
     });
-  }, [navigation, title, data]);
+  }, [navigation, title, data, redirect]); // Add redirect to dependencies
 
   // Add language as a dependency to force re-render when language changes
   const renderItem = useCallback(
