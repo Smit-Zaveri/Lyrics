@@ -79,7 +79,6 @@ yarn-error.log
 .env.development
 .env.production
 *.env
-.env.*
 
 # google-services.json should not be in version control for production
 android/app/google-services.json
