@@ -1,22 +1,20 @@
 export const colors = {
   light: {
-    primary: '#A62424', // Deep red as requested
-    text: '#2C1717', // Dark red-tinted text
-    background: '#FFF5F5', // Very light red tint background
-    surface: '#FFFFFF', // Pure White
-    cardBackground: '#FFEDED', // Light warm red tint for cards
-    link: '#8B1E1E', // Slightly darker red for links
-    placeholder: '#B4A1A1', // Warm gray for placeholders
-    border: '#FFE2E2', // Light red border
+    primary: '#673BB7', // Primary Purple
+    text: '#333333', // Dark Gray for text
+    background: '#EDE7F6', // Light Lavender for background
+    surface: '#FFFFFF', // White for cards and surfaces
+    cardBackground: '#D1C4E9', // Light Purple for cards
+    link: '#5E35B1', // Darker Purple for links
+    placeholder: '#BDBDBD', // Medium Gray for placeholder text
   },
   dark: {
-    primary: '#A62424', // Same deep red
-    text: '#FFFFFF', // White text
-    background: '#1C1414', // Dark red-tinted background
-    surface: '#261818', // Slightly lighter surface
-    cardBackground: '#2E1D1D', // Elevated surface with red tint
-    link: '#CF2929', // Brighter red for dark theme links
-    placeholder: '#A19696', // Medium warm gray
-    border: '#3D2626', // Dark red-tinted borders
-  },
+  primary: "#7E57C2",        // Lighter Purple for dark mode
+  text: "#FAFAFA",           // Almost White for text
+  background: "#1E1E2F",     // Darker Slate Gray
+  surface: "#292B36",        // Dark Gray for cards and surfaces
+  cardBackground: "#292B36", // Deep Gray for cards in dark mode
+  link: '#BB86FC',           // Light Purple for links in dark mode
+  placeholder: '#B0BEC5',    // Light Gray for placeholder text
+},
 };

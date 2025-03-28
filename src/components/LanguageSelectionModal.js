@@ -1,20 +1,24 @@
-import React, { useContext } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
+import React, {useContext} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
   Modal,
-  Image 
+  Image,
 } from 'react-native';
-import { LanguageContext, LANGUAGES, LANGUAGE_NAMES } from '../context/LanguageContext';
-import { ThemeContext } from '../../App';
+import {
+  LanguageContext,
+  LANGUAGES,
+  LANGUAGE_NAMES,
+} from '../context/LanguageContext';
+import {ThemeContext} from '../../App';
 
-const LanguageSelectionModal = ({ visible }) => {
-  const { setLanguage } = useContext(LanguageContext);
-  const { themeColors } = useContext(ThemeContext);
-
-  const handleLanguageSelect = (language) => {
+const LanguageSelectionModal = ({visible}) => {
+  const {setLanguage} = useContext(LanguageContext);
+  const {themeColors} = useContext(ThemeContext);
+  const {currentTheme} = useContext(ThemeContext);
+  const handleLanguageSelect = language => {
     setLanguage(language);
   };
 
@@ -23,48 +27,71 @@ const LanguageSelectionModal = ({ visible }) => {
       visible={visible}
       animationType="fade"
       transparent={true}
-      statusBarTranslucent={true}
-    >
+      statusBarTranslucent={true}>
       <View style={styles.centeredView}>
-        <View style={[styles.modalView, { backgroundColor: themeColors.surface }]}>
-          <Image 
-            source={require('../assets/logo.png')} 
-            style={styles.logo} 
-            resizeMode="contain"
-          />
-          
-          <Text style={[styles.title, { color: themeColors.text }]}>
+        <View
+          style={[styles.modalView, {backgroundColor: themeColors.surface}]}>
+          {currentTheme === 'dark' ? (
+            <Image
+              source={require('../assets/logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          ) : (
+            <Image
+              source={require('../assets/logo_black.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          )}
+          <Text style={[styles.title, {color: themeColors.text}]}>
             Choose Your Language
           </Text>
-          
-          <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>
+          <Text style={[styles.subtitle, {color: themeColors.text}]}>
             ભાષા પસંદ કરો | भाषा चुनें | Select Language
           </Text>
-          
           <View style={styles.languageButtonsContainer}>
             <TouchableOpacity
-              style={[styles.languageButton, { backgroundColor: themeColors.primary }]}
-              onPress={() => handleLanguageSelect(LANGUAGES.GUJARATI)}
-            >
-              <Text style={[styles.languageButtonText, { color: themeColors.onPrimary }]}>
+              style={[
+                styles.languageButton,
+                {backgroundColor: themeColors.primary},
+              ]}
+              onPress={() => handleLanguageSelect(LANGUAGES.GUJARATI)}>
+              <Text
+                style={[
+                  styles.languageButtonText,
+                  {color: themeColors.onPrimary},
+                ]}>
                 {LANGUAGE_NAMES[LANGUAGES.GUJARATI]}
               </Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
-              style={[styles.languageButton, { backgroundColor: themeColors.primary }]}
-              onPress={() => handleLanguageSelect(LANGUAGES.HINDI)}
-            >
-              <Text style={[styles.languageButtonText, { color: themeColors.onPrimary }]}>
+              style={[
+                styles.languageButton,
+                {backgroundColor: themeColors.primary},
+              ]}
+              onPress={() => handleLanguageSelect(LANGUAGES.HINDI)}>
+              <Text
+                style={[
+                  styles.languageButtonText,
+                  {color: themeColors.onPrimary},
+                ]}>
                 {LANGUAGE_NAMES[LANGUAGES.HINDI]}
               </Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
-              style={[styles.languageButton, { backgroundColor: themeColors.primary }]}
-              onPress={() => handleLanguageSelect(LANGUAGES.ENGLISH)}
-            >
-              <Text style={[styles.languageButtonText, { color: themeColors.onPrimary }]}>
+              style={[
+                styles.languageButton,
+                {backgroundColor: themeColors.primary},
+              ]}
+              onPress={() => handleLanguageSelect(LANGUAGES.ENGLISH)}>
+              <Text
+                style={[
+                  styles.languageButtonText,
+                  {color: themeColors.onPrimary},
+                ]}>
                 {LANGUAGE_NAMES[LANGUAGES.ENGLISH]}
               </Text>
             </TouchableOpacity>
