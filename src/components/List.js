@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useContext } from 'react';
+import React, {useState, useEffect, useCallback, useContext} from 'react';
 import {
   FlatList,
   SafeAreaView,
@@ -7,21 +7,21 @@ import {
   ActivityIndicator,
   Text,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-import { getFromAsyncStorage } from '../config/DataService';
+import {getFromAsyncStorage} from '../config/DataService';
 import TagItem from './TagItem';
 import ListItem from './ListItem';
 import EmptyList from './EmptyList';
-import { ThemeContext } from '../../App';
-import { LanguageContext } from '../context/LanguageContext';
+import {ThemeContext} from '../../App';
+import {LanguageContext} from '../context/LanguageContext';
 
-const List = ({ route }) => {
-  const { collectionName, Tags, title, customLyrics } = route.params;
+const List = ({route}) => {
+  const {collectionName, Tags, title, customLyrics} = route.params;
   const navigation = useNavigation();
-  const { themeColors } = useContext(ThemeContext);
-  const { getString, language } = useContext(LanguageContext);
+  const {themeColors} = useContext(ThemeContext);
+  const {getString, language} = useContext(LanguageContext);
 
   const [header, setHeader] = useState(true);
   const [lyrics, setLyrics] = useState([]);
@@ -40,9 +40,9 @@ const List = ({ route }) => {
     const filteredItems = lyrics.filter(item => {
       // Skip null or undefined items
       if (!item) return false;
-      
+
       if (tags.length === 0) return true;
-      
+
       return tags.every(selectedTag => {
         // Handle multi-language tags
         const itemTags = Array.isArray(item.tags) ? item.tags : [];
@@ -52,20 +52,26 @@ const List = ({ route }) => {
             const localizedTag = getString(tag);
             return localizedTag.toLowerCase() === selectedTag.toLowerCase();
           }
-          return tag && selectedTag && tag.toLowerCase() === selectedTag.toLowerCase();
+          return (
+            tag &&
+            selectedTag &&
+            tag.toLowerCase() === selectedTag.toLowerCase()
+          );
         });
-        
+
         // Check collection name match if tag not found
         let collectionMatch = false;
         if (item.collectionName) {
           if (Array.isArray(item.collectionName)) {
             const localizedName = getString(item.collectionName);
-            collectionMatch = localizedName.toLowerCase() === selectedTag.toLowerCase();
+            collectionMatch =
+              localizedName.toLowerCase() === selectedTag.toLowerCase();
           } else {
-            collectionMatch = item.collectionName.toLowerCase() === selectedTag.toLowerCase();
+            collectionMatch =
+              item.collectionName.toLowerCase() === selectedTag.toLowerCase();
           }
         }
-          
+
         return hasTag || collectionMatch;
       });
     });
@@ -86,54 +92,59 @@ const List = ({ route }) => {
     }));
   };
 
-  const getFilteredLyrics = useCallback((items, selectedTag) => {
-    if (!selectedTag) return items;
+  const getFilteredLyrics = useCallback(
+    (items, selectedTag) => {
+      if (!selectedTag) return items;
 
-    const filteredItems = items.filter(item => {
-      // Check if item has any matching tag
-      const hasTag = item.tags?.some(tag => {
-        if (Array.isArray(tag)) {
-          const localizedTag = getString(tag);
-          return localizedTag.toLowerCase() === selectedTag.toLowerCase();
+      const filteredItems = items.filter(item => {
+        // Check if item has any matching tag
+        const hasTag = item.tags?.some(tag => {
+          if (Array.isArray(tag)) {
+            const localizedTag = getString(tag);
+            return localizedTag.toLowerCase() === selectedTag.toLowerCase();
+          }
+          return tag.toLowerCase() === selectedTag.toLowerCase();
+        });
+
+        // Check if collection name matches
+        let collectionMatch = false;
+        if (item.collectionName) {
+          if (Array.isArray(item.collectionName)) {
+            const localizedName = getString(item.collectionName);
+            collectionMatch =
+              localizedName.toLowerCase() === selectedTag.toLowerCase();
+          } else {
+            collectionMatch =
+              item.collectionName.toLowerCase() === selectedTag.toLowerCase();
+          }
         }
-        return tag.toLowerCase() === selectedTag.toLowerCase();
+
+        return hasTag || collectionMatch;
       });
 
-      // Check if collection name matches
-      let collectionMatch = false;
-      if (item.collectionName) {
-        if (Array.isArray(item.collectionName)) {
-          const localizedName = getString(item.collectionName);
-          collectionMatch = localizedName.toLowerCase() === selectedTag.toLowerCase();
-        } else {
-          collectionMatch = item.collectionName.toLowerCase() === selectedTag.toLowerCase();
+      // Sort items based on order or numbering
+      const sortedItems = filteredItems.sort((a, b) => {
+        // First try to sort by order
+        if (a.order !== undefined && b.order !== undefined) {
+          return a.order - b.order;
         }
-      }
-        
-      return hasTag || collectionMatch;
-    });
+        // Then try numbering
+        if (a.numbering !== undefined && b.numbering !== undefined) {
+          return a.numbering - b.numbering;
+        }
+        // Finally fallback to index + 1
+        return 0;
+      });
 
-    // Sort items based on order or numbering
-    const sortedItems = filteredItems.sort((a, b) => {
-      // First try to sort by order
-      if (a.order !== undefined && b.order !== undefined) {
-        return a.order - b.order;
-      }
-      // Then try numbering
-      if (a.numbering !== undefined && b.numbering !== undefined) {
-        return a.numbering - b.numbering;
-      }
-      // Finally fallback to index + 1
-      return 0;
-    });
-
-    // Apply display numbering to sorted items
-    return sortedItems.map((item, index) => ({
-      ...item,
-      displayNumbering: item.order || item.numbering || index + 1,
-      filteredIndex: index + 1,
-    }));
-  }, [getString]);
+      // Apply display numbering to sorted items
+      return sortedItems.map((item, index) => ({
+        ...item,
+        displayNumbering: item.order || item.numbering || index + 1,
+        filteredIndex: index + 1,
+      }));
+    },
+    [getString],
+  );
 
   const loadData = async () => {
     try {
@@ -152,23 +163,31 @@ const List = ({ route }) => {
 
         // Process tags with language support
         const tagsArray = Array.isArray(fetchedDataTags) ? fetchedDataTags : [];
-        const sortedTags = [...tagsArray].sort((a, b) => {
-          const numA = a.numbering !== undefined ? a.numbering : 0;
-          const numB = b.numbering !== undefined ? b.numbering : 0;
-          return numA - numB;
-        }).map(tag => ({
-          ...tag,
-          displayName: Array.isArray(tag.displayName) ? getString(tag.displayName) : tag.displayName || tag.name
-        }));
+        const sortedTags = [...tagsArray]
+          .sort((a, b) => {
+            const numA = a.numbering !== undefined ? a.numbering : 0;
+            const numB = b.numbering !== undefined ? b.numbering : 0;
+            return numA - numB;
+          })
+          .map(tag => ({
+            ...tag,
+            displayName: Array.isArray(tag.displayName)
+              ? getString(tag.displayName)
+              : tag.displayName || tag.name,
+          }));
 
-        const allLyrics = Array.isArray(fetchedDataLyrics) ? fetchedDataLyrics : [];
-        const hasValidOrder = allLyrics.length > 0 && allLyrics.every(
-          (item, index, arr) =>
-            item.order !== undefined &&
-            item.order !== null &&
-            typeof item.order === 'number' &&
-            arr.filter(({order}) => order === item.order).length === 1,
-        );
+        const allLyrics = Array.isArray(fetchedDataLyrics)
+          ? fetchedDataLyrics
+          : [];
+        const hasValidOrder =
+          allLyrics.length > 0 &&
+          allLyrics.every(
+            (item, index, arr) =>
+              item.order !== undefined &&
+              item.order !== null &&
+              typeof item.order === 'number' &&
+              arr.filter(({order}) => order === item.order).length === 1,
+          );
 
         const lyricsWithNumbering = hasValidOrder
           ? allLyrics
@@ -214,7 +233,7 @@ const List = ({ route }) => {
           console.error('Error updating tags for language change:', error);
         }
       };
-      
+
       updateTagsForLanguageChange();
     }
   }, [language, Tags, customLyrics]);
@@ -224,17 +243,19 @@ const List = ({ route }) => {
   useEffect(() => {
     // Get localized title if it's an array
     const localizedTitle = Array.isArray(title) ? getString(title) : title;
-    
+
     navigation.setOptions({
       title: localizedTitle || 'List',
       headerRight: () => (
         <Icon
           name="search"
           color="#fff"
-          onPress={() => navigation.navigate('Search', {
-            collectionName,
-            title: localizedTitle
-          })}
+          onPress={() =>
+            navigation.navigate('Search', {
+              collectionName,
+              title: localizedTitle,
+            })
+          }
           size={26}
         />
       ),
@@ -286,7 +307,12 @@ const List = ({ route }) => {
           backgroundColor: themeColors.background,
           padding: 20,
         }}>
-        <Text style={{ color: themeColors.error, textAlign: 'center', marginBottom: 20 }}>
+        <Text
+          style={{
+            color: themeColors.error,
+            textAlign: 'center',
+            marginBottom: 20,
+          }}>
           {error}
         </Text>
         <Icon
@@ -300,7 +326,7 @@ const List = ({ route }) => {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
+    <SafeAreaView style={{flex: 1, backgroundColor: themeColors.background}}>
       <View style={{flexGrow: 0, flexShrink: 0}}>
         {/* Only show tags if not using customLyrics and tags are available */}
         {!customLyrics && tags && tags.length > 0 && (
@@ -309,7 +335,9 @@ const List = ({ route }) => {
             showsHorizontalScrollIndicator={false}
             data={tags}
             extraData={language} // Add language as extraData to force re-render on language change
-            keyExtractor={(item, index) => (item.id?.toString() || `tag-${index}`)}
+            keyExtractor={(item, index) =>
+              item.id?.toString() || `tag-${index}`
+            }
             renderItem={({item}) => (
               <TagItem
                 item={item}
@@ -327,9 +355,11 @@ const List = ({ route }) => {
             backgroundColor: themeColors.background,
             paddingBottom: 100,
             flexGrow: filteredLyrics.length === 0 ? 1 : undefined,
+            borderBottomColor:
+              themeColors.border || themeColors.divider || '#444',
           }}
           data={filteredLyrics}
-          keyExtractor={(item, index) => (item.id?.toString() || `item-${index}`)}
+          keyExtractor={(item, index) => item.id?.toString() || `item-${index}`}
           renderItem={({item}) => (
             <ListItem
               item={{...item, numbering: item.displayNumbering}}
@@ -339,7 +369,10 @@ const List = ({ route }) => {
           )}
           ListEmptyComponent={<EmptyList filteredLyrics={filteredLyrics} />}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => loadData(true)} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => loadData(true)}
+            />
           }
           windowSize={3}
           maxToRenderPerBatch={8}

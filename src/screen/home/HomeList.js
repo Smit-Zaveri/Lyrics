@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useContext } from 'react';
+import React, {useState, useEffect, useCallback, useContext} from 'react';
 import {
   FlatList,
   Text,
@@ -11,13 +11,13 @@ import {
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {getFromAsyncStorage, refreshAllData} from '../../config/DataService';
-import { ThemeContext } from '../../../App';
-import { LanguageContext } from '../../context/LanguageContext';
+import {ThemeContext} from '../../../App';
+import {LanguageContext} from '../../context/LanguageContext';
 
 const HomeList = () => {
   const navigation = useNavigation();
-  const { themeColors } = useContext(ThemeContext);
-  const { getString } = useContext(LanguageContext);
+  const {themeColors} = useContext(ThemeContext);
+  const {getString} = useContext(LanguageContext);
 
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,8 +32,8 @@ const HomeList = () => {
       const collections = await getFromAsyncStorage('collections');
       if (collections && collections.length > 0) {
         // Make sure collections is an array before sorting
-        const sortedCollections = [...collections].sort((a, b) => 
-          (a.numbering || 0) - (b.numbering || 0)
+        const sortedCollections = [...collections].sort(
+          (a, b) => (a.numbering || 0) - (b.numbering || 0),
         );
         setData(sortedCollections);
       } else {
@@ -42,8 +42,8 @@ const HomeList = () => {
           const refreshedCollections = await getFromAsyncStorage('collections');
           // Make sure refreshedCollections is an array before sorting
           if (refreshedCollections && refreshedCollections.length > 0) {
-            const sortedCollections = [...refreshedCollections].sort((a, b) => 
-              (a.numbering || 0) - (b.numbering || 0)
+            const sortedCollections = [...refreshedCollections].sort(
+              (a, b) => (a.numbering || 0) - (b.numbering || 0),
             );
             setData(sortedCollections);
           } else {
@@ -52,7 +52,9 @@ const HomeList = () => {
         } else {
           // No internet connection and no cached data
           setData([]);
-          setError("No internet connection. Please connect to the internet and try again.");
+          setError(
+            'No internet connection. Please connect to the internet and try again.',
+          );
         }
       }
     } catch (error) {
@@ -70,17 +72,17 @@ const HomeList = () => {
   }, [loadData]);
 
   // Get localized display name based on the user's language preference
-  const getLocalizedDisplayName = (item) => {
+  const getLocalizedDisplayName = item => {
     // Check if displayName is an array for multi-language support
     if (Array.isArray(item.displayName)) {
       return getString(item.displayName);
     }
-    
+
     // Fallback to the regular displayName if it exists
     if (item.displayName) {
       return item.displayName;
     }
-    
+
     // Final fallback to the collection name
     return item.name;
   };
@@ -91,7 +93,9 @@ const HomeList = () => {
         collectionName: item.name,
         Tags: 'tags',
         // Pass the original displayName array if available, enabling instant language updates
-        title: Array.isArray(item.displayName) ? item.displayName : item.displayName || item.name,
+        title: Array.isArray(item.displayName)
+          ? item.displayName
+          : item.displayName || item.name,
       });
     },
     [navigation],
@@ -99,7 +103,7 @@ const HomeList = () => {
 
   const renderItem = ({item}) => {
     const displayName = getLocalizedDisplayName(item);
-    
+
     return (
       <Pressable
         onPress={handleItemPress(item)}
@@ -109,6 +113,8 @@ const HomeList = () => {
             backgroundColor: pressed
               ? themeColors.surface
               : themeColors.background,
+            borderBottomColor:
+              themeColors.border || themeColors.divider || '#444',
           },
         ]}>
         <View style={styles.leftContainer}>
@@ -176,7 +182,8 @@ const HomeList = () => {
           })}
         />
       ) : (
-        <View style={[styles.centered, {backgroundColor: themeColors.background}]}>
+        <View
+          style={[styles.centered, {backgroundColor: themeColors.background}]}>
           <Text style={{color: themeColors.text}}>
             No collections available. Pull down to refresh.
           </Text>

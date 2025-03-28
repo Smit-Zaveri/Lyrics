@@ -58,7 +58,8 @@ const ListItem = React.memo(({item, themeColors, onItemPress, searchTerms, highl
         styles.itemContainer,
         {
           backgroundColor: pressed ? themeColors.surface : 'transparent', // Change press color based on theme
-          borderBottomColor: themeColors.border, // Border color from theme
+          borderBottomColor:
+              themeColors.border || themeColors.divder || '#444',
         },
       ]}>
       <View style={styles.leftContainer}>
