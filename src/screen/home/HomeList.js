@@ -87,14 +87,14 @@ const HomeList = () => {
 
   const handleItemPress = useCallback(
     item => () => {
-      const localizedDisplayName = getLocalizedDisplayName(item);
       navigation.navigate('List', {
         collectionName: item.name,
         Tags: 'tags',
-        title: localizedDisplayName,
+        // Pass the original displayName array if available, enabling instant language updates
+        title: Array.isArray(item.displayName) ? item.displayName : item.displayName || item.name,
       });
     },
-    [navigation, getString],
+    [navigation],
   );
 
   const renderItem = ({item}) => {

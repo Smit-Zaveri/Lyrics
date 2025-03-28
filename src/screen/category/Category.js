@@ -14,10 +14,6 @@ const Category = () => {
   const { themeColors } = useContext(ThemeContext);
   const { getString } = useContext(LanguageContext);
 
-  // Multi-language titles
-  const titles = {
-    category: ['વર્ગ', 'श्रेणी', 'Category'],
-  };
 
   // Dynamic header styles based on theme
   const getHeaderStyle = () => ({

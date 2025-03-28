@@ -1,8 +1,18 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { LanguageContext } from '../context/LanguageContext';
 
 const TagItem = ({ item, selectedTags, onTagPress, themeColors }) => {
   const isSelected = selectedTags.includes(item.name);
+  const { getString } = useContext(LanguageContext);
+
+  // Get localized display name if it's an array (multi-language support)
+  const getLocalizedDisplayName = () => {
+    if (Array.isArray(item.displayName)) {
+      return getString(item.displayName);
+    }
+    return item.displayName || item.name;
+  };
 
   return (
     <TouchableOpacity
@@ -26,7 +36,7 @@ const TagItem = ({ item, selectedTags, onTagPress, themeColors }) => {
           },
         ]}
       >
-        {item.displayName || item.name}
+        {getLocalizedDisplayName()}
       </Text>
     </TouchableOpacity>
   );

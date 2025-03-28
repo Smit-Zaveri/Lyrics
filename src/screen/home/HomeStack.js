@@ -10,7 +10,7 @@ const Stack = createNativeStackNavigator();
 
 const HomeStack = () => {
   const { themeColors } = useContext(ThemeContext);
-
+    
   return (
     <Stack.Navigator
       initialRouteName="HomeList"

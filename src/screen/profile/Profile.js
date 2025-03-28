@@ -15,7 +15,7 @@ const Stack = createNativeStackNavigator();
 const Profile = () => {
   const [savedLyrics, setSavedLyrics] = useState([]);
   const { themeColors } = useContext(ThemeContext);
-
+    
   const fetchSavedLyrics = async () => {
     try {
       const savedData = await AsyncStorage.getItem('saved');

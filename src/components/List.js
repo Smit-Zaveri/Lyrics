@@ -21,7 +21,7 @@ const List = ({ route }) => {
   const { collectionName, Tags, title, customLyrics } = route.params;
   const navigation = useNavigation();
   const { themeColors } = useContext(ThemeContext);
-  const { getString } = useContext(LanguageContext);
+  const { getString, language } = useContext(LanguageContext);
 
   const [header, setHeader] = useState(true);
   const [lyrics, setLyrics] = useState([]);
@@ -195,6 +195,30 @@ const List = ({ route }) => {
     loadData();
   }, [Tags, collectionName]);
 
+  // Update tags when language changes
+  useEffect(() => {
+    if (!customLyrics && tags.length > 0) {
+      // Get fresh tags from AsyncStorage when language changes
+      const updateTagsForLanguageChange = async () => {
+        try {
+          const fetchedDataTags = await getFromAsyncStorage(Tags);
+          if (Array.isArray(fetchedDataTags) && fetchedDataTags.length > 0) {
+            const updatedTags = [...fetchedDataTags].sort((a, b) => {
+              const numA = a.numbering !== undefined ? a.numbering : 0;
+              const numB = b.numbering !== undefined ? b.numbering : 0;
+              return numA - numB;
+            });
+            setTags(updatedTags);
+          }
+        } catch (error) {
+          console.error('Error updating tags for language change:', error);
+        }
+      };
+      
+      updateTagsForLanguageChange();
+    }
+  }, [language, Tags, customLyrics]);
+
   const filteredLyrics = filterAndSortLyrics(selectedTags, lyrics);
 
   useEffect(() => {
@@ -216,7 +240,7 @@ const List = ({ route }) => {
       ),
       headerShown: header,
     });
-  }, [navigation, header, title, collectionName]);
+  }, [navigation, header, title, collectionName, language]);
 
   const handleTagPress = useCallback(
     tag => {
@@ -284,6 +308,7 @@ const List = ({ route }) => {
             horizontal
             showsHorizontalScrollIndicator={false}
             data={tags}
+            extraData={language} // Add language as extraData to force re-render on language change
             keyExtractor={(item, index) => (item.id?.toString() || `tag-${index}`)}
             renderItem={({item}) => (
               <TagItem
