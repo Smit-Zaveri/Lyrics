@@ -1,12 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  SafeAreaView,
-  ScrollView,
-} from 'react-native';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ThemeContext } from '../../../App';
@@ -18,115 +11,107 @@ const Settings = () => {
   const { language, setLanguage, languageName } = useContext(LanguageContext);
 
   useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const savedFontSize = await AsyncStorage.getItem('fontSize');
+        if (savedFontSize) {
+          setFontSize(parseInt(savedFontSize, 10));
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      }
+    };
     loadSettings();
   }, []);
 
-  const loadSettings = async () => {
-    try {
-      const savedFontSize = await AsyncStorage.getItem('fontSize');
-      if (savedFontSize) {
-        setFontSize(parseInt(savedFontSize, 10));
-      }
-    } catch (error) {
-      console.error('Error loading settings:', error);
-    }
-  };
-
-  const handleFontSizeChange = async (newSize) => {
+  const handleFontSizeChange = useCallback(async (newSize) => {
     try {
       await AsyncStorage.setItem('fontSize', newSize.toString());
       setFontSize(newSize);
     } catch (error) {
       console.error('Error saving font size:', error);
     }
-  };
+  }, []);
 
-  const handleThemeChange = (newTheme) => {
+  const handleThemeChange = useCallback((newTheme) => {
     setThemePreference(newTheme);
-  };
-  
-  const handleLanguageChange = (langValue) => {
-    setLanguage(langValue);
-  };
+  }, [setThemePreference]);
 
-  const ThemeOption = ({ theme, label, icon }) => (
+  const handleLanguageChange = useCallback((langValue) => {
+    setLanguage(langValue);
+  }, [setLanguage]);
+
+  // Memoized option components to avoid unnecessary re-renders
+  const ThemeOption = useCallback(({ theme, label, icon }) => (
     <TouchableOpacity
       onPress={() => handleThemeChange(theme)}
       style={[
-        styles.themeOption,
+        styles.option,
         {
           backgroundColor: themePreference === theme ? themeColors.primary : 'transparent',
-          borderColor: themeColors.border,
+          borderColor: themeColors.border || '#444',
         },
-      ]}>
-      <MaterialCommunityIcons 
-        name={icon} 
-        size={20} 
+      ]}
+    >
+      <MaterialCommunityIcons
+        name={icon}
+        size={20}
         color={themePreference === theme ? '#fff' : themeColors.text}
-        style={styles.themeIcon} 
+        style={styles.icon}
       />
-      <Text
-        style={[
-          styles.themeText,
-          {
-            color: themePreference === theme ? '#fff' : themeColors.text,
-          },
-        ]}>
+      <Text style={[styles.optionText, { color: themePreference === theme ? '#fff' : themeColors.text }]}>
         {label}
       </Text>
     </TouchableOpacity>
-  );
-  
-  const LanguageOption = ({ langValue, label }) => (
+  ), [handleThemeChange, themePreference, themeColors]);
+
+  const LanguageOption = useCallback(({ langValue, label }) => (
     <TouchableOpacity
       onPress={() => handleLanguageChange(langValue)}
       style={[
-        styles.themeOption,
+        styles.option,
         {
           backgroundColor: language === langValue ? themeColors.primary : 'transparent',
-          borderColor: themeColors.border,
+          borderColor: themeColors.border || '#444',
         },
-      ]}>
-      <Text
-        style={[
-          styles.themeText,
-          {
-            color: language === langValue ? '#fff' : themeColors.text,
-          },
-        ]}>
+      ]}
+    >
+      <Text style={[styles.optionText, { color: language === langValue ? '#fff' : themeColors.text }]}>
         {label}
       </Text>
     </TouchableOpacity>
-  );
+  ), [handleLanguageChange, language, themeColors]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
       <ScrollView>
         {/* Font Size Settings */}
-        <View style={[styles.listItem, { borderBottomColor: themeColors.border }]}>
+        <View style={[styles.listItem, { borderBottomColor: themeColors.border || '#444' }]}>
           <Text style={[styles.title, { color: themeColors.text }]}>Font Size</Text>
           <View style={styles.controls}>
             <TouchableOpacity
               onPress={() => handleFontSizeChange(Math.max(12, fontSize - 2))}
-              style={styles.button}>
+              style={styles.button}
+            >
               <MaterialCommunityIcons name="minus" size={20} color={themeColors.primary} />
             </TouchableOpacity>
             <Text style={[styles.fontValue, { color: themeColors.text }]}>{fontSize}</Text>
             <TouchableOpacity
               onPress={() => handleFontSizeChange(Math.min(24, fontSize + 2))}
-              style={styles.button}>
+              style={styles.button}
+            >
               <MaterialCommunityIcons name="plus" size={20} color={themeColors.primary} />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Language Settings */}
-        <View style={[styles.listItem, { borderBottomColor: themeColors.border }]}>
+        <View style={[styles.listItem, { borderBottomColor: themeColors.border || '#444' }]}>
           <Text style={[styles.title, { color: themeColors.text }]}>Language (ભાષા / भाषा)</Text>
-          <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>
+          <Text style={[styles.subtitle, { color: themeColors.text }]}>
             Current: {languageName}
           </Text>
-          <View style={styles.languageControls}>
+          <View style={styles.optionContainer}>
             <LanguageOption langValue={LANGUAGES.GUJARATI} label={LANGUAGE_NAMES[LANGUAGES.GUJARATI]} />
             <LanguageOption langValue={LANGUAGES.HINDI} label={LANGUAGE_NAMES[LANGUAGES.HINDI]} />
             <LanguageOption langValue={LANGUAGES.ENGLISH} label={LANGUAGE_NAMES[LANGUAGES.ENGLISH]} />
@@ -134,9 +119,9 @@ const Settings = () => {
         </View>
 
         {/* Theme Settings */}
-        <View style={[styles.listItem, { borderBottomColor: themeColors.border }]}>
+        <View style={[styles.listItem, { borderBottomColor: themeColors.border || '#444' }]}>
           <Text style={[styles.title, { color: themeColors.text }]}>Theme</Text>
-          <View style={styles.themeControls}>
+          <View style={styles.optionContainer}>
             <ThemeOption theme="light" label="Light" icon="white-balance-sunny" />
             <ThemeOption theme="dark" label="Dark" icon="moon-waning-crescent" />
             <ThemeOption theme="system" label="System" icon="theme-light-dark" />
@@ -156,7 +141,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    gap: 12,
+    marginBottom: 8,
   },
   title: {
     fontSize: 16,
@@ -164,11 +149,12 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-    marginTop: -8,
+    marginTop: 4,
   },
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 8,
   },
   button: {
     padding: 6,
@@ -177,30 +163,25 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     fontSize: 16,
   },
-  themeControls: {
+  optionContainer: {
     flexDirection: 'row',
-    gap: 10,
     flexWrap: 'wrap',
-  },
-  languageControls: {
-    flexDirection: 'row',
+    marginTop: 8,
     gap: 10,
-    flexWrap: 'wrap',
   },
-  themeOption: {
+  option: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
     borderWidth: 1,
-    marginBottom: 8,
   },
-  themeText: {
+  optionText: {
     fontSize: 14,
     fontWeight: '500',
   },
-  themeIcon: {
+  icon: {
     marginRight: 6,
   },
 });

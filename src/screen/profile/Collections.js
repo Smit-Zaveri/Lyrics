@@ -13,24 +13,63 @@ import {
   Platform,
   Pressable,
   Image,
+  SafeAreaView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { ThemeContext } from '../../../App';
+import EditCollectionModal from '../../components/EditCollectionModal';
+import CreateCollectionModal from '../../components/CreateCollectionModal';
 
 const { width } = Dimensions.get('window');
+
+// Generate a unique ID using timestamp and random numbers
+const generateUniqueId = () => {
+  return 'id_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+};
 
 const Collections = ({ navigation }) => {
   const { themeColors } = useContext(ThemeContext);
   const [collections, setCollections] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ visible: false, collectionId: null, collectionName: '' });
+  
+  // Enhanced animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const iconRotateAnim = useRef(new Animated.Value(0)).current;
+
+  // New state for edit collection modal
+  const [editModal, setEditModal] = useState({ 
+    visible: false, 
+    collectionId: null, 
+    collectionName: '' 
+  });
+  const [newName, setNewName] = useState('');
+  const editSlideAnim = useRef(new Animated.Value(0)).current;
+  
+  // State variables for the create collection modal
+  const [createModal, setCreateModal] = useState({
+    visible: false
+  });
+  const [createName, setCreateName] = useState('');
+  const createSlideAnim = useRef(new Animated.Value(0)).current;
   
   // Create an array of animated values for each item
   const [itemAnimations, setItemAnimations] = useState([]);
+
+  // New state for duplicate name error modal
+  const [errorModal, setErrorModal] = useState({ 
+    visible: false, 
+    message: '',
+    title: ''
+  });
+
+  // State variables for handling input errors inline
+  const [editErrorMessage, setEditErrorMessage] = useState('');
+  const [createErrorMessage, setCreateErrorMessage] = useState('');
 
   // Initialize animations when collection data changes
   useEffect(() => {
@@ -65,20 +104,11 @@ const Collections = ({ navigation }) => {
 
   useEffect(() => {
     loadCollections();
-    // Animate the components when they mount
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 8,
-        tension: 40,
-        useNativeDriver: true,
-      })
-    ]).start();
+    // Initialize animations with visible values
+    fadeAnim.setValue(1);
+    scaleAnim.setValue(1);
+    slideAnim.setValue(0);
+    iconRotateAnim.setValue(1);
   }, []);
 
   const loadCollections = async () => {
@@ -126,6 +156,113 @@ const Collections = ({ navigation }) => {
     }
   };
 
+  const showEditModal = (collectionId, collectionName) => {
+    setEditModal({ visible: true, collectionId, collectionName });
+    setNewName(collectionName);
+    Animated.timing(editSlideAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const hideEditModal = () => {
+    Animated.timing(editSlideAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setEditModal({ visible: false, collectionId: null, collectionName: '' });
+      setNewName('');
+      setEditErrorMessage('');
+    });
+  };
+
+  const confirmEditCollection = async () => {
+    try {
+      const { collectionId } = editModal;
+      
+      if (!newName.trim()) {
+        setEditErrorMessage("Please enter a collection name");
+        return;
+      }
+
+      // Check if another collection with the same name already exists
+      const collectionExists = collections.some(
+        collection => collection.id !== collectionId && 
+                     collection.name.toLowerCase() === newName.trim().toLowerCase()
+      );
+
+      if (collectionExists) {
+        setEditErrorMessage("A collection with this name already exists");
+        return;
+      }
+
+      const updatedCollections = collections.map(c => 
+        c.id === collectionId ? { ...c, name: newName.trim() } : c
+      );
+      await AsyncStorage.setItem('user_collections', JSON.stringify(updatedCollections));
+      setCollections(updatedCollections);
+      hideEditModal();
+    } catch (error) {
+      console.error('Error editing collection:', error);
+    }
+  };
+
+  const showCreateModal = () => {
+    setCreateModal({ visible: true });
+    setCreateName('');
+    Animated.timing(createSlideAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const hideCreateModal = () => {
+    Animated.timing(createSlideAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setCreateModal({ visible: false });
+      setCreateName('');
+    });
+  };
+
+  const confirmCreateCollection = async () => {
+    try {
+      if (!createName.trim()) {
+        setCreateErrorMessage("Please enter a collection name");
+        return;
+      }
+
+      // Check if a collection with the same name already exists
+      const collectionExists = collections.some(
+        collection => collection.name.toLowerCase() === createName.trim().toLowerCase()
+      );
+
+      if (collectionExists) {
+        setCreateErrorMessage("A collection with this name already exists");
+        return;
+      }
+
+      const newCollection = {
+        id: generateUniqueId(),
+        name: createName.trim(),
+        songs: [],
+        createdAt: new Date().toISOString()
+      };
+      
+      const updatedCollections = [...collections, newCollection];
+      await AsyncStorage.setItem('user_collections', JSON.stringify(updatedCollections));
+      setCollections(updatedCollections);
+      hideCreateModal();
+    } catch (error) {
+      console.error('Error creating collection:', error);
+    }
+  };
+
   const DeleteConfirmationModal = () => (
     <Modal
       transparent
@@ -166,89 +303,213 @@ const Collections = ({ navigation }) => {
   );
 
   const renderItem = ({ item, index }) => {
-    // Use the pre-created animation values instead of creating new ones in the render function
     const itemAnimation = itemAnimations[index] || { fade: new Animated.Value(1), scale: new Animated.Value(1) };
     
     return (
       <Animated.View
         style={[
-          { opacity: itemAnimation.fade, transform: [{ scale: itemAnimation.scale }] }
+          { 
+            opacity: itemAnimation.fade, 
+            transform: [{ scale: itemAnimation.scale }],
+          }
         ]}
       >
         <TouchableOpacity
           style={[
             styles.collectionItem,
-            { backgroundColor: themeColors.surface, borderColor: themeColors.border }
+            { 
+              backgroundColor: themeColors.surface, 
+              borderColor: themeColors.border
+            }
           ]}
           onPress={() => handleCollectionPress(item)}
+          activeOpacity={0.7}
         >
-          <View style={styles.collectionIcon}>
+          <View style={[styles.collectionIconContainer, { backgroundColor: `${themeColors.primary}20` }]}>
             <MaterialCommunityIcons 
               name="playlist-music" 
-              size={28} 
+              size={32} 
               color={themeColors.primary} 
             />
           </View>
           <View style={styles.collectionInfo}>
-            <Text style={[styles.collectionName, { color: themeColors.text }]}>{item.name}</Text>
+            <Text style={[styles.collectionName, { color: themeColors.text }]}>
+              {item.name}
+            </Text>
             <Text style={[styles.songCount, { color: themeColors.placeholder }]}>
               {item.songs?.length || 0} {item.songs?.length === 1 ? 'song' : 'songs'}
             </Text>
           </View>
-          <TouchableOpacity
-            onPress={() => showDeleteModal(item.id, item.name)}
-            style={styles.deleteButton}
-            testID={`delete-button-${item.id}`}
-          >
-            <MaterialCommunityIcons name="delete-outline" size={24} color="#FF5252" />
-          </TouchableOpacity>
+          <View style={styles.collectionActions}>
+            <TouchableOpacity
+              onPress={() => showEditModal(item.id, item.name)}
+              style={styles.actionButton}
+              testID={`edit-button-${item.id}`}
+            >
+              <MaterialCommunityIcons name="pencil" size={22} color={themeColors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => showDeleteModal(item.id, item.name)}
+              style={styles.actionButton}
+              testID={`delete-button-${item.id}`}
+            >
+              <MaterialCommunityIcons name="delete" size={22} color="#FF5252" />
+            </TouchableOpacity>
+          </View>
         </TouchableOpacity>
       </Animated.View>
     );
   };
 
-  const EmptyComponent = () => (
-    <Animated.View 
-      style={[
-        styles.emptyContainer,
-        { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }
-      ]}
-    >
-      <MaterialCommunityIcons 
-        name="playlist-music-outline" 
-        size={80} 
-        color={themeColors.placeholder} 
-        style={styles.emptyIcon}
-      />
-      <Text style={[styles.emptyText, { color: themeColors.text }]}>
-        No collections yet
-      </Text>
-      <Text style={[styles.emptySubText, { color: themeColors.placeholder }]}>
-        Create one by saving songs to a collection!
-      </Text>
-    </Animated.View>
-  );
+  const EmptyComponent = () => {
+    const spin = iconRotateAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0deg', '360deg'],
+    });
+
+    return (
+      <Animated.View 
+        style={[
+          styles.emptyContainer,
+          { 
+            backgroundColor: themeColors.background,
+            opacity: fadeAnim,
+            transform: [
+              { scale: scaleAnim },
+              { translateY: slideAnim },
+            ]
+          }
+        ]}
+      >
+        <Animated.View 
+          style={[
+            styles.emptyIconContainer, 
+            { 
+              backgroundColor: `${themeColors.primary}15`,
+              transform: [{ rotate: spin }]
+            }
+          ]}
+        >
+          <MaterialCommunityIcons 
+            name="playlist-music-outline" 
+            size={60} 
+            color={themeColors.primary}
+          />
+        </Animated.View>
+        <Animated.Text 
+          style={[
+            styles.emptyText, 
+            { 
+              color: themeColors.text,
+              opacity: fadeAnim,
+              transform: [
+                { scale: scaleAnim },
+                { translateY: slideAnim }
+              ]
+            }
+          ]}
+        >
+          No Collections Yet
+        </Animated.Text>
+        <Animated.Text 
+          style={[
+            styles.emptySubText, 
+            { 
+              color: themeColors.placeholder,
+              opacity: fadeAnim,
+              transform: [
+                { scale: scaleAnim },
+                { translateY: slideAnim }
+              ]
+            }
+          ]}
+        >
+          Create a collection to organize your favorite songs
+        </Animated.Text>
+        <Animated.View
+          style={{
+            opacity: fadeAnim,
+            transform: [
+              { scale: scaleAnim },
+              { translateY: slideAnim }
+            ]
+          }}
+        >
+          <TouchableOpacity
+            style={[styles.createEmptyButton, { backgroundColor: themeColors.primary }]}
+            onPress={showCreateModal}
+          >
+            <MaterialCommunityIcons name="playlist-plus" size={24} color="#FFFFFF" style={{ marginRight: 8 }} />
+            <Text style={styles.createEmptyButtonText}>Create Collection</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </Animated.View>
+    );
+  };
 
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
-      <FlatList
-        data={collections}
-        renderItem={renderItem}
-        keyExtractor={item => item.id}
-        contentContainerStyle={collections.length === 0 ? styles.listContentEmpty : styles.listContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[themeColors.primary]}
-            tintColor={themeColors.primary}
-          />
-        }
-        ListEmptyComponent={EmptyComponent}
-        showsVerticalScrollIndicator={false}
-      />
-      <DeleteConfirmationModal />
-    </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
+      <View style={{ flex: 1 }}>
+        <FlatList
+          data={collections}
+          renderItem={renderItem}
+          keyExtractor={item => item.id}
+          contentContainerStyle={[
+            styles.listContent,
+            { flexGrow: 1, backgroundColor: themeColors.background, paddingBottom: 100 },
+            collections.length === 0 && styles.emptyListContainer
+          ]}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[themeColors.primary]}
+              tintColor={themeColors.primary}
+            />
+          }
+          ListEmptyComponent={EmptyComponent}
+          showsVerticalScrollIndicator={false}
+        />
+        
+        {/* Floating Action Button */}
+        <TouchableOpacity 
+          style={[styles.fab, { backgroundColor: themeColors.primary }]}
+          onPress={showCreateModal}
+          testID="create-collection-fab"
+        >
+          <MaterialCommunityIcons name="playlist-plus" size={28} color="#FFFFFF" />
+        </TouchableOpacity>
+        
+        <DeleteConfirmationModal />
+        <EditCollectionModal 
+          visible={editModal.visible}
+          themeColors={themeColors}
+          collectionName={editModal.collectionName}
+          editSlideAnim={editSlideAnim}
+          onClose={hideEditModal}
+          onChangeText={(text) => {
+            setNewName(text);
+            setEditErrorMessage(''); // Clear error when user types
+          }}
+          onConfirm={confirmEditCollection}
+          value={newName}
+          errorMessage={editErrorMessage}
+        />
+        <CreateCollectionModal
+          visible={createModal.visible}
+          themeColors={themeColors}
+          createSlideAnim={createSlideAnim}
+          onClose={hideCreateModal}
+          onChangeText={(text) => {
+            setCreateName(text);
+            setCreateErrorMessage(''); // Clear error when user types
+          }}
+          onConfirm={confirmCreateCollection}
+          value={createName}
+          errorMessage={createErrorMessage}
+        />
+      </View>
+    </SafeAreaView>
   );
 };
 
@@ -264,13 +525,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 16,
   },
+  emptyListContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   collectionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
     padding: 16,
     borderRadius: 12,
-    borderWidth: 1,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -283,13 +548,12 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  collectionIcon: {
+  collectionIconContainer: {
     width: 48,
     height: 48,
     borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(103, 59, 183, 0.1)', // Light purple background for the icon
     marginRight: 16,
   },
   collectionInfo: {
@@ -303,14 +567,27 @@ const styles = StyleSheet.create({
   songCount: {
     fontSize: 14,
   },
-  deleteButton: {
+  collectionActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionButton: {
     padding: 8,
+    marginLeft: 8,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+  },
+  emptyIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   emptyIcon: {
     marginBottom: 16,
@@ -325,6 +602,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     maxWidth: '80%',
+    marginBottom: 16,
+  },
+  createEmptyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  createEmptyButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   modalOverlay: {
     flex: 1,
@@ -361,6 +652,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  errorIconContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(255, 82, 82, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -389,12 +689,51 @@ const styles = StyleSheet.create({
     marginRight: 8,
     borderWidth: 1,
   },
-  deleteButton: {
+  saveButton: {
     marginLeft: 8,
   },
   buttonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  textInput: {
+    width: '100%',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    fontSize: 16,
+  },
+  singleButtonContainer: {
+    width: '100%',
+  },
+  singleButton: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
   },
 });
 

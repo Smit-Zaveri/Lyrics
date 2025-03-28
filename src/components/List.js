@@ -6,6 +6,7 @@ import {
   View,
   ActivityIndicator,
   Text,
+  StyleSheet,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -327,37 +328,35 @@ const List = ({route}) => {
 
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: themeColors.background}}>
-      <View style={{flexGrow: 0, flexShrink: 0}}>
+      <View style={{flex: 1}}>
         {/* Only show tags if not using customLyrics and tags are available */}
         {!customLyrics && tags && tags.length > 0 && (
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            data={tags}
-            extraData={language} // Add language as extraData to force re-render on language change
-            keyExtractor={(item, index) =>
-              item.id?.toString() || `tag-${index}`
-            }
-            renderItem={({item}) => (
-              <TagItem
-                item={item}
-                selectedTags={selectedTags}
-                onTagPress={handleTagPress}
-                themeColors={themeColors}
-              />
-            )}
-          />
+          <View style={styles.tagContainer}>
+            <FlatList
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              data={tags}
+              extraData={language}
+              keyExtractor={(item, index) =>
+                item.id?.toString() || `tag-${index}`
+              }
+              contentContainerStyle={styles.tagListContent}
+              renderItem={({item}) => (
+                <TagItem
+                  item={item}
+                  selectedTags={selectedTags}
+                  onTagPress={handleTagPress}
+                  themeColors={themeColors}
+                />
+              )}
+            />
+          </View>
         )}
 
         {/* Lyrics List */}
         <FlatList
-          contentContainerStyle={{
-            backgroundColor: themeColors.background,
-            paddingBottom: 100,
-            flexGrow: filteredLyrics.length === 0 ? 1 : undefined,
-            borderBottomColor:
-              themeColors.border || themeColors.divider || '#444',
-          }}
+          style={styles.lyricsList}
+          contentContainerStyle={styles.lyricsListContent}
           data={filteredLyrics}
           keyExtractor={(item, index) => item.id?.toString() || `item-${index}`}
           renderItem={({item}) => (
@@ -367,7 +366,7 @@ const List = ({route}) => {
               onItemPress={handleItemPress}
             />
           )}
-          ListEmptyComponent={<EmptyList filteredLyrics={filteredLyrics} />}
+          ListEmptyComponent={<EmptyList />}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -389,5 +388,24 @@ const List = ({route}) => {
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  tagContainer: {
+    maxHeight: 44,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+  },
+  tagListContent: {
+    paddingHorizontal: 8,
+    alignItems: 'center',
+  },
+  lyricsList: {
+    flex: 1,
+  },
+  lyricsListContent: {
+    flexGrow: 1,
+    paddingBottom: 100,
+  },
+});
 
 export default List;

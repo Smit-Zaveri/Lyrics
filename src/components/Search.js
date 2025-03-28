@@ -303,9 +303,11 @@ const Search = ({route}) => {
           </View>
         )}
         {filteredLyrics.length === 0 && searchQuery.trim() && (
-          <Text style={[styles.noResultsText, {color: themeColors.text}]}>
-            No results found
-          </Text>
+          <View style={styles.noResultsContainer}>
+            <Text style={[styles.noResultsText, {color: themeColors.text}]}>
+              No results found
+            </Text>
+          </View>
         )}
         <FlatList
           data={filteredLyrics}
@@ -315,7 +317,10 @@ const Search = ({route}) => {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerStyle={styles.listContainer}
+          contentContainerStyle={[
+            styles.listContainer,
+            !filteredLyrics.length && styles.emptyListContainer,
+          ]}
         />
       </SafeAreaView>
     </Provider>
@@ -421,7 +426,20 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   listContainer: {
+    flexGrow: 1,
     paddingBottom: 20,
+  },
+  emptyListContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 300,
+  },
+  noResultsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 200,
   },
   noResultsText: {
     fontSize: 16,

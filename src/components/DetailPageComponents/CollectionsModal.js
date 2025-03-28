@@ -1,13 +1,13 @@
 import React from 'react';
-import { 
-  View, 
-  Text, 
-  Modal, 
-  TouchableOpacity, 
-  TextInput, 
-  FlatList, 
-  StyleSheet, 
-  Animated 
+import {
+  View,
+  Text,
+  Modal,
+  TouchableOpacity,
+  TextInput,
+  FlatList,
+  StyleSheet,
+  Animated,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -21,46 +21,47 @@ const CollectionsModal = ({
   onClose,
   onNewCollectionNameChange,
   onCreateCollection,
-  onToggleCollection
+  onToggleCollection,
 }) => {
   return (
     <Modal
       visible={visible}
       transparent
       animationType="none"
-      onRequestClose={onClose}
-    >
+      onRequestClose={onClose}>
       <TouchableOpacity
         style={styles.modalOverlay}
         activeOpacity={1}
-        onPress={onClose}
-      >
+        onPress={onClose}>
         <Animated.View
           style={[
             styles.collectionsModal,
             {
               backgroundColor: themeColors.surface,
-              transform: [{
-                translateY: slideUpAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [600, 0]
-                })
-              }]
-            }
-          ]}
-        >
+              transform: [
+                {
+                  translateY: slideUpAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [600, 0],
+                  }),
+                },
+              ],
+            },
+          ]}>
           <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: themeColors.text }]}>Save to Collection</Text>
+            <Text style={[styles.modalTitle, {color: themeColors.text}]}>
+              Save to Collection
+            </Text>
           </View>
 
           <View style={styles.newCollectionInput}>
             <TextInput
               style={[
-                styles.input, 
-                { 
-                  color: themeColors.text, 
-                  borderColor: themeColors.border 
-                }
+                styles.input,
+                {
+                  color: themeColors.text,
+                  borderColor: themeColors.border,
+                },
               ]}
               placeholder="Create new collection..."
               placeholderTextColor={themeColors.placeholder}
@@ -68,30 +69,45 @@ const CollectionsModal = ({
               onChangeText={onNewCollectionNameChange}
             />
             <TouchableOpacity
-              style={[styles.createButton, { backgroundColor: themeColors.primary }]}
-              onPress={onCreateCollection}
-            >
-              <Text style={{ color: '#fff' }}>Create</Text>
+              style={[
+                styles.createButton,
+                {backgroundColor: themeColors.primary},
+              ]}
+              onPress={onCreateCollection}>
+              <Text style={{color: '#fff'}}>Create</Text>
             </TouchableOpacity>
           </View>
 
           <FlatList
             data={collections}
             keyExtractor={item => item.id}
-            renderItem={({ item }) => {
-              const isSavedInCollection = item.songs?.some(s => s.id === song?.id);
+            renderItem={({item}) => {
+              const isSavedInCollection = item.songs?.some(
+                s => s.id === song?.id,
+              );
               return (
                 <TouchableOpacity
-                  style={[styles.collectionItem, { borderBottomColor: themeColors.border }]}
-                  onPress={() => onToggleCollection(item.id)}
-                >
-                  <Text style={[styles.collectionName, { color: themeColors.text }]}>
+                  style={[
+                    styles.collectionItem,
+                    {
+                      borderBottomColor:
+                        themeColors.border || themeColors.divder || '#444'                    },
+                  ]}
+                  onPress={() => onToggleCollection(item.id)}>
+                  <Text
+                    style={[styles.collectionName, {color: themeColors.text}]}>
                     {item.name}
                   </Text>
                   <MaterialCommunityIcons
-                    name={isSavedInCollection ? 'check-circle' : 'circle-outline'}
+                    name={
+                      isSavedInCollection ? 'check-circle' : 'circle-outline'
+                    }
                     size={24}
-                    color={isSavedInCollection ? themeColors.primary : themeColors.text}
+                    color={
+                      isSavedInCollection
+                        ? themeColors.primary
+                        : themeColors.text
+                    }
                   />
                 </TouchableOpacity>
               );
