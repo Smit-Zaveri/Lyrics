@@ -1,4 +1,10 @@
-import React, {useState, useEffect, useCallback, useContext} from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useContext,
+  useRef,
+} from 'react';
 import {
   FlatList,
   SafeAreaView,
@@ -7,6 +13,8 @@ import {
   ActivityIndicator,
   Text,
   StyleSheet,
+  Animated,
+  Easing,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -19,10 +27,17 @@ import {ThemeContext} from '../../App';
 import {LanguageContext} from '../context/LanguageContext';
 
 const List = ({route}) => {
-  const {collectionName, Tags, title, customLyrics} = route.params;
+  const {collectionName, Tags, title, customLyrics, returnToIndex} =
+    route.params || {};
   const navigation = useNavigation();
   const {themeColors} = useContext(ThemeContext);
   const {getString, language} = useContext(LanguageContext);
+
+  const flatListRef = useRef(null);
+  const initialScrollDone = useRef(false);
+  const highlightedItemId = useRef(null);
+
+  const [highlightAnim] = useState(new Animated.Value(0));
 
   const [header, setHeader] = useState(true);
   const [lyrics, setLyrics] = useState([]);
@@ -33,23 +48,19 @@ const List = ({route}) => {
   const [error, setError] = useState(null);
 
   const filterAndSortLyrics = (tags, lyrics) => {
-    // Ensure lyrics is always a valid array
     if (!lyrics || !Array.isArray(lyrics)) {
       return [];
     }
 
     const filteredItems = lyrics.filter(item => {
-      // Skip null or undefined items
       if (!item) return false;
 
       if (tags.length === 0) return true;
 
       return tags.every(selectedTag => {
-        // Handle multi-language tags
         const itemTags = Array.isArray(item.tags) ? item.tags : [];
         const hasTag = itemTags.some(tag => {
           if (Array.isArray(tag)) {
-            // For multi-language tags, check all variations
             const localizedTag = getString(tag);
             return localizedTag.toLowerCase() === selectedTag.toLowerCase();
           }
@@ -60,7 +71,6 @@ const List = ({route}) => {
           );
         });
 
-        // Check collection name match if tag not found
         let collectionMatch = false;
         if (item.collectionName) {
           if (Array.isArray(item.collectionName)) {
@@ -77,12 +87,10 @@ const List = ({route}) => {
       });
     });
 
-    // Sort items safely
     const sortedItems = filteredItems.sort((a, b) => {
       if (a.order !== undefined && b.order !== undefined) {
         return a.order - b.order;
       }
-      // Use numbering as backup, with fallback to 0
       return (a.numbering || 0) - (b.numbering || 0);
     });
 
@@ -98,7 +106,6 @@ const List = ({route}) => {
       if (!selectedTag) return items;
 
       const filteredItems = items.filter(item => {
-        // Check if item has any matching tag
         const hasTag = item.tags?.some(tag => {
           if (Array.isArray(tag)) {
             const localizedTag = getString(tag);
@@ -107,7 +114,6 @@ const List = ({route}) => {
           return tag.toLowerCase() === selectedTag.toLowerCase();
         });
 
-        // Check if collection name matches
         let collectionMatch = false;
         if (item.collectionName) {
           if (Array.isArray(item.collectionName)) {
@@ -123,21 +129,16 @@ const List = ({route}) => {
         return hasTag || collectionMatch;
       });
 
-      // Sort items based on order or numbering
       const sortedItems = filteredItems.sort((a, b) => {
-        // First try to sort by order
         if (a.order !== undefined && b.order !== undefined) {
           return a.order - b.order;
         }
-        // Then try numbering
         if (a.numbering !== undefined && b.numbering !== undefined) {
           return a.numbering - b.numbering;
         }
-        // Finally fallback to index + 1
         return 0;
       });
 
-      // Apply display numbering to sorted items
       return sortedItems.map((item, index) => ({
         ...item,
         displayNumbering: item.order || item.numbering || index + 1,
@@ -154,15 +155,12 @@ const List = ({route}) => {
       setError(null);
 
       if (customLyrics) {
-        // If we have custom lyrics (from a collection), use those
         setLyrics(Array.isArray(customLyrics) ? customLyrics : []);
         setTags([]);
       } else {
-        // Otherwise load from AsyncStorage as before
         const fetchedDataTags = await getFromAsyncStorage(Tags);
         const fetchedDataLyrics = await getFromAsyncStorage(collectionName);
 
-        // Process tags with language support
         const tagsArray = Array.isArray(fetchedDataTags) ? fetchedDataTags : [];
         const sortedTags = [...tagsArray]
           .sort((a, b) => {
@@ -215,10 +213,8 @@ const List = ({route}) => {
     loadData();
   }, [Tags, collectionName]);
 
-  // Update tags when language changes
   useEffect(() => {
     if (!customLyrics && tags.length > 0) {
-      // Get fresh tags from AsyncStorage when language changes
       const updateTagsForLanguageChange = async () => {
         try {
           const fetchedDataTags = await getFromAsyncStorage(Tags);
@@ -241,8 +237,117 @@ const List = ({route}) => {
 
   const filteredLyrics = filterAndSortLyrics(selectedTags, lyrics);
 
+  const smoothScrollToIndex = useCallback(
+    (index, highlightAfter = true) => {
+      if (!flatListRef.current || index < 0) return;
+
+      try {
+        flatListRef.current.scrollToIndex({
+          index,
+          animated: true,
+          viewPosition: 0.3,
+          viewOffset: 20,
+        });
+
+        if (highlightAfter && index >= 0 && index < filteredLyrics.length) {
+          const itemToHighlight = filteredLyrics[index];
+          highlightedItemId.current =
+            itemToHighlight.id?.toString() || `item-${index}`;
+
+          highlightAnim.setValue(0);
+
+          setTimeout(() => {
+            Animated.sequence([
+              Animated.timing(highlightAnim, {
+                toValue: 1,
+                duration: 500,
+                useNativeDriver: true,
+                easing: Easing.bezier(0.2, 0, 0.2, 1),
+              }),
+              Animated.timing(highlightAnim, {
+                toValue: 0,
+                duration: 1000,
+                useNativeDriver: true,
+                easing: Easing.bezier(0.4, 0, 0.2, 1),
+              }),
+            ]).start(() => {
+              highlightedItemId.current = null;
+            });
+          }, 600);
+        }
+      } catch (error) {
+        console.warn('Scroll failed, using fallback', error);
+
+        const estimatedOffset = index * 70;
+
+        Animated.timing(new Animated.Value(0), {
+          toValue: 1,
+          duration: 800,
+          easing: Easing.bezier(0.4, 0, 0.2, 1),
+          useNativeDriver: true,
+        }).start();
+
+        flatListRef.current.scrollToOffset({
+          offset: Math.max(0, estimatedOffset - 120),
+          animated: true,
+        });
+      }
+    },
+    [flatListRef, filteredLyrics, highlightAnim],
+  );
+
   useEffect(() => {
-    // Get localized title if it's an array
+    let hasAttemptedScroll = false;
+    let isMounted = true;
+
+    const handleFocus = () => {
+      if (!isMounted || hasAttemptedScroll) return;
+      hasAttemptedScroll = true;
+
+      const returnedIndex = route.params?.returnToIndex;
+
+      if (returnedIndex && flatListRef.current && filteredLyrics.length > 0) {
+        const targetIndex = parseInt(returnedIndex, 10);
+
+        const indexToScrollTo = filteredLyrics.findIndex(
+          item => item.filteredIndex === targetIndex,
+        );
+
+        if (indexToScrollTo !== -1) {
+          setTimeout(() => {
+            if (!isMounted) return;
+            smoothScrollToIndex(indexToScrollTo);
+          }, 500);
+        }
+      }
+    };
+
+    if (route.params?.returnToIndex) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (isMounted) handleFocus();
+        });
+      });
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [route.params?.returnToIndex, filteredLyrics, smoothScrollToIndex]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (route.params?.returnToIndex) {
+        setTimeout(() => {
+          navigation.setParams({returnToIndex: undefined});
+        }, 1000);
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  useEffect(() => {
     const localizedTitle = Array.isArray(title) ? getString(title) : title;
 
     navigation.setOptions({
@@ -280,9 +385,62 @@ const List = ({route}) => {
     navigation.navigate('Details', {
       Lyrics: filteredLyrics,
       itemNumberingparas: item.filteredIndex,
+      previousScreen: 'List',
     });
     setHeader(true);
   };
+
+  const renderItem = useCallback(
+    ({item, index}) => {
+      const isHighlighted =
+        item.id?.toString() === highlightedItemId.current ||
+        `item-${index}` === highlightedItemId.current;
+
+      const itemStyle = isHighlighted
+        ? {
+            transform: [
+              {
+                scale: highlightAnim.interpolate({
+                  inputRange: [0, 0.5, 1],
+                  outputRange: [1, 1.02, 1],
+                }),
+              },
+            ],
+            backgroundColor: highlightAnim.interpolate({
+              inputRange: [0, 0.3, 1],
+              outputRange: [
+                themeColors.background,
+                themeColors.primary + '15',
+                themeColors.background,
+              ],
+            }),
+            borderRadius: 8,
+            marginHorizontal: 4,
+            shadowOpacity: highlightAnim.interpolate({
+              inputRange: [0, 0.5, 1],
+              outputRange: [0, 0.1, 0],
+            }),
+            shadowRadius: 4,
+            shadowOffset: {width: 0, height: 2},
+            elevation: highlightAnim.interpolate({
+              inputRange: [0, 0.5, 1],
+              outputRange: [0, 2, 0],
+            }),
+          }
+        : {};
+
+      return (
+        <Animated.View style={itemStyle}>
+          <ListItem
+            item={{...item, numbering: item.displayNumbering}}
+            themeColors={themeColors}
+            onItemPress={handleItemPress}
+          />
+        </Animated.View>
+      );
+    },
+    [highlightAnim, themeColors, handleItemPress],
+  );
 
   if (isLoading) {
     return (
@@ -329,7 +487,6 @@ const List = ({route}) => {
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: themeColors.background}}>
       <View style={{flex: 1}}>
-        {/* Only show tags if not using customLyrics and tags are available */}
         {!customLyrics && tags && tags.length > 0 && (
           <View style={styles.tagContainer}>
             <FlatList
@@ -353,19 +510,13 @@ const List = ({route}) => {
           </View>
         )}
 
-        {/* Lyrics List */}
         <FlatList
+          ref={flatListRef}
           style={styles.lyricsList}
           contentContainerStyle={styles.lyricsListContent}
           data={filteredLyrics}
           keyExtractor={(item, index) => item.id?.toString() || `item-${index}`}
-          renderItem={({item}) => (
-            <ListItem
-              item={{...item, numbering: item.displayNumbering}}
-              themeColors={themeColors}
-              onItemPress={handleItemPress}
-            />
-          )}
+          renderItem={renderItem}
           ListEmptyComponent={<EmptyList />}
           refreshControl={
             <RefreshControl
@@ -373,8 +524,8 @@ const List = ({route}) => {
               onRefresh={() => loadData(true)}
             />
           }
-          windowSize={3}
-          maxToRenderPerBatch={8}
+          windowSize={5}
+          maxToRenderPerBatch={10}
           updateCellsBatchingPeriod={50}
           getItemLayout={(data, index) => ({
             length: 70,
@@ -382,7 +533,34 @@ const List = ({route}) => {
             index,
           })}
           removeClippedSubviews={true}
-          initialNumToRender={8}
+          initialNumToRender={20}
+          onScrollToIndexFailed={info => {
+            console.warn('Scroll to index failed:', info);
+
+            const offset = info.index * 70;
+            const targetY = Math.max(0, offset - 100);
+
+            let currentOffset = 0;
+            const totalFrames = 30;
+            const step = targetY / totalFrames;
+
+            function animateScroll(frame) {
+              if (frame >= totalFrames || !flatListRef.current) return;
+
+              currentOffset += step;
+              flatListRef.current.scrollToOffset({
+                offset: currentOffset,
+                animated: false,
+              });
+
+              requestAnimationFrame(() => animateScroll(frame + 1));
+            }
+
+            requestAnimationFrame(() => animateScroll(0));
+          }}
+          scrollEventThrottle={16}
+          decelerationRate="normal"
+          keyboardShouldPersistTaps="handled"
         />
       </View>
     </SafeAreaView>
@@ -404,7 +582,6 @@ const styles = StyleSheet.create({
   },
   lyricsListContent: {
     flexGrow: 1,
-    paddingBottom: 100,
   },
 });
 

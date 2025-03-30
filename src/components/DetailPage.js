@@ -204,6 +204,67 @@ const DetailPage = ({navigation, route}) => {
     setSong(foundSong);
   }, [itemNumbering, setSongByNumbering]);
 
+  // Update the beforeRemove handler for smoother transitions
+  useEffect(() => {
+    let hasNavigated = false;
+    let isAnimating = false;
+
+    const unsubscribe = navigation.addListener('beforeRemove', e => {
+      // Prevent handling the event multiple times or during animation
+      if (hasNavigated || isAnimating) return;
+      hasNavigated = true;
+
+      // Store the current index
+      const currentIndex = itemNumbering;
+
+      // Cancel the default navigation behavior
+      e.preventDefault();
+
+      // Add a smoother fade out animation
+      isAnimating = true;
+
+      // Sequential animations for smoother transition
+      Animated.sequence([
+        // First gently fade and scale for a more natural transition
+        Animated.parallel([
+          Animated.timing(opacityAnim, {
+            toValue: 0.7,
+            duration: 220, // Slightly longer for smoother effect
+            useNativeDriver: true,
+            easing: Easing.bezier(0.4, 0, 0.2, 1), // Material Design natural easing
+          }),
+          Animated.timing(scaleAnim, {
+            toValue: 0.98, // Subtle scale change
+            duration: 220,
+            useNativeDriver: true,
+            easing: Easing.bezier(0.4, 0, 0.2, 1),
+          }),
+        ]),
+        // Then continue fading to complete the transition
+        Animated.timing(opacityAnim, {
+          toValue: 0.4,
+          duration: 120,
+          useNativeDriver: true,
+          easing: Easing.bezier(0.4, 0, 0.2, 1),
+        }),
+      ]).start(() => {
+        // Then navigate back with the current index
+        setTimeout(() => {
+          navigation.navigate({
+            name: route.params?.previousScreen || 'List',
+            params: {
+              returnToIndex: currentIndex,
+              transitionType: 'fade',
+            },
+            merge: true,
+          });
+        }, 50); // Short delay before navigation completes the effect
+      });
+    });
+
+    return unsubscribe;
+  }, [navigation, itemNumbering, opacityAnim, scaleAnim]);
+
   // Handle song navigation with animations
   const navigateSong = direction => {
     try {
