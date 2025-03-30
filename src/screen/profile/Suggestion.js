@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, {useState, useEffect, useContext, useRef} from 'react';
 import {
   Text,
   View,
@@ -9,12 +9,12 @@ import {
   Animated,
   ScrollView,
 } from 'react-native';
-import { Controller, useForm } from 'react-hook-form';
-import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase/config';
+import {Controller, useForm} from 'react-hook-form';
+import {collection, getDocs, addDoc, serverTimestamp} from 'firebase/firestore';
+import {db} from '../../firebase/config';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { Button } from 'react-native-paper';
-import { ThemeContext } from '../../../App';
+import {Button} from 'react-native-paper';
+import {ThemeContext} from '../../../App';
 import NetInfo from '@react-native-community/netinfo';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
@@ -38,10 +38,9 @@ const InputField = ({
               styles.input,
               multiline && styles.textArea,
               {
-                backgroundColor: themeColors.surface, 
-                color: themeColors.text, 
+                backgroundColor: themeColors.surface,
+                color: themeColors.text,
                 borderColor: themeColors.border,
-                borderWidth: 1,
               },
             ]}
             placeholder={placeholder}
@@ -59,19 +58,28 @@ const InputField = ({
   );
 };
 
-const ErrorMessage = ({ message, show }) => {
+const ErrorMessage = ({message, show}) => {
   if (!show) return null;
   return (
     <View style={styles.errorContainer}>
-      <Icon name="error-outline" size={14} color="#ff4d4d" style={styles.errorIcon} />
+      <Icon
+        name="error-outline"
+        size={14}
+        color="#ff4d4d"
+        style={styles.errorIcon}
+      />
       <Text style={styles.error}>{message}</Text>
     </View>
   );
 };
 
 const Suggestion = () => {
-  const { themeColors } = useContext(ThemeContext);
-  const [alertModal, setAlertModal] = useState({ visible: false, type: null, message: '' });
+  const {themeColors} = useContext(ThemeContext);
+  const [alertModal, setAlertModal] = useState({
+    visible: false,
+    type: null,
+    message: '',
+  });
   const alertAnimation = useRef(new Animated.Value(0)).current;
   const scaleAnimation = useRef(new Animated.Value(0.3)).current;
 
@@ -85,18 +93,18 @@ const Suggestion = () => {
     defaultValues: {
       title: '',
       content: '',
-      collection: '',
+      collection: 'general',
     },
     mode: 'onBlur',
   });
 
   const [collections, setCollections] = useState([]);
   const [collectionDropdownOpen, setCollectionDropdownOpen] = useState(false);
-  const [selectedCollection, setSelectedCollection] = useState('other');
+  const [selectedCollection, setSelectedCollection] = useState('general');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const showAlert = (type, message) => {
-    setAlertModal({ visible: true, type, message });
+    setAlertModal({visible: true, type, message});
     Animated.parallel([
       Animated.spring(alertAnimation, {
         toValue: 1,
@@ -127,13 +135,16 @@ const Suggestion = () => {
         duration: 200,
         useNativeDriver: true,
       }),
-    ]).start(() => setAlertModal({ visible: false, type: null, message: '' }));
+    ]).start(() => setAlertModal({visible: false, type: null, message: ''}));
   };
 
   const checkInternet = async () => {
     const netInfo = await NetInfo.fetch();
     if (!netInfo.isConnected) {
-      showAlert('error', 'Please check your internet connection and try again.');
+      showAlert(
+        'error',
+        'Please check your internet connection and try again.',
+      );
       return false;
     }
     return true;
@@ -145,12 +156,21 @@ const Suggestion = () => {
         const collectionsRef = collection(db, 'collections');
         const snapshot = await getDocs(collectionsRef);
         const collectionData = snapshot.docs.map(doc => ({
-          label: doc.data().displayName  + ' (' + doc.data().name + ')'  || doc.data().name,
+          label:
+            doc.data().displayName + ' (' + doc.data().name + ')' ||
+            doc.data().name,
           value: doc.data().name,
         }));
-        setCollections(collectionData);
+
+        const collectionsWithGeneral = [
+          {label: 'General Suggestions', value: 'general'},
+          ...collectionData,
+        ];
+
+        setCollections(collectionsWithGeneral);
       } catch (error) {
         console.error('Error fetching collections:', error);
+        setCollections([{label: 'General Suggestions', value: 'general'}]);
       }
     };
 
@@ -159,15 +179,15 @@ const Suggestion = () => {
 
   const onSubmit = async data => {
     if (!(await checkInternet())) return;
-    
+
     setIsSubmitting(true);
     try {
       const suggestionsRef = collection(db, 'suggestions_new');
       await addDoc(suggestionsRef, {
-        ...data
+        ...data,
       });
       reset();
-      setSelectedCollection("other");
+      setSelectedCollection('general');
       showAlert('success', 'Your suggestion has been submitted successfully!');
     } catch (error) {
       console.error('Error submitting suggestion:', error);
@@ -178,21 +198,22 @@ const Suggestion = () => {
   };
 
   return (
-    <ScrollView 
-      style={[styles.container, { backgroundColor: themeColors.background }]}
+    <ScrollView
+      style={[styles.container, {backgroundColor: themeColors.background}]}
       contentContainerStyle={styles.contentContainer}
-      showsVerticalScrollIndicator={false}
-    >
+      showsVerticalScrollIndicator={false}>
       <View style={styles.form}>
         <View style={styles.fieldWrapper}>
-          <Text style={[styles.fieldLabel, { color: themeColors.text }]}>Collection</Text>
+          <Text style={[styles.fieldLabel, {color: themeColors.text}]}>
+            Collection
+          </Text>
           <DropDownPicker
             open={collectionDropdownOpen}
             value={selectedCollection}
             items={collections}
             setOpen={setCollectionDropdownOpen}
             setValue={setSelectedCollection}
-            onChangeValue={(value) => {
+            onChangeValue={value => {
               setValue('collection', value);
             }}
             placeholder="Select a collection"
@@ -234,67 +255,82 @@ const Suggestion = () => {
             zIndexInverse={1000}
             listMode="SCROLLVIEW"
           />
-          <ErrorMessage message="Please select a collection" show={errors.collection || (!selectedCollection && errors.collection)} />
+          <ErrorMessage
+            message="Please select a collection"
+            show={
+              errors.collection || (!selectedCollection && errors.collection)
+            }
+          />
         </View>
 
         <View style={styles.fieldWrapper}>
-          <Text style={[styles.fieldLabel, { color: themeColors.text }]}>Title</Text>
+          <Text style={[styles.fieldLabel, {color: themeColors.text}]}>
+            Title
+          </Text>
           <InputField
             control={control}
             name="title"
             placeholder="Enter a title for your suggestion"
-            rules={{ required: 'Title is required' }}
+            rules={{required: 'Title is required'}}
             themeColors={themeColors}
           />
-          <ErrorMessage message={errors.title?.message || "Title is required"} show={errors.title} />
+          <ErrorMessage
+            message={errors.title?.message || 'Title is required'}
+            show={errors.title}
+          />
         </View>
 
         <View style={styles.fieldWrapper}>
-          <Text style={[styles.fieldLabel, { color: themeColors.text }]}>Content</Text>
+          <Text style={[styles.fieldLabel, {color: themeColors.text}]}>
+            Content
+          </Text>
           <InputField
             control={control}
             name="content"
             placeholder="Describe your suggestion in detail"
-            rules={{ required: 'Content is required' }}
+            rules={{required: 'Content is required'}}
             multiline
             numberOfLines={6}
             themeColors={themeColors}
           />
-          <ErrorMessage message={errors.content?.message || "Content is required"} show={errors.content} />
+          <ErrorMessage
+            message={errors.content?.message || 'Content is required'}
+            show={errors.content}
+          />
         </View>
 
         <Button
           mode="contained"
           disabled={isSubmitting}
           onPress={handleSubmit(data => {
-            // Validate all required fields
             if (!data.collection) {
-              setValue('collection', '', { shouldValidate: true });
+              setValue('collection', '', {shouldValidate: true});
               return showAlert('error', 'Please fill in all required fields');
             }
             onSubmit(data);
           })}
-          style={[styles.submitButton, { backgroundColor: themeColors.primary }]}
+          style={[styles.submitButton, {backgroundColor: themeColors.primary}]}
           labelStyle={styles.buttonLabel}
           loading={isSubmitting}>
           {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
         </Button>
       </View>
 
-      {/* Alert Modal */}
-      <Modal transparent visible={alertModal.visible} onRequestClose={closeAlertModal}>
+      <Modal
+        transparent
+        visible={alertModal.visible}
+        onRequestClose={closeAlertModal}>
         <TouchableOpacity
           activeOpacity={1}
           style={styles.modalOverlay}
-          onPress={closeAlertModal}
-        >
+          onPress={closeAlertModal}>
           <Animated.View
             style={[
               styles.modalContent,
               {
                 backgroundColor: themeColors.surface,
                 transform: [
-                  { scale: scaleAnimation },
+                  {scale: scaleAnimation},
                   {
                     translateY: alertAnimation.interpolate({
                       inputRange: [0, 1],
@@ -304,8 +340,7 @@ const Suggestion = () => {
                 ],
                 opacity: alertAnimation,
               },
-            ]}
-          >
+            ]}>
             <View style={styles.modalInner}>
               <Animated.View
                 style={{
@@ -317,22 +352,21 @@ const Suggestion = () => {
                       }),
                     },
                   ],
-                }}
-              >
+                }}>
                 {alertModal.type === 'success' ? (
-                  <Icon name="check-circle" size={60} color={themeColors.primary} />
+                  <Icon
+                    name="check-circle"
+                    size={60}
+                    color={themeColors.primary}
+                  />
                 ) : (
                   <Icon name="error" size={60} color="#F44336" />
                 )}
               </Animated.View>
-              <Text
-                style={[styles.alertTitle, { color: themeColors.text }]}
-              >
+              <Text style={[styles.alertTitle, {color: themeColors.text}]}>
                 {alertModal.type === 'success' ? 'Success!' : 'Error'}
               </Text>
-              <Text
-                style={[styles.alertMessage, { color: themeColors.text }]}
-              >
+              <Text style={[styles.alertMessage, {color: themeColors.text}]}>
                 {alertModal.message}
               </Text>
             </View>
@@ -348,43 +382,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  headerContainer: {
-    marginBottom: 30,
-    alignItems: 'center',
+    padding: 15,
+    paddingBottom: 30,
   },
   form: {
-    gap: 25,
-  },
-  formTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  formSubtitle: {
-    fontSize: 16,
-    opacity: 0.7,
-    textAlign: 'center',
+    gap: 15,
   },
   fieldLabel: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    marginBottom: 8,
-    letterSpacing: 0.5,
+    marginBottom: 6,
   },
   fieldWrapper: {
-    marginBottom: 5,
+    marginBottom: 15,
   },
   inputContainer: {
-    marginTop: 5,
+    marginTop: 3,
   },
   input: {
     borderRadius: 8,
-    padding: 14,
+    padding: 12,
     fontSize: 16,
+    borderWidth: 1,
   },
   textArea: {
     height: 150,
@@ -393,7 +412,7 @@ const styles = StyleSheet.create({
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 6,
+    marginTop: 4,
     marginLeft: 4,
   },
   errorIcon: {
@@ -404,15 +423,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   submitButton: {
-    marginTop: 20,
+    marginTop: 10,
     borderRadius: 8,
-    paddingVertical: 6,
-    elevation: 2,
+    paddingVertical: 5,
   },
   buttonLabel: {
     fontSize: 16,
     fontWeight: 'bold',
-    letterSpacing: 0.5,
     paddingVertical: 2,
   },
   modalOverlay: {
@@ -424,13 +441,9 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '80%',
     maxWidth: 300,
-    borderRadius: 20,
-    padding: 24,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    borderRadius: 16,
+    padding: 20,
+    elevation: 4,
   },
   modalInner: {
     alignItems: 'center',
@@ -438,10 +451,9 @@ const styles = StyleSheet.create({
   alertTitle: {
     marginTop: 15,
     marginBottom: 10,
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     textAlign: 'center',
-    letterSpacing: 0.5,
   },
   alertMessage: {
     textAlign: 'center',
