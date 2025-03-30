@@ -13,6 +13,9 @@ import NetInfo from '@react-native-community/netinfo';
 import {refreshAllData} from '../../config/DataService';
 import {ThemeContext} from '../../../App';
 
+// Import from package.json (for version)
+const appVersion = require('../../../package.json').version;
+
 const ProfileDisplay = ({navigation}) => {
   const [alertModal, setAlertModal] = useState({
     visible: false,
@@ -140,6 +143,13 @@ const ProfileDisplay = ({navigation}) => {
         themeColors={themeColors}
       />
 
+      {/* Version Display */}
+      <View style={styles.versionContainer}>
+        <Text style={[styles.versionText, {color: themeColors.placeholder}]}>
+          v{appVersion}
+        </Text>
+      </View>
+
       {/* Alert Modal */}
       <AlertModal
         visible={alertModal.visible}
@@ -162,7 +172,12 @@ const MenuItem = memo(
           styles.item,
           {borderBottomColor: themeColors.border || '#444'},
         ]}>
-        <Icon style={{marginLeft: 5}} name={icon} color={themeColors.primary} size={25} />
+        <Icon
+          style={{marginLeft: 5}}
+          name={icon}
+          color={themeColors.primary}
+          size={25}
+        />
         <Text style={[styles.text, {color: themeColors.text}]}>{label}</Text>
       </View>
     </TouchableOpacity>
@@ -258,6 +273,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 22,
+  },
+  versionContainer: {
+    position: 'absolute',
+    bottom: 5,
+    alignSelf: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  versionText: {
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });
 
