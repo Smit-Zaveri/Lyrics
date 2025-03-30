@@ -8,7 +8,9 @@ import {
   Pressable,
   ActivityIndicator,
   RefreshControl,
+  Image,
 } from 'react-native';
+import NetInfo from '@react-native-community/netinfo';
 import {useNavigation} from '@react-navigation/native';
 import {getFromAsyncStorage, refreshAllData} from '../../config/DataService';
 import {ThemeContext} from '../../../App';
@@ -23,6 +25,27 @@ const HomeList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [networkStatus, setNetworkStatus] = useState(true);
+
+  // Check for network status changes
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      const isConnected = state.isConnected;
+      setNetworkStatus(isConnected);
+
+      // If connection is restored, fetch data automatically
+      if (isConnected && error) {
+        loadData(true);
+      }
+    });
+
+    // Check initial network status
+    NetInfo.fetch().then(state => {
+      setNetworkStatus(state.isConnected);
+    });
+
+    return () => unsubscribe();
+  }, [error, loadData]);
 
   const loadData = useCallback(async (isRefresh = false) => {
     if (isRefresh) {
@@ -52,9 +75,7 @@ const HomeList = () => {
         } else {
           // No internet connection and no cached data
           setData([]);
-          setError(
-            'No internet connection. Please connect to the internet and try again.',
-          );
+          setError('no_connection');
         }
       }
     } catch (error) {
@@ -137,6 +158,36 @@ const HomeList = () => {
     );
   };
 
+  // Custom No Connection View
+  const NoConnectionView = () => (
+    <View
+      style={[
+        styles.noConnectionContainer,
+        {backgroundColor: themeColors.background},
+      ]}>
+      <Image
+        source={require('../../assets/logo.png')}
+        style={styles.noConnectionImage}
+        resizeMode="contain"
+      />
+      <Text style={[styles.noConnectionTitle, {color: themeColors.text}]}>
+        No Internet Connection
+      </Text>
+      <Text
+        style={[
+          styles.noConnectionSubtitle,
+          {color: themeColors.textSecondary},
+        ]}>
+        Please check your internet connection and try again
+      </Text>
+      <Pressable
+        onPress={() => loadData(true)}
+        style={[styles.retryButton, {backgroundColor: themeColors.primary}]}>
+        <Text style={styles.retryText}>Retry</Text>
+      </Pressable>
+    </View>
+  );
+
   if (isLoading) {
     return (
       <View
@@ -146,7 +197,9 @@ const HomeList = () => {
     );
   }
 
-  if (error) {
+  if (error === 'no_connection') {
+    return <NoConnectionView />;
+  } else if (error) {
     return (
       <View
         style={[styles.centered, {backgroundColor: themeColors.background}]}>
@@ -230,6 +283,28 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   retryText: {color: '#fff', fontWeight: 'bold'},
+  noConnectionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  noConnectionImage: {
+    width: 150,
+    height: 150,
+    marginBottom: 20,
+  },
+  noConnectionTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  noConnectionSubtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 30,
+  },
 });
 
 export default HomeList;
