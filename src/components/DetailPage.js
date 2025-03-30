@@ -1,36 +1,52 @@
-import React, { useState, useEffect, useRef, useContext, useCallback, useLayoutEffect } from 'react';
-import { View, Text, Animated, Easing } from 'react-native';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useContext,
+  useCallback,
+  useLayoutEffect,
+} from 'react';
+import {
+  View,
+  Text,
+  Animated,
+  Easing,
+  PanResponder,
+  ScrollView,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Sound from 'react-native-sound';
 import CustomMaterialMenu from './CustomMaterialMenu';
-import { ThemeContext } from '../../App';
-import { LanguageContext } from '../context/LanguageContext';
-import { Linking } from 'react-native';
+import {ThemeContext} from '../../App';
+import {LanguageContext} from '../context/LanguageContext';
+import {Linking} from 'react-native';
 
 // Import sub-components
 import {
   AudioPlayer,
-  LyricsContent,
   CollectionsModal,
   ActionButtons,
-  NavigationHandler
+  NavigationHandler,
 } from './DetailPageComponents';
 
 const DetailPage = ({navigation, route}) => {
-  const { themeColors } = useContext(ThemeContext);
-  const { getString } = useContext(LanguageContext);
-  const { itemNumberingparas, Lyrics } = route.params;
+  const {themeColors} = useContext(ThemeContext);
+  const {getString} = useContext(LanguageContext);
+  const {itemNumberingparas, Lyrics} = route.params;
 
   // Main state
   const [itemNumbering, setItemNumbering] = useState(itemNumberingparas);
   const [song, setSong] = useState(null);
   const [fontSize, setFontSize] = useState(18);
-  
+
   // Collections state
   const [collections, setCollections] = useState([]);
   const [showCollectionsModal, setShowCollectionsModal] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState('');
-  
+  const [collectionError, setCollectionError] = useState('');
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
   // Audio playback state
   const [isPlaying, setIsPlaying] = useState(false);
   const [sound, setSound] = useState(null);
@@ -40,14 +56,14 @@ const DetailPage = ({navigation, route}) => {
   const [duration, setDuration] = useState(0);
   const [isSeeking, setIsSeeking] = useState(false);
   const [seekValue, setSeekValue] = useState(0);
-  
+
   // Animation values
   const [slideAnim] = useState(new Animated.Value(0));
   const [opacityAnim] = useState(new Animated.Value(1));
   const [scaleAnim] = useState(new Animated.Value(1));
   const [fabAnim] = useState(new Animated.Value(1));
   const slideUpAnim = useRef(new Animated.Value(0)).current;
-  
+
   // Refs
   const scrollViewRef = useRef(null);
   const progressIntervalRef = useRef(null);
@@ -71,41 +87,57 @@ const DetailPage = ({navigation, route}) => {
     };
   }, []);
 
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        return Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+      },
+      onPanResponderRelease: (e, gestureState) => {
+        if (gestureState.dx > 50) {
+          navigateSong('prev');
+        } else if (gestureState.dx < -50) {
+          navigateSong('next');
+        }
+      },
+    }),
+  ).current;
+
   // Function to get content in the user's selected language
-  const getLocalizedContent = (item) => {
+  const getLocalizedContent = item => {
     if (!item) return '';
-    
+
     // Handle array-based content structure
     if (Array.isArray(item.content)) {
       return getString(item.content);
     }
-    
+
     // Fallback to string-based content for backward compatibility
     return item.content;
   };
 
   // Function to get title in the user's selected language
-  const getLocalizedTitle = (item) => {
+  const getLocalizedTitle = item => {
     if (!item) return '';
-    
+
     // Handle array-based title structure
     if (Array.isArray(item.title)) {
       return getString(item.title);
     }
-    
+
     // Fallback to string-based title for backward compatibility
     return item.title;
   };
 
   // Function to get artist in the user's selected language
-  const getLocalizedArtist = (item) => {
+  const getLocalizedArtist = item => {
     if (!item) return '';
-    
+
     // Handle array-based artist structure
     if (Array.isArray(item.artist)) {
       return getString(item.artist);
     }
-    
+
     // Fallback to string-based artist for backward compatibility
     return item.artist;
   };
@@ -142,16 +174,17 @@ const DetailPage = ({navigation, route}) => {
   const headerOptions = useCallback(
     () => ({
       headerTitle: song ? `${itemNumbering}. ${getLocalizedTitle(song)}` : '',
-      headerRight: () => song && (
-        <CustomMaterialMenu
-          menuText=""
-          item={song}
-          isIcon={true}
-          theme={themeColors}
-        />
-      ),
+      headerRight: () =>
+        song && (
+          <CustomMaterialMenu
+            menuText=""
+            item={song}
+            isIcon={true}
+            theme={themeColors}
+          />
+        ),
     }),
-    [song, itemNumbering, themeColors]
+    [song, itemNumbering, themeColors],
   );
 
   useLayoutEffect(() => {
@@ -159,9 +192,12 @@ const DetailPage = ({navigation, route}) => {
   }, [navigation, headerOptions]);
 
   // Set song based on current numbering
-  const setSongByNumbering = useCallback((number) => {
-    return Lyrics.find(item => item.filteredIndex === number);
-  }, [Lyrics]);
+  const setSongByNumbering = useCallback(
+    number => {
+      return Lyrics.find(item => item.filteredIndex === number);
+    },
+    [Lyrics],
+  );
 
   useEffect(() => {
     const foundSong = setSongByNumbering(itemNumbering);
@@ -184,9 +220,9 @@ const DetailPage = ({navigation, route}) => {
         setSound(null);
         setIsPlaying(false);
       }
-      
+
       const toValue = direction === 'next' ? 1 : -1;
-      
+
       Animated.parallel([
         Animated.timing(slideAnim, {
           toValue: toValue,
@@ -261,25 +297,51 @@ const DetailPage = ({navigation, route}) => {
   };
 
   // Collection management
-  const createNewCollection = async () => {
+  const handleCreateCollection = async () => {
     if (!newCollectionName.trim()) return;
 
     try {
+      // Check if collection name already exists
+      const collectionExists = collections.some(
+        collection =>
+          collection.name.toLowerCase() ===
+          newCollectionName.trim().toLowerCase(),
+      );
+
+      if (collectionExists) {
+        setHasError(true);
+        setErrorMessage('Collection with this name already exists');
+        return;
+      }
+
+      // Reset error message
+      setHasError(false);
+      setErrorMessage('');
+
       const newCollection = {
         id: Date.now().toString(),
         name: newCollectionName.trim(),
-        songs: []
+        songs: [],
       };
       const updatedCollections = [...collections, newCollection];
-      await AsyncStorage.setItem('user_collections', JSON.stringify(updatedCollections));
+      await AsyncStorage.setItem(
+        'user_collections',
+        JSON.stringify(updatedCollections),
+      );
       setCollections(updatedCollections);
       setNewCollectionName('');
     } catch (error) {
       console.error('Error creating collection:', error);
+      setCollectionError('Error creating collection');
     }
   };
 
-  const toggleSongInCollection = async (collectionId) => {
+  const handleCollectionNameChange = text => {
+    setNewCollectionName(text);
+    setHasError(false);
+  };
+
+  const toggleSongInCollection = async collectionId => {
     try {
       const updatedCollections = collections.map(collection => {
         if (collection.id === collectionId) {
@@ -288,20 +350,23 @@ const DetailPage = ({navigation, route}) => {
             // Add song to collection
             return {
               ...collection,
-              songs: [...(collection.songs || []), song]
+              songs: [...(collection.songs || []), song],
             };
           } else {
             // Remove song from collection
             return {
               ...collection,
-              songs: collection.songs.filter(s => s.id !== song.id)
+              songs: collection.songs.filter(s => s.id !== song.id),
             };
           }
         }
         return collection;
       });
 
-      await AsyncStorage.setItem('user_collections', JSON.stringify(updatedCollections));
+      await AsyncStorage.setItem(
+        'user_collections',
+        JSON.stringify(updatedCollections),
+      );
       setCollections(updatedCollections);
     } catch (error) {
       console.error('Error toggling song in collection:', error);
@@ -315,7 +380,7 @@ const DetailPage = ({navigation, route}) => {
       toValue: 1,
       useNativeDriver: true,
       tension: 50,
-      friction: 7
+      friction: 7,
     }).start();
   };
 
@@ -323,7 +388,7 @@ const DetailPage = ({navigation, route}) => {
     Animated.timing(slideUpAnim, {
       toValue: 0,
       duration: 200,
-      useNativeDriver: true
+      useNativeDriver: true,
     }).start(() => setShowCollectionsModal(false));
   };
 
@@ -337,7 +402,7 @@ const DetailPage = ({navigation, route}) => {
           sound.pause();
           setIsPlaying(false);
         } else {
-          sound.play((success) => {
+          sound.play(success => {
             if (!success) {
               setAudioError('Playback failed');
               setIsPlaying(false);
@@ -347,14 +412,14 @@ const DetailPage = ({navigation, route}) => {
         }
       } else {
         setIsLoading(true);
-        const newSound = new Sound(song.audio, null, (error) => {
+        const newSound = new Sound(song.audio, null, error => {
           setIsLoading(false);
           if (error) {
             setAudioError('Error loading audio');
             return;
           }
           setDuration(newSound.getDuration());
-          newSound.play((success) => {
+          newSound.play(success => {
             if (!success) {
               setAudioError('Playback failed');
               setIsPlaying(false);
@@ -368,7 +433,7 @@ const DetailPage = ({navigation, route}) => {
             clearInterval(progressIntervalRef.current);
           }
           progressIntervalRef.current = setInterval(() => {
-            newSound.getCurrentTime((seconds) => {
+            newSound.getCurrentTime(seconds => {
               if (!isSeeking) {
                 setProgress(seconds);
                 setSeekValue(seconds);
@@ -384,12 +449,12 @@ const DetailPage = ({navigation, route}) => {
     }
   };
 
-  const handleSeekValueChange = (value) => {
+  const handleSeekValueChange = value => {
     setIsSeeking(true);
     setSeekValue(value);
   };
 
-  const handleSeekComplete = async (value) => {
+  const handleSeekComplete = async value => {
     setIsSeeking(false);
     if (sound) {
       sound.setCurrentTime(value);
@@ -399,7 +464,7 @@ const DetailPage = ({navigation, route}) => {
 
   const openYouTubeApp = async () => {
     if (!song?.youtube) return;
-    
+
     try {
       await Linking.openURL(song.youtube);
     } catch (error) {
@@ -409,8 +474,14 @@ const DetailPage = ({navigation, route}) => {
 
   if (!song) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: themeColors.background }}>
-        <Text style={{ color: themeColors.text }}>Loading...</Text>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: themeColors.background,
+        }}>
+        <Text style={{color: themeColors.text}}>Loading...</Text>
       </View>
     );
   }
@@ -425,27 +496,41 @@ const DetailPage = ({navigation, route}) => {
     paddingHorizontal: 20,
     paddingBottom: 20,
     opacity: opacityAnim,
-    transform: [
-      { translateX: translateXValue },
-      { scale: scaleAnim },
-    ]
+    transform: [{translateX: translateXValue}, {scale: scaleAnim}],
   };
 
   return (
     <NavigationHandler onNavigate={navigateSong}>
-      <View style={{ flex: 1, backgroundColor: themeColors.background }}>
+      <View
+        style={{flex: 1, backgroundColor: themeColors.background}}
+        {...panResponder.panHandlers}>
         {/* Lyrics Content */}
-        <LyricsContent
-          ref={scrollViewRef}
-          song={song}
-          content={getLocalizedContent(song)}
-          artist={getLocalizedArtist(song)}
-          fontSize={fontSize}
-          themeColors={themeColors}
-          animated={true}
-          animatedStyle={animatedStyle}
-        />
-        
+        <Animated.View
+          style={[
+            animatedStyle,
+            {paddingStart: 20, paddingEnd: 20, paddingBottom: 20},
+          ]}>
+          <Text
+            style={{
+              paddingTop: 10,
+              fontSize: getLocalizedArtist(song) ? 16 : 0,
+              marginBottom: getLocalizedArtist(song) ? 10 : 0,
+              color: themeColors.text,
+            }}>
+            {getLocalizedArtist(song) ? 'રચનાર :' : null}{' '}
+            {getLocalizedArtist(song)}
+          </Text>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{paddingBottom: 30}}>
+            <Text
+              style={{fontSize: 18, textAlign: '', color: themeColors.text}}
+              {...panResponder.panHandlers}>
+              {getLocalizedContent(song)}
+            </Text>
+          </ScrollView>
+        </Animated.View>
+
         {/* Audio Player */}
         <AudioPlayer
           song={song}
@@ -461,7 +546,7 @@ const DetailPage = ({navigation, route}) => {
           onSeekValueChange={handleSeekValueChange}
           onSeekComplete={handleSeekComplete}
         />
-        
+
         {/* Action Buttons (FABs) */}
         <ActionButtons
           song={song}
@@ -471,7 +556,7 @@ const DetailPage = ({navigation, route}) => {
           onBookmarkPress={handleFABClick}
           onYoutubePress={openYouTubeApp}
         />
-        
+
         {/* Collections Modal */}
         <CollectionsModal
           visible={showCollectionsModal}
@@ -481,9 +566,13 @@ const DetailPage = ({navigation, route}) => {
           slideUpAnim={slideUpAnim}
           song={song}
           onClose={closeCollectionsModal}
-          onNewCollectionNameChange={setNewCollectionName}
-          onCreateCollection={createNewCollection}
+          onNewCollectionNameChange={handleCollectionNameChange}
+          onCreateCollection={handleCreateCollection}
           onToggleCollection={toggleSongInCollection}
+          collectionError={collectionError}
+          hasError={hasError}
+          errorMessage={errorMessage}
+          onClearError={() => setCollectionError('')}
         />
       </View>
     </NavigationHandler>

@@ -22,6 +22,8 @@ const CollectionsModal = ({
   onNewCollectionNameChange,
   onCreateCollection,
   onToggleCollection,
+  hasError,
+  errorMessage,
 }) => {
   return (
     <Modal
@@ -60,7 +62,7 @@ const CollectionsModal = ({
                 styles.input,
                 {
                   color: themeColors.text,
-                  borderColor: themeColors.border,
+                  borderColor: hasError ? 'red' : themeColors.border,
                 },
               ]}
               placeholder="Create new collection..."
@@ -78,6 +80,8 @@ const CollectionsModal = ({
             </TouchableOpacity>
           </View>
 
+          {hasError && <Text style={styles.errorText}>{errorMessage}</Text>}
+
           <FlatList
             data={collections}
             keyExtractor={item => item.id}
@@ -91,7 +95,8 @@ const CollectionsModal = ({
                     styles.collectionItem,
                     {
                       borderBottomColor:
-                        themeColors.border || themeColors.divder || '#444'                    },
+                        themeColors.border || themeColors.divder || '#444',
+                    },
                   ]}
                   onPress={() => onToggleCollection(item.id)}>
                   <Text
@@ -166,6 +171,12 @@ const styles = StyleSheet.create({
   },
   collectionName: {
     fontSize: 16,
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 15,
+    marginTop: -10,
+    fontSize: 12,
   },
 });
 

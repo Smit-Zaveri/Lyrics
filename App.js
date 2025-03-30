@@ -1,16 +1,22 @@
-import React, { useState, useEffect, useCallback, useMemo, createContext } from 'react';
-import { StatusBar, useColorScheme, Animated } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  createContext,
+} from 'react';
+import {StatusBar, useColorScheme, Animated} from 'react-native';
+import {NavigationContainer} from '@react-navigation/native';
+import {createMaterialBottomTabNavigator} from '@react-navigation/material-bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SplashScreen from './src/components/SplashScreen';
 import HomeStack from './src/screen/home/HomeStack';
 import Profile from './src/screen/profile/Profile';
 import Category from './src/screen/category/Category';
-import { LogLevel, OneSignal } from 'react-native-onesignal';
-import { colors } from './src/theme/Theme';
-import { LanguageProvider, LanguageContext } from './src/context/LanguageContext';
+import {LogLevel, OneSignal} from 'react-native-onesignal';
+import {colors} from './src/theme/Theme';
+import {LanguageProvider, LanguageContext} from './src/context/LanguageContext';
 import LanguageSelectionModal from './src/components/LanguageSelectionModal';
 
 // Create bottom tab navigator
@@ -29,20 +35,20 @@ const AppContent = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [themePreference, setThemePreference] = useState('system');
   const fadeAnim = useMemo(() => new Animated.Value(1), []);
-  const { isLanguageSelected } = React.useContext(LanguageContext);
-  
+  const {isLanguageSelected} = React.useContext(LanguageContext);
+
   // 2. useColorScheme hook (external store)
   const systemTheme = useColorScheme();
-  
+
   // 3. useMemo hooks
-  const currentTheme = useMemo(() => 
-    themePreference === 'system' ? systemTheme : themePreference, 
-    [themePreference, systemTheme]
+  const currentTheme = useMemo(
+    () => (themePreference === 'system' ? systemTheme : themePreference),
+    [themePreference, systemTheme],
   );
-  
-  const themeColors = useMemo(() => 
-    colors[currentTheme === 'dark' ? 'dark' : 'light'],
-    [currentTheme]
+
+  const themeColors = useMemo(
+    () => colors[currentTheme === 'dark' ? 'dark' : 'light'],
+    [currentTheme],
   );
 
   // Animate theme changes
@@ -60,25 +66,28 @@ const AppContent = () => {
       }),
     ]).start();
   }, [currentTheme, fadeAnim]);
-  
-  const themeContextValue = useMemo(() => ({
-    themePreference,
-    setThemePreference: async (newTheme) => {
-      try {
-        await AsyncStorage.setItem('themePreference', newTheme);
-        setThemePreference(newTheme);
-      } catch (error) {
-        console.error('Error saving theme preference:', error);
-      }
-    },
-    currentTheme,
-    themeColors,
-  }), [themePreference, currentTheme, themeColors]);
+
+  const themeContextValue = useMemo(
+    () => ({
+      themePreference,
+      setThemePreference: async newTheme => {
+        try {
+          await AsyncStorage.setItem('themePreference', newTheme);
+          setThemePreference(newTheme);
+        } catch (error) {
+          console.error('Error saving theme preference:', error);
+        }
+      },
+      currentTheme,
+      themeColors,
+    }),
+    [themePreference, currentTheme, themeColors],
+  );
 
   // 4. useCallback hooks
   const renderIcon = useCallback(
     (name, color) => <Icon name={name} size={26} color={color} />,
-    []
+    [],
   );
 
   // 5. useEffect hooks
@@ -94,7 +103,7 @@ const AppContent = () => {
       }
     };
     loadThemePreference();
-    
+
     const timer = setTimeout(() => {
       setShowSplash(false);
     }, 2000);
@@ -109,9 +118,15 @@ const AppContent = () => {
       const handleNotificationClick = event => {
         console.log('OneSignal: notification clicked:', event);
       };
-      OneSignal.Notifications.addEventListener('click', handleNotificationClick);
+      OneSignal.Notifications.addEventListener(
+        'click',
+        handleNotificationClick,
+      );
       return () => {
-        OneSignal.Notifications.removeEventListener('click', handleNotificationClick);
+        OneSignal.Notifications.removeEventListener(
+          'click',
+          handleNotificationClick,
+        );
       };
     } catch (error) {
       console.error('Error initializing OneSignal:', error);
@@ -131,9 +146,9 @@ const AppContent = () => {
           barStyle={currentTheme === 'dark' ? 'light-content' : 'dark-content'}
         />
         <LanguageSelectionModal visible={!isLanguageSelected} />
-        <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+        <Animated.View style={{flex: 1, opacity: fadeAnim}}>
           <Tab.Navigator
-            barStyle={{ backgroundColor: themeColors.surface }}
+            barStyle={{backgroundColor: themeColors.surface}}
             activeColor={themeColors.primary}
             inactiveColor={themeColors.text}>
             <Tab.Screen
