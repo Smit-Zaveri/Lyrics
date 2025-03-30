@@ -1,10 +1,50 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Lyrics Display Application
 
-# Getting Started
+A dynamic, offline-first lyrics display application developed in React Native, featuring a sleek theme system, media integration, and robust content management. Designed with a focus on user experience, the application provides reliable access to lyrics even in areas with limited internet connectivity.
 
->**Note**: Make sure you have completed the [React Native - Environment Setup](https://reactnative.dev/docs/environment-setup) instructions till "Creating a new application" step, before proceeding.
+## Project Overview
 
-## Step 1: Start the Metro Server
+This application is designed to provide access to song lyrics with special focus on Jain religious songs. The app (known as "Jain Dhun") features a modern, user-friendly interface with comprehensive lyrics management capabilities.
+
+## Core Features
+
+### Content Management
+
+- Comprehensive lyrics display with multilingual support
+- Dynamic content loading and caching
+- Collections and favorites management
+- Advanced search with highlighting
+- Category-based organization (artists, tirthankar, tirth)
+- Tag-based filtering system
+
+### Media Features
+
+- Integrated audio playback with progress tracking
+- YouTube video integration
+- Font size adjustment for better readability
+- Share functionality
+
+### User Experience
+
+- Dark/Light theme support with system theme integration
+- Responsive design for various device sizes
+- Smooth animations and transitions
+- Offline-first architecture
+- Multi-language support (Gujarati, Hindi, English)
+
+### Technical Highlights
+
+- Firebase integration for backend services
+- OneSignal for push notifications
+- Comprehensive error handling
+- Efficient AsyncStorage implementation
+- Optimized performance for smooth interactions
+
+## Getting Started
+
+> **Note**: Make sure you have completed the [React Native - Environment Setup](https://reactnative.dev/docs/environment-setup) instructions till "Creating a new application" step, before proceeding.
+
+### Step 1: Start the Metro Server
 
 First, you will need to start **Metro**, the JavaScript _bundler_ that ships _with_ React Native.
 
@@ -18,7 +58,7 @@ npm start
 yarn start
 ```
 
-## Step 2: Start your Application
+### Step 2: Start your Application
 
 Let Metro Bundler run in its _own_ terminal. Open a _new_ terminal from the _root_ of your React Native project. Run the following command to start your _Android_ or _iOS_ app:
 
@@ -46,29 +86,57 @@ If everything is set up _correctly_, you should see your new app running in your
 
 This is one way to run your app — you can also run it directly from within Android Studio and Xcode respectively.
 
-## Step 3: Modifying your App
+## Project Structure
 
-Now that you have successfully run the app, let's modify it.
+The project follows a modular architecture with these key components:
 
-1. Open `App.tsx` in your text editor of choice and edit some lines.
-2. For **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Developer Menu** (<kbd>Ctrl</kbd> + <kbd>M</kbd> (on Window and Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (on macOS)) to see your changes!
+- **src/components**: Reusable UI components
+- **src/screens**: Main application screens
+- **src/context**: Context providers for themes, language, etc.
+- **src/config**: Configuration and service files
+- **src/theme**: Theme definitions and styling
+- **src/assets**: Images, sounds, and other static resources
 
-   For **iOS**: Hit <kbd>Cmd ⌘</kbd> + <kbd>R</kbd> in your iOS Simulator to reload the app and see your changes!
+## Technical Implementation
 
-## Congratulations! :tada:
+### State Management
 
-You've successfully run and modified your React Native App. :partying_face:
+- React hooks (useState, useEffect, useCallback, useMemo)
+- Context API for global state (themes, language)
+- Efficient re-rendering control
 
-### Now what?
+### Storage and Data
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [Introduction to React Native](https://reactnative.dev/docs/getting-started).
+- AsyncStorage for persistent data
+- Firebase Firestore integration
+- Offline data synchronization
 
-# Troubleshooting
+### UI and Animation
 
-If you can't get this to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+- Custom animations using Animated API
+- Gesture handling with PanResponder
+- Material Design inspired components
+- Vector icons integration
 
-# Learn More
+### Navigation
+
+- React Navigation with custom configuration
+- Stack and Tab navigators
+- Dynamic headers and navigation options
+
+## Contributing
+
+Please see the [CONTRIBUTING.md](./CONTRIBUTING.md) file for guidelines on how to contribute to this project.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+
+## Troubleshooting
+
+If you can't get this to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page in the React Native documentation.
+
+## Learn More
 
 To learn more about React Native, take a look at the following resources:
 
