@@ -30,7 +30,7 @@ const TagItem = ({ item, selectedTags, onTagPress, themeColors }) => {
         style={[
           styles.chipText,
           {
-            color: isSelected ? themeColors.surface : themeColors.primary,
+            color: isSelected ? themeColors.surface : themeColors.primary, // Inverted colors when selected
           },
         ]}
       >
@@ -51,9 +51,11 @@ const styles = StyleSheet.create({
     marginVertical: 6,
   },
   chipText: {
-    fontSize: 12,
+    padding: 8,
+    fontSize: 13,
+    height: 36,
     textTransform: 'capitalize',
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
 });
 
