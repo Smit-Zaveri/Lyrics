@@ -1,37 +1,14 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react';
+import React, { useContext, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ThemeContext } from '../../../App';
 import { LanguageContext, LANGUAGES, LANGUAGE_NAMES } from '../../../src/context/LanguageContext';
+import { FontSizeContext } from '../../context/FontSizeContext';
 
 const Settings = () => {
-  const [fontSize, setFontSize] = useState(18);
+  const { fontSize, changeFontSize } = useContext(FontSizeContext);
   const { themePreference, setThemePreference, themeColors } = useContext(ThemeContext);
   const { language, setLanguage, languageName } = useContext(LanguageContext);
-
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const savedFontSize = await AsyncStorage.getItem('fontSize');
-        if (savedFontSize) {
-          setFontSize(parseInt(savedFontSize, 10));
-        }
-      } catch (error) {
-        console.error('Error loading settings:', error);
-      }
-    };
-    loadSettings();
-  }, []);
-
-  const handleFontSizeChange = useCallback(async (newSize) => {
-    try {
-      await AsyncStorage.setItem('fontSize', newSize.toString());
-      setFontSize(newSize);
-    } catch (error) {
-      console.error('Error saving font size:', error);
-    }
-  }, []);
 
   const handleThemeChange = useCallback((newTheme) => {
     setThemePreference(newTheme);
@@ -90,14 +67,14 @@ const Settings = () => {
           <Text style={[styles.title, { color: themeColors.text }]}>Font Size</Text>
           <View style={styles.controls}>
             <TouchableOpacity
-              onPress={() => handleFontSizeChange(Math.max(12, fontSize - 2))}
+              onPress={() => changeFontSize(Math.max(12, fontSize - 2))}
               style={styles.button}
             >
               <MaterialCommunityIcons name="minus" size={20} color={themeColors.primary} />
             </TouchableOpacity>
             <Text style={[styles.fontValue, { color: themeColors.text }]}>{fontSize}</Text>
             <TouchableOpacity
-              onPress={() => handleFontSizeChange(Math.min(24, fontSize + 2))}
+              onPress={() => changeFontSize(Math.min(24, fontSize + 2))}
               style={styles.button}
             >
               <MaterialCommunityIcons name="plus" size={20} color={themeColors.primary} />

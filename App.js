@@ -18,6 +18,7 @@ import {LogLevel, OneSignal} from 'react-native-onesignal';
 import {colors} from './src/theme/Theme';
 import {LanguageProvider, LanguageContext} from './src/context/LanguageContext';
 import LanguageSelectionModal from './src/components/LanguageSelectionModal';
+import {FontSizeProvider} from './src/context/FontSizeContext';
 
 // Create bottom tab navigator
 const Tab = createMaterialBottomTabNavigator();
@@ -185,9 +186,11 @@ const AppContent = () => {
 
 const App = () => {
   return (
-    <LanguageProvider>
-      <AppContent />
-    </LanguageProvider>
+    <FontSizeProvider>
+      <LanguageProvider>
+        <AppContent />
+      </LanguageProvider>
+    </FontSizeProvider>
   );
 };
 

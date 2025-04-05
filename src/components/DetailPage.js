@@ -19,6 +19,7 @@ import Sound from 'react-native-sound';
 import CustomMaterialMenu from './CustomMaterialMenu';
 import {ThemeContext} from '../../App';
 import {LanguageContext} from '../context/LanguageContext';
+import {FontSizeContext} from '../context/FontSizeContext';
 import {Linking} from 'react-native';
 
 // Import sub-components
@@ -32,12 +33,12 @@ import {
 const DetailPage = ({navigation, route}) => {
   const {themeColors} = useContext(ThemeContext);
   const {getString} = useContext(LanguageContext);
+  const {fontSize} = useContext(FontSizeContext);
   const {itemNumberingparas, Lyrics} = route.params;
 
   // Main state
   const [itemNumbering, setItemNumbering] = useState(itemNumberingparas);
   const [song, setSong] = useState(null);
-  const [fontSize, setFontSize] = useState(18);
 
   // Collections state
   const [collections, setCollections] = useState([]);
@@ -145,19 +146,7 @@ const DetailPage = ({navigation, route}) => {
   // Load collections on mount
   useEffect(() => {
     loadCollections();
-    loadFontSize();
   }, []);
-
-  const loadFontSize = async () => {
-    try {
-      const savedFontSize = await AsyncStorage.getItem('fontSize');
-      if (savedFontSize) {
-        setFontSize(parseInt(savedFontSize, 10));
-      }
-    } catch (error) {
-      console.error('Error loading font size:', error);
-    }
-  };
 
   const loadCollections = async () => {
     try {
@@ -585,7 +574,7 @@ const DetailPage = ({navigation, route}) => {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{paddingBottom: 30}}>
             <Text
-              style={{fontSize: 18, textAlign: '', color: themeColors.text}}
+              style={{fontSize: fontSize, textAlign: '', color: themeColors.text}}
               {...panResponder.panHandlers}>
               {getLocalizedContent(song)}
             </Text>
