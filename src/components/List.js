@@ -97,6 +97,27 @@ const List = ({route}) => {
       });
     });
 
+    useEffect(() => {
+      const localizedTitle = Array.isArray(title) ? getString(title) : title;
+      navigation.setOptions({
+        title: localizedTitle || 'List',
+        headerRight: () => (
+          <Icon
+            name="search"
+            color="#fff"
+            onPress={() =>
+              navigation.navigate('Search', {
+                collectionName,
+                title: localizedTitle,
+              })
+            }
+            size={26}
+          />
+        ),
+        headerShown: header,
+      });
+    }, [navigation, header, title, collectionName, language]);
+
     const sortedItems = filteredItems.sort((a, b) => {
       if (a.order !== undefined && b.order !== undefined) {
         return a.order - b.order;
