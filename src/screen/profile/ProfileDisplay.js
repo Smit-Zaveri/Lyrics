@@ -98,10 +98,17 @@ const ProfileDisplay = ({navigation}) => {
     try {
       await Share.share({
         message:
-          `🌟 Discover Your Next Favorite Lyrics App! 🎶\n\n` +
-          `Hey there! If you love music and want to access a world of lyrics at your fingertips, check out this amazing app!\n\n` +
+          `🌟 Hello bhakti lovers, we recently launched our new Jain lyrics app! 🥳\n\n` +
+          `✨🌈  *Jain Dhun*  🎧💫\n\n` +
+          `✅ Advanced Search Facility\n` +
+          `✅ All New & Upcoming Songs\n` +
+          `✅ Quick-Glance Categories\n` +
+          `✅ Bookmark Your Favourites\n` +
+          `✅ Light & Dark Mode\n` +
+          `✅ Adjustable Text Size\n\n` +
+          `And Much More!\n\n` +
           `✨ Download it here: https://bit.ly/jain_dhun\n\n` +
-          `Join the community of music lovers and elevate your listening experience today! 🎤💖`,
+          `Join the community of bhakti lovers and elevate your bhakti experience today! 🎤💖`,
       });
     } catch (error) {
       console.error('Error sharing:', error);
