@@ -57,6 +57,28 @@ const List = ({route}) => {
   const [tagsMap, setTagsMap] = useState({});
   const [forceUpdate, setForceUpdate] = useState(0);
 
+  // useEffect for updating title and header - moved from inside filterAndSortLyrics
+  useEffect(() => {
+    const localizedTitle = Array.isArray(title) ? getString(title) : title;
+    navigation.setOptions({
+      title: localizedTitle || 'List',
+      headerRight: () => (
+        <Icon
+          name="search"
+          color="#fff"
+          onPress={() =>
+            navigation.navigate('Search', {
+              collectionName,
+              title: localizedTitle,
+            })
+          }
+          size={26}
+        />
+      ),
+      headerShown: header,
+    });
+  }, [navigation, header, title, collectionName, language]);
+
   const filterAndSortLyrics = (tags, lyrics) => {
     if (!lyrics || !Array.isArray(lyrics)) {
       return [];
@@ -96,27 +118,6 @@ const List = ({route}) => {
         return hasTag || collectionMatch;
       });
     });
-
-    useEffect(() => {
-      const localizedTitle = Array.isArray(title) ? getString(title) : title;
-      navigation.setOptions({
-        title: localizedTitle || 'List',
-        headerRight: () => (
-          <Icon
-            name="search"
-            color="#fff"
-            onPress={() =>
-              navigation.navigate('Search', {
-                collectionName,
-                title: localizedTitle,
-              })
-            }
-            size={26}
-          />
-        ),
-        headerShown: header,
-      });
-    }, [navigation, header, title, collectionName, language]);
 
     const sortedItems = filteredItems.sort((a, b) => {
       if (a.order !== undefined && b.order !== undefined) {
