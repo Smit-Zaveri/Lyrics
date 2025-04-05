@@ -550,7 +550,7 @@ const DetailPage = ({navigation, route}) => {
   // Define a specific value for translateX based on animation instead of passing Animated.Value directly
   const translateXValue = slideAnim.interpolate({
     inputRange: [-1, 0, 1],
-    outputRange: [-300, 0, 300],
+    outputRange: [175, 0, -175],
   });
 
   const animatedStyle = {
