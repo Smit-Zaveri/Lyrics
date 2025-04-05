@@ -20,6 +20,7 @@ import {LanguageProvider, LanguageContext} from './src/context/LanguageContext';
 import LanguageSelectionModal from './src/components/LanguageSelectionModal';
 import {FontSizeProvider} from './src/context/FontSizeContext';
 import { SingerModeProvider } from './src/context/SingerModeContext';
+import { checkAndRefreshIfDateChanged, updateLastOpenDate } from './src/config/DataService';
 
 // Create bottom tab navigator
 const Tab = createMaterialBottomTabNavigator();
@@ -111,6 +112,24 @@ const AppContent = () => {
     }, 2000);
     return () => clearTimeout(timer);
   }, []);
+
+  // Check if date has changed since last app open and refresh data if needed
+  useEffect(() => {
+    const checkDateAndRefresh = async () => {
+      try {
+        // Only check after splash screen is done to avoid affecting startup time
+        if (!showSplash) {
+          await checkAndRefreshIfDateChanged();
+        }
+      } catch (error) {
+        console.error('Error checking date change:', error);
+        // Update the date anyway to avoid repeated refresh attempts on error
+        updateLastOpenDate();
+      }
+    };
+
+    checkDateAndRefresh();
+  }, [showSplash]);
 
   useEffect(() => {
     try {

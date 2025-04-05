@@ -5,8 +5,53 @@ import NetInfo from '@react-native-community/netinfo';
 import { LANGUAGES } from '../context/LanguageContext';
 
 const DATA_KEY_PREFIX = 'cachedData_';
+const LAST_OPEN_DATE_KEY = 'last_open_date';
 let collectionGroups = [];
 let all = [];
+
+// Get today's date as a string in format YYYY-MM-DD
+const getTodayDateString = () => {
+  const today = new Date();
+  return today.toISOString().split('T')[0]; // Returns YYYY-MM-DD
+};
+
+// Check if the date has changed since last app open
+const checkAndRefreshIfDateChanged = async () => {
+  try {
+    // Get the stored last open date
+    const lastOpenDate = await AsyncStorage.getItem(LAST_OPEN_DATE_KEY);
+    const todayDate = getTodayDateString();
+    
+    // If the date has changed or no date stored, refresh the data
+    if (!lastOpenDate || lastOpenDate !== todayDate) {
+      console.log('Date changed since last open, refreshing data...');
+      
+      // Store today's date
+      await AsyncStorage.setItem(LAST_OPEN_DATE_KEY, todayDate);
+      
+      // Refresh all data
+      return await refreshAllData();
+    }
+    
+    console.log('Date unchanged since last open, skipping refresh');
+    return false;
+  } catch (error) {
+    console.error('Error checking date change:', error);
+    return false;
+  }
+};
+
+// Update the last open date to today without refreshing
+const updateLastOpenDate = async () => {
+  try {
+    const todayDate = getTodayDateString();
+    await AsyncStorage.setItem(LAST_OPEN_DATE_KEY, todayDate);
+    return true;
+  } catch (error) {
+    console.error('Error updating last open date:', error);
+    return false;
+  }
+};
 
 const fetchCollectionGroups = async () => {
   try {
@@ -217,4 +262,6 @@ export {
   getLocalizedData,
   refreshAllData,
   initializeGroups,
+  checkAndRefreshIfDateChanged,
+  updateLastOpenDate,
 };
