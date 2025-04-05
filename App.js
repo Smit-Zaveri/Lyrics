@@ -19,6 +19,7 @@ import {colors} from './src/theme/Theme';
 import {LanguageProvider, LanguageContext} from './src/context/LanguageContext';
 import LanguageSelectionModal from './src/components/LanguageSelectionModal';
 import {FontSizeProvider} from './src/context/FontSizeContext';
+import { SingerModeProvider } from './src/context/SingerModeContext';
 
 // Create bottom tab navigator
 const Tab = createMaterialBottomTabNavigator();
@@ -141,56 +142,59 @@ const AppContent = () => {
   // Show language selection modal if language not selected yet
   return (
     <ThemeContext.Provider value={themeContextValue}>
-      <NavigationContainer>
-        <StatusBar
-          backgroundColor={themeColors.primary}
-          barStyle={currentTheme === 'dark' ? 'light-content' : 'dark-content'}
-        />
-        <LanguageSelectionModal visible={!isLanguageSelected} />
-        <Animated.View style={{flex: 1, opacity: fadeAnim}}>
-          <Tab.Navigator
-            barStyle={{backgroundColor: themeColors.surface}}
-            activeColor={themeColors.primary}
-            inactiveColor={themeColors.text}>
-            <Tab.Screen
-              name="Home"
-              component={HomeStack}
-              options={{
-                tabBarLabel: 'Home',
-                tabBarIcon: ({color}) => renderIcon('home', color),
-              }}
-            />
-            <Tab.Screen
-              name="Category"
-              component={Category}
-              options={{
-                tabBarLabel: 'Category',
-                tabBarIcon: ({color}) => renderIcon('menu', color),
-              }}
-            />
-            <Tab.Screen
-              name="Profile"
-              component={Profile}
-              options={{
-                title: 'Profile',
-                tabBarLabel: 'Profile',
-                tabBarIcon: ({color}) => renderIcon('person', color),
-              }}
-            />
-          </Tab.Navigator>
-        </Animated.View>
-      </NavigationContainer>
+        <NavigationContainer>
+          <StatusBar
+            backgroundColor={themeColors.primary}
+            barStyle={currentTheme === 'dark' ? 'light-content' : 'dark-content'}
+          />
+          <LanguageSelectionModal visible={!isLanguageSelected} />
+          <Animated.View style={{flex: 1, opacity: fadeAnim}}>
+            <Tab.Navigator
+              barStyle={{backgroundColor: themeColors.surface}}
+              activeColor={themeColors.primary}
+              inactiveColor={themeColors.text}>
+              <Tab.Screen
+                name="Home"
+                component={HomeStack}
+                options={{
+                  tabBarLabel: 'Home',
+                  tabBarIcon: ({color}) => renderIcon('home', color),
+                }}
+              />
+              <Tab.Screen
+                name="Category"
+                component={Category}
+                options={{
+                  tabBarLabel: 'Category',
+                  tabBarIcon: ({color}) => renderIcon('menu', color),
+                }}
+              />
+              <Tab.Screen
+                name="Profile"
+                component={Profile}
+                options={{
+                  title: 'Profile',
+                  tabBarLabel: 'Profile',
+                  tabBarIcon: ({color}) => renderIcon('person', color),
+                }}
+              />
+            </Tab.Navigator>
+          </Animated.View>
+        </NavigationContainer>
     </ThemeContext.Provider>
   );
 };
 
 const App = () => {
   return (
+    <SingerModeProvider>
     <FontSizeProvider>
       <LanguageProvider>
         <AppContent />
       </LanguageProvider>
     </FontSizeProvider>
+      </SingerModeProvider>
+
   );
 };
 

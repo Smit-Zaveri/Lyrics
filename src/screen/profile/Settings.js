@@ -1,14 +1,16 @@
 import React, { useContext, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Animated } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ThemeContext } from '../../../App';
 import { LanguageContext, LANGUAGES, LANGUAGE_NAMES } from '../../../src/context/LanguageContext';
 import { FontSizeContext } from '../../context/FontSizeContext';
+import { useSingerMode } from '../../context/SingerModeContext';
 
 const Settings = () => {
   const { fontSize, changeFontSize } = useContext(FontSizeContext);
   const { themePreference, setThemePreference, themeColors } = useContext(ThemeContext);
   const { language, setLanguage, languageName } = useContext(LanguageContext);
+  const { isSingerMode, toggleSingerMode } = useSingerMode();
 
   const handleThemeChange = useCallback((newTheme) => {
     setThemePreference(newTheme);
@@ -104,6 +106,32 @@ const Settings = () => {
             <ThemeOption theme="system" label="System" icon="theme-light-dark" />
           </View>
         </View>
+
+        {/* Singer Mode Settings */}
+        <View style={[styles.listItem, { borderBottomColor: themeColors.border || '#444' }]}>
+          <Text style={[styles.title, { color: themeColors.text }]}>Singer Mode</Text>
+          <View style={styles.optionContainer}>
+            <TouchableOpacity
+              onPress={toggleSingerMode}
+              style={[
+                styles.toggleButton,
+                {
+                  backgroundColor: isSingerMode ? themeColors.primary : 'transparent',
+                  borderColor: isSingerMode ? themeColors.primary : '#444',
+                },
+              ]}>
+              <Animated.View
+                style={[
+                  styles.toggleIndicator,
+                  {
+                    backgroundColor: isSingerMode ? '#fff' : '#fff',
+                    transform: [{ translateX: isSingerMode ? 20 : 2 }],
+                  },
+                ]}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -160,6 +188,23 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginRight: 6,
+  },
+  settingHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  toggleButton: {
+    width: 46,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
+    justifyContent: 'center',
+  },
+  toggleIndicator: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
   },
 });
 

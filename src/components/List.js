@@ -25,6 +25,7 @@ import ListItem from './ListItem';
 import EmptyList from './EmptyList';
 import {ThemeContext} from '../../App';
 import {LanguageContext} from '../context/LanguageContext';
+import {useSingerMode} from '../context/SingerModeContext';
 
 const List = ({route}) => {
   const {collectionName, Tags, title, customLyrics, returnToIndex} =
@@ -32,6 +33,7 @@ const List = ({route}) => {
   const navigation = useNavigation();
   const {themeColors} = useContext(ThemeContext);
   const {getString, language} = useContext(LanguageContext);
+  const {isSingerMode} = useSingerMode();
 
   const flatListRef = useRef(null);
   const initialScrollDone = useRef(false);
@@ -162,8 +164,23 @@ const List = ({route}) => {
         const fetchedDataLyrics = await getFromAsyncStorage(collectionName);
 
         const tagsArray = Array.isArray(fetchedDataTags) ? fetchedDataTags : [];
-        const sortedTags = [...tagsArray]
+
+        // Add numbered tags when Singer Mode is enabled
+        const numberTags = isSingerMode
+          ? [
+              {id: 'num4', name: '4', displayName: '4'},
+              {id: 'num3', name: '3', displayName: '3'},
+              {id: 'num2', name: '2', displayName: '2'},
+              {id: 'num1', name: '1', displayName: '1'},
+            ]
+          : [];
+
+        const sortedTags = [...numberTags, ...tagsArray]
           .sort((a, b) => {
+            // Keep number tags at the start
+            if (a.id?.startsWith('num')) return -1;
+            if (b.id?.startsWith('num')) return 1;
+
             const numA = a.numbering !== undefined ? a.numbering : 0;
             const numB = b.numbering !== undefined ? b.numbering : 0;
             return numA - numB;
