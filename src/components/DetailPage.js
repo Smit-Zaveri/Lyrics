@@ -21,6 +21,7 @@ import {ThemeContext} from '../../App';
 import {LanguageContext} from '../context/LanguageContext';
 import {FontSizeContext} from '../context/FontSizeContext';
 import {Linking} from 'react-native';
+import {useSingerMode} from '../context/SingerModeContext';
 
 // Import sub-components
 import {
@@ -28,17 +29,20 @@ import {
   CollectionsModal,
   ActionButtons,
   NavigationHandler,
+  RelatedSongs,
 } from './DetailPageComponents';
 
 const DetailPage = ({navigation, route}) => {
   const {themeColors} = useContext(ThemeContext);
   const {getString} = useContext(LanguageContext);
   const {fontSize} = useContext(FontSizeContext);
+  const {isSingerMode} = useSingerMode();
   const {itemNumberingparas, Lyrics} = route.params;
 
   // Main state
   const [itemNumbering, setItemNumbering] = useState(itemNumberingparas);
   const [song, setSong] = useState(null);
+  const [relatedSongs, setRelatedSongs] = useState([]);
 
   // Collections state
   const [collections, setCollections] = useState([]);
@@ -208,7 +212,47 @@ const DetailPage = ({navigation, route}) => {
   useEffect(() => {
     const foundSong = setSongByNumbering(itemNumbering);
     setSong(foundSong);
-  }, [itemNumbering, setSongByNumbering]);
+
+    // Find related songs with the same numeric tag when singer mode is enabled
+    if (foundSong && isSingerMode) {
+      // Check song tags for numeric values (1, 2, 3, 4, etc.)
+      const findNumericTag = (tags) => {
+        if (!tags || !Array.isArray(tags)) return null;
+        
+        // Process tag arrays or strings to find numeric tags
+        for (const tag of tags) {
+          const tagValue = Array.isArray(tag) ? getString(tag) : tag;
+          // Check if the tag is a numeric value (1-9)
+          if (/^[1-9]$/.test(tagValue)) {
+            return tagValue;
+          }
+        }
+        return null;
+      };
+      
+      const songNumericTag = findNumericTag(foundSong.tags);
+      
+      // If we found a numeric tag, find other songs with the same tag
+      if (songNumericTag) {
+        const related = Lyrics.filter(item => 
+          // Different song than current
+          item.id !== foundSong.id && 
+          // Has matching numeric tag
+          Array.isArray(item.tags) && 
+          item.tags.some(tag => {
+            const tagValue = Array.isArray(tag) ? getString(tag) : tag;
+            return tagValue === songNumericTag;
+          })
+        ).slice(0, 5); // Limit to 5 related songs
+        
+        setRelatedSongs(related);
+      } else {
+        setRelatedSongs([]);
+      }
+    } else {
+      setRelatedSongs([]);
+    }
+  }, [itemNumbering, setSongByNumbering, isSingerMode, Lyrics, getString]);
 
   // Update the beforeRemove handler for smoother transitions
   useEffect(() => {
@@ -613,6 +657,7 @@ const DetailPage = ({navigation, route}) => {
             {getLocalizedArtist(song)}
           </Text>
           <ScrollView
+            ref={scrollViewRef}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{paddingBottom: 30}}>
             <Text
@@ -620,6 +665,24 @@ const DetailPage = ({navigation, route}) => {
               {...panResponder.panHandlers}>
               {getLocalizedContent(song)}
             </Text>
+            
+            {/* Related Songs - Only visible in Singer Mode and part of scrollable content */}
+            {isSingerMode && relatedSongs.length > 0 && (
+              <View style={{ marginTop: 60 }}>
+                <RelatedSongs
+                  relatedSongs={relatedSongs}
+                  themeColors={themeColors}
+                  onSongPress={(relatedSong) => {
+                    // Switch to the related song
+                    setItemNumbering(relatedSong.filteredIndex);
+                    // Scroll back to top when switching to new song
+                    scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
+                  }}
+                  getLocalizedTitle={getLocalizedTitle}
+                  getDisplayNumber={getDisplayNumber}
+                />
+              </View>
+            )}
           </ScrollView>
         </Animated.View>
 
