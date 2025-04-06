@@ -143,6 +143,23 @@ const DetailPage = ({navigation, route}) => {
     return item.artist;
   };
 
+  // Function to get the correct display number for the song
+  const getDisplayNumber = useCallback(songItem => {
+    if (!songItem) return '';
+    
+    if (songItem.displayNumbering !== null && songItem.displayNumbering !== undefined) {
+      return songItem.displayNumbering.toString();
+    } else if (songItem.order !== null && songItem.order !== undefined) {
+      return songItem.order.toString();
+    } else if (songItem.numbering !== null && songItem.numbering !== undefined) {
+      return songItem.numbering.toString();
+    } else if (songItem.filteredIndex !== null && songItem.filteredIndex !== undefined) {
+      return songItem.filteredIndex.toString();
+    } else {
+      return "1"; // Default to 1
+    }
+  }, []);
+
   // Load collections on mount
   useEffect(() => {
     loadCollections();
@@ -159,10 +176,10 @@ const DetailPage = ({navigation, route}) => {
     }
   };
 
-  // Header options with localized title
+  // Header options with localized title and proper song numbering
   const headerOptions = useCallback(
     () => ({
-      headerTitle: song ? `${itemNumbering}. ${getLocalizedTitle(song)}` : '',
+      headerTitle: song ? `${getDisplayNumber(song)}. ${getLocalizedTitle(song)}` : '',
       headerRight: () =>
         song && (
           <CustomMaterialMenu
@@ -173,7 +190,7 @@ const DetailPage = ({navigation, route}) => {
           />
         ),
     }),
-    [song, itemNumbering, themeColors],
+    [song, themeColors, getDisplayNumber],
   );
 
   useLayoutEffect(() => {
@@ -203,8 +220,8 @@ const DetailPage = ({navigation, route}) => {
       if (hasNavigated || isAnimating) return;
       hasNavigated = true;
 
-      // Store the current index
-      const currentIndex = itemNumbering;
+      // Store the current index with proper type conversion
+      const currentIndex = parseInt(itemNumbering, 10);
 
       // Cancel the default navigation behavior
       e.preventDefault();
@@ -244,6 +261,7 @@ const DetailPage = ({navigation, route}) => {
             params: {
               returnToIndex: currentIndex,
               transitionType: 'fade',
+              updatedFilters: true, // Add a flag to indicate the filters should be preserved
             },
             merge: true,
           });
@@ -293,16 +311,40 @@ const DetailPage = ({navigation, route}) => {
           useNativeDriver: true,
         }),
       ]).start(() => {
-        // Change to next/previous song
+        // Change to next/previous song using filtered indexes for consistency
         setItemNumbering(prev => {
           const currentIndex = parseInt(prev, 10);
-          let newIndex = currentIndex + toValue;
-          if (newIndex < 1) {
-            newIndex = Lyrics.length;
-          } else if (newIndex > Lyrics.length) {
-            newIndex = 1;
+          const currentSong = Lyrics.find(item => item.filteredIndex === currentIndex);
+          
+          // Find the current song's position in the filtered list
+          const currentPosition = currentSong ? Lyrics.findIndex(
+            item => item.stableId === currentSong.stableId
+          ) : -1;
+          
+          if (currentPosition === -1) {
+            // Fallback to simple numeric navigation if we can't find the current item
+            let newIndex = currentIndex + toValue;
+            if (newIndex < 1) {
+              newIndex = Lyrics.length;
+            } else if (newIndex > Lyrics.length) {
+              newIndex = 1;
+            }
+            return newIndex;
           }
-          return newIndex;
+          
+          // Calculate the next position based on direction
+          let nextPosition = currentPosition + toValue;
+          
+          // Handle circular navigation
+          if (nextPosition < 0) {
+            nextPosition = Lyrics.length - 1;
+          } else if (nextPosition >= Lyrics.length) {
+            nextPosition = 0;
+          }
+          
+          // Get the filtered index of the next song
+          const nextSong = Lyrics[nextPosition];
+          return nextSong ? nextSong.filteredIndex : 1;
         });
 
         // Reset slide position for entry animation
