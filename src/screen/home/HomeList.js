@@ -51,46 +51,64 @@ const HomeList = () => {
     return () => unsubscribe();
   }, [error, loadData]);
 
-  const loadData = useCallback(async (isRefresh = false) => {
-    if (isRefresh) {
-      setRefreshing(true);
-    }
-    try {
-      const collections = await getFromAsyncStorage('collections');
-      if (collections && collections.length > 0) {
-        // Make sure collections is an array before sorting
-        const sortedCollections = [...collections].sort(
-          (a, b) => (a.numbering || 0) - (b.numbering || 0),
-        );
-        setData(sortedCollections);
-      } else {
-        const isConnected = await refreshAllData();
-        if (isConnected) {
-          const refreshedCollections = await getFromAsyncStorage('collections');
-          // Make sure refreshedCollections is an array before sorting
-          if (refreshedCollections && refreshedCollections.length > 0) {
-            const sortedCollections = [...refreshedCollections].sort(
-              (a, b) => (a.numbering || 0) - (b.numbering || 0),
-            );
-            setData(sortedCollections);
-          } else {
-            setData([]);
-          }
-        } else {
-          // No internet connection and no cached data
-          setData([]);
-          setError('no_connection');
-        }
+  const loadData = useCallback(
+    async (isRefresh = false) => {
+      if (isRefresh) {
+        setRefreshing(true);
       }
-    } catch (error) {
-      console.error('Error loading data:', error);
-      setError(`Error loading data: ${error.message}`);
-      setData([]);
-    } finally {
-      setIsLoading(false);
-      if (isRefresh) setRefreshing(false);
-    }
-  }, []);
+      try {
+        const collections = await getFromAsyncStorage('collections');
+        if (collections && collections.length > 0) {
+          // Make sure collections is an array before sorting
+          const sortedCollections = [...collections]
+            .filter(collection => {
+              // Filter out added-songs collection if singer mode is off
+              if (!isSingerMode && collection.name === 'added-songs') {
+                return false;
+              }
+              return true;
+            })
+            .sort((a, b) => (a.numbering || 0) - (b.numbering || 0));
+
+          setData(sortedCollections);
+        } else {
+          const isConnected = await refreshAllData();
+          if (isConnected) {
+            const refreshedCollections =
+              await getFromAsyncStorage('collections');
+            // Make sure refreshedCollections is an array before sorting
+            if (refreshedCollections && refreshedCollections.length > 0) {
+              const sortedCollections = [...refreshedCollections]
+                .filter(collection => {
+                  // Filter out added-songs collection if singer mode is off
+                  if (!isSingerMode && collection.name === 'added-songs') {
+                    return false;
+                  }
+                  return true;
+                })
+                .sort((a, b) => (a.numbering || 0) - (b.numbering || 0));
+
+              setData(sortedCollections);
+            } else {
+              setData([]);
+            }
+          } else {
+            // No internet connection and no cached data
+            setData([]);
+            setError('no_connection');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+        setError(`Error loading data: ${error.message}`);
+        setData([]);
+      } finally {
+        setIsLoading(false);
+        if (isRefresh) setRefreshing(false);
+      }
+    },
+    [isSingerMode],
+  );
 
   useEffect(() => {
     loadData();
@@ -247,11 +265,28 @@ const HomeList = () => {
         </View>
       )}
       {isSingerMode && (
-        <TouchableOpacity
-          style={[styles.fab, {backgroundColor: themeColors.primary}]}
-          onPress={() => navigation.navigate('SingerMode')}>
-          <Icon name="mic" size={24} color="#fff" />
-        </TouchableOpacity>
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 20,
+            right: 20,
+            alignItems: 'center',
+          }}>
+          <TouchableOpacity
+            style={[styles.fab, {backgroundColor: themeColors.primary}]}
+            onPress={() => navigation.navigate('SingerMode')}>
+            <Icon name="music-note" size={24} color="#fff" />
+          </TouchableOpacity>
+          <Text
+            style={{
+              marginTop: 4,
+              fontSize: 12,
+              fontWeight: 'bold',
+              color: themeColors.text,
+            }}>
+            Singer Mode
+          </Text>
+        </View>
       )}
     </SafeAreaView>
   );
@@ -319,7 +354,7 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     bottom: 20,
-    right: 20,
+    // right: 20,
     width: 56,
     height: 56,
     borderRadius: 28,

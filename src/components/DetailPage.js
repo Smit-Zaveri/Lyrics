@@ -38,6 +38,7 @@ import {
   NavigationHandler,
   RelatedSongs,
   MediaContent,
+  DeleteConfirmationModal,
 } from './DetailPageComponents';
 
 const DetailPage = ({navigation, route}) => {
@@ -77,6 +78,8 @@ const DetailPage = ({navigation, route}) => {
   const [scaleAnim] = useState(new Animated.Value(1));
   const [fabAnim] = useState(new Animated.Value(1));
   const slideUpAnim = useRef(new Animated.Value(0)).current;
+  const [editFabAnim] = useState(new Animated.Value(1));
+  const [deleteFabAnim] = useState(new Animated.Value(1));
 
   // Refs
   const scrollViewRef = useRef(null);
@@ -84,6 +87,9 @@ const DetailPage = ({navigation, route}) => {
 
   // Add state to track updates
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Add new state for delete modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Helper function to shuffle an array (Fisher-Yates algorithm)
   const shuffleArray = array => {
@@ -437,11 +443,24 @@ const DetailPage = ({navigation, route}) => {
 
   const navigateSong = direction => {
     try {
-      Animated.timing(fabAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
+      // Animate all FABs out
+      Animated.parallel([
+        Animated.timing(fabAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(editFabAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(deleteFabAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
 
       if (sound && isPlaying) {
         sound.stop();
@@ -525,7 +544,18 @@ const DetailPage = ({navigation, route}) => {
             easing: Easing.out(Easing.exp),
             useNativeDriver: true,
           }),
+          // Animate all FABs back in
           Animated.timing(fabAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(editFabAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(deleteFabAnim, {
             toValue: 1,
             duration: 300,
             useNativeDriver: true,
@@ -534,11 +564,24 @@ const DetailPage = ({navigation, route}) => {
       });
     } catch (error) {
       console.error('Error navigating song:', error);
-      Animated.timing(fabAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
+      // Reset all FAB animations on error
+      Animated.parallel([
+        Animated.timing(fabAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(editFabAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(deleteFabAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
     }
   };
 
@@ -711,59 +754,40 @@ const DetailPage = ({navigation, route}) => {
   };
 
   const deleteSong = async () => {
-    if (!song) return;
+    try {
+      setLoading(true);
 
-    Alert.alert(
-      'Delete Song',
-      'Are you sure you want to delete this song? This action cannot be undone.',
-      [
-        {text: 'Cancel', style: 'cancel'},
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setLoading(true);
+      const lyricsData = await AsyncStorage.getItem('cachedData_lyrics');
+      if (lyricsData) {
+        const lyrics = JSON.parse(lyricsData);
+        const updatedLyrics = lyrics.filter(item => item.id !== song.id);
+        await AsyncStorage.setItem(
+          'cachedData_lyrics',
+          JSON.stringify(updatedLyrics),
+        );
+      }
 
-              const lyricsData =
-                await AsyncStorage.getItem('cachedData_lyrics');
-              if (lyricsData) {
-                const lyrics = JSON.parse(lyricsData);
-                const updatedLyrics = lyrics.filter(
-                  item => item.id !== song.id,
-                );
-                await AsyncStorage.setItem(
-                  'cachedData_lyrics',
-                  JSON.stringify(updatedLyrics),
-                );
-              }
+      const addedSongsData = await AsyncStorage.getItem(
+        'cachedData_added-songs',
+      );
+      if (addedSongsData) {
+        const addedSongs = JSON.parse(addedSongsData);
+        const updatedAddedSongs = addedSongs.filter(
+          item => item.id !== song.id,
+        );
+        await AsyncStorage.setItem(
+          'cachedData_added-songs',
+          JSON.stringify(updatedAddedSongs),
+        );
+      }
 
-              const addedSongsData = await AsyncStorage.getItem(
-                'cachedData_added-songs',
-              );
-              if (addedSongsData) {
-                const addedSongs = JSON.parse(addedSongsData);
-                const updatedAddedSongs = addedSongs.filter(
-                  item => item.id !== song.id,
-                );
-                await AsyncStorage.setItem(
-                  'cachedData_added-songs',
-                  JSON.stringify(updatedAddedSongs),
-                );
-              }
-
-              navigation.goBack();
-            } catch (error) {
-              console.error('Error deleting song:', error);
-              Alert.alert('Error', 'Failed to delete song. Please try again.');
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ],
-      {cancelable: true},
-    );
+      navigation.goBack();
+    } catch (error) {
+      console.error('Error deleting song:', error);
+      Alert.alert('Error', 'Failed to delete song. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!song) {
@@ -874,52 +898,25 @@ const DetailPage = ({navigation, route}) => {
           song={song}
           collections={collections}
           fabAnim={fabAnim}
+          editFabAnim={editFabAnim}
+          deleteFabAnim={deleteFabAnim}
           themeColors={themeColors}
           onBookmarkPress={handleFABClick}
           onYoutubePress={openYouTubeApp}
+          onEditPress={() => {
+            navigation.navigate('AddSong', {
+              songToEdit: song,
+              isEditing: true,
+              returnToDetailPage: true,
+              returnScreen: 'DetailPage',
+              previousScreen: route.params?.previousScreen || 'List',
+            });
+          }}
+          onDeletePress={() => setShowDeleteModal(true)}
+          showEditDelete={
+            isSingerMode && song?.collectionName === 'added-songs'
+          }
         />
-
-        {isSingerMode && song?.collectionName === 'added-songs' && (
-          <View
-            style={{
-              position: 'absolute',
-              bottom: 80,
-              right: 16,
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 10,
-            }}>
-            <TouchableOpacity
-              style={{
-                backgroundColor: '#4CAF50',
-                borderRadius: 50,
-                padding: 15,
-                elevation: 5,
-              }}
-              onPress={() => {
-                navigation.navigate('AddSong', {
-                  songToEdit: song,
-                  isEditing: true,
-                  returnToDetailPage: true,
-                  returnScreen: 'DetailPage',
-                  previousScreen: route.params?.previousScreen || 'List',
-                });
-              }}>
-              <Icon name="edit" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={{
-                backgroundColor: '#FF5252',
-                borderRadius: 50,
-                padding: 15,
-                elevation: 5,
-              }}
-              onPress={deleteSong}>
-              <Icon name="delete" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-        )}
 
         <CollectionsModal
           visible={showCollectionsModal}
@@ -936,6 +933,13 @@ const DetailPage = ({navigation, route}) => {
           hasError={hasError}
           errorMessage={errorMessage}
           onClearError={() => setCollectionError('')}
+        />
+
+        <DeleteConfirmationModal
+          visible={showDeleteModal}
+          themeColors={themeColors}
+          onClose={() => setShowDeleteModal(false)}
+          onDelete={deleteSong}
         />
       </View>
     </NavigationHandler>

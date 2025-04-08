@@ -465,9 +465,10 @@ const AddSong = () => {
       const songData = {
         title: title.trim(),
         content: content.trim(),
-        tags: processedTags,
+        tags: tags.trim() ? processedTags : [], // Ensure empty string results in empty array
         images: imageUrls,
         hasLocalImages: imageUrls.length > 0,
+        fromAddedSongs: true, // Add this flag to identify songs that come from the singer mode
       };
 
       let result;
@@ -653,7 +654,9 @@ const AddSong = () => {
             contentContainerStyle={styles.imageScrollContent}>
             {images.map((image, index) => (
               <View key={index} style={styles.imageWrapper}>
-                <TouchableOpacity onPress={() => openFullScreenGallery(index)}>
+                <TouchableOpacity
+                  onPress={() => openFullScreenGallery(index)}
+                  activeOpacity={0.8}>
                   <Image source={{uri: image.uri}} style={styles.image} />
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -671,6 +674,7 @@ const AddSong = () => {
                 styles.mediaButton,
                 {backgroundColor: themeColors.primary},
               ]}
+              activeOpacity={0.7}
               onPress={handleMediaPicker}>
               <Icon
                 name="add-photo-alternate"
@@ -690,12 +694,18 @@ const AddSong = () => {
           transparent={true}
           animationType="slide"
           onRequestClose={() => setShowMediaOptions(false)}>
-          <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setShowMediaOptions(false)}>
             <View
               style={[
                 styles.modalContent,
                 {backgroundColor: themeColors.surface},
-              ]}>
+              ]}
+              // Prevent touch events from propagating to parent
+              onStartShouldSetResponder={() => true}
+              onTouchEnd={e => e.stopPropagation()}>
               <Text style={[styles.modalTitle, {color: themeColors.text}]}>
                 Choose Media Option
               </Text>
@@ -745,7 +755,7 @@ const AddSong = () => {
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </TouchableOpacity>
         </Modal>
 
         <View style={styles.buttonContainer}>
@@ -761,6 +771,7 @@ const AddSong = () => {
                     : themeColors.primary,
               },
             ]}
+            activeOpacity={0.7}
             onPress={handleSave}
             disabled={
               loading ||
@@ -797,33 +808,46 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollViewContent: {
-    padding: 16,
+    padding: 20,
   },
   formGroup: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   label: {
-    fontWeight: 'bold',
-    marginBottom: 8,
+    fontWeight: '600',
+    marginBottom: 10,
     fontSize: 16,
   },
   input: {
-    height: 48,
+    height: 50,
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
+    borderRadius: 12,
+    paddingHorizontal: 14,
     fontSize: 16,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 1,
   },
   textArea: {
     height: 200,
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingTop: 12,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingTop: 14,
     fontSize: 16,
+    textAlignVertical: 'top',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 1,
   },
   saveButton: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
   saveButtonText: {
     color: '#fff',
@@ -831,14 +855,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   buttonContainer: {
-    marginVertical: 20,
+    marginVertical: 24,
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 50,
-    borderRadius: 8,
+    height: 54,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
   },
   buttonText: {
     color: '#fff',
@@ -846,27 +875,33 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   buttonIcon: {
-    marginRight: 8,
+    marginRight: 10,
   },
   tagsContainer: {
-    maxHeight: 40,
+    maxHeight: 44,
   },
   tagsScrollContent: {
     alignItems: 'center',
     paddingVertical: 4,
   },
   tagChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 10,
     borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 1,
   },
   tagChipText: {
     fontSize: 14,
+    fontWeight: '500',
   },
   imageContainer: {
-    maxHeight: 100,
+    maxHeight: 110,
   },
   imageScrollContent: {
     alignItems: 'center',
@@ -874,7 +909,14 @@ const styles = StyleSheet.create({
   },
   imageWrapper: {
     position: 'relative',
-    marginRight: 8,
+    marginRight: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
   },
   image: {
     width: 100,
@@ -883,15 +925,18 @@ const styles = StyleSheet.create({
   },
   removeImageButton: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: 12,
-    padding: 4,
+    top: 6,
+    right: 6,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   mediaButtonsContainer: {
     flexDirection: 'row',
-    marginTop: 8,
+    marginTop: 12,
     justifyContent: 'center',
   },
   mediaButton: {
@@ -899,21 +944,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     height: 50,
-    borderRadius: 8,
+    borderRadius: 12,
     flex: 1,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
   },
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
   },
   modalContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: -3},
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
@@ -921,18 +976,24 @@ const styles = StyleSheet.create({
   modalOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 15,
+    paddingVertical: 16,
     borderBottomWidth: 1,
   },
   modalOptionText: {
     fontSize: 16,
-    marginLeft: 15,
+    marginLeft: 18,
+    fontWeight: '500',
   },
   cancelButton: {
-    borderRadius: 8,
-    padding: 15,
+    borderRadius: 12,
+    padding: 16,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 24,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
   },
   cancelButtonText: {
     color: '#fff',
@@ -950,6 +1011,12 @@ const styles = StyleSheet.create({
     top: 40,
     right: 20,
     zIndex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   fullscreenImageContainer: {
     width: screenWidth,
@@ -962,7 +1029,11 @@ const styles = StyleSheet.create({
   },
   imageCounter: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 30,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
