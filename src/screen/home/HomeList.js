@@ -9,17 +9,21 @@ import {
   ActivityIndicator,
   RefreshControl,
   Image,
+  TouchableOpacity,
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import {useNavigation} from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import {getFromAsyncStorage, refreshAllData} from '../../config/DataService';
 import {ThemeContext} from '../../../App';
 import {LanguageContext} from '../../context/LanguageContext';
+import {useSingerMode} from '../../context/SingerModeContext';
 
 const HomeList = () => {
   const navigation = useNavigation();
   const {themeColors} = useContext(ThemeContext);
   const {getString} = useContext(LanguageContext);
+  const {isSingerMode} = useSingerMode();
 
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -242,6 +246,13 @@ const HomeList = () => {
           </Text>
         </View>
       )}
+      {isSingerMode && (
+        <TouchableOpacity
+          style={[styles.fab, {backgroundColor: themeColors.primary}]}
+          onPress={() => navigation.navigate('SingerMode')}>
+          <Icon name="mic" size={24} color="#fff" />
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 };
@@ -304,6 +315,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 30,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
   },
 });
 

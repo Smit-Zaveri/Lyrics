@@ -4,6 +4,8 @@ import List from '../../components/List';
 import DetailPage from '../../components/DetailPage';
 import Search from '../../components/Search';
 import HomeList from './HomeList';
+import SingerMode from '../singer/SingerMode';
+import AddSong from '../singer/AddSong';
 import { ThemeContext } from '../../../App';
 
 const Stack = createNativeStackNavigator();
@@ -35,6 +37,8 @@ const HomeStack = () => {
       <Stack.Screen name="List" component={List} />
       <Stack.Screen name="Search" component={Search} />
       <Stack.Screen name="Details" component={DetailPage} />
+      <Stack.Screen name="SingerMode" component={SingerMode} />
+      <Stack.Screen name="AddSong" component={AddSong} />
     </Stack.Navigator>
   );
 };

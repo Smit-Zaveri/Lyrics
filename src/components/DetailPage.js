@@ -13,6 +13,12 @@ import {
   Easing,
   PanResponder,
   ScrollView,
+  Alert,
+  TouchableOpacity,
+  Modal,
+  Pressable,
+  Image,
+  Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Sound from 'react-native-sound';
@@ -22,6 +28,7 @@ import {LanguageContext} from '../context/LanguageContext';
 import {FontSizeContext} from '../context/FontSizeContext';
 import {Linking} from 'react-native';
 import {useSingerMode} from '../context/SingerModeContext';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 // Import sub-components
 import {
@@ -30,6 +37,7 @@ import {
   ActionButtons,
   NavigationHandler,
   RelatedSongs,
+  MediaContent,
 } from './DetailPageComponents';
 
 const DetailPage = ({navigation, route}) => {
@@ -43,6 +51,7 @@ const DetailPage = ({navigation, route}) => {
   const [itemNumbering, setItemNumbering] = useState(itemNumberingparas);
   const [song, setSong] = useState(null);
   const [relatedSongs, setRelatedSongs] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   // Collections state
   const [collections, setCollections] = useState([]);
@@ -73,7 +82,102 @@ const DetailPage = ({navigation, route}) => {
   const scrollViewRef = useRef(null);
   const progressIntervalRef = useRef(null);
 
-  // Set Sound category and clean up on unmount
+  // Add state to track updates
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Helper function to shuffle an array (Fisher-Yates algorithm)
+  const shuffleArray = array => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
+  // Function to refresh song data
+  const refreshSongData = useCallback(async () => {
+    if (!song || !song.id) return;
+
+    try {
+      let updatedSong = null;
+
+      const addedSongsData = await AsyncStorage.getItem(
+        'cachedData_added-songs',
+      );
+      if (addedSongsData) {
+        const addedSongs = JSON.parse(addedSongsData);
+        updatedSong = addedSongs.find(s => s.id === song.id);
+      }
+
+      if (!updatedSong) {
+        const lyricsData = await AsyncStorage.getItem('cachedData_lyrics');
+        if (lyricsData) {
+          const lyrics = JSON.parse(lyricsData);
+          updatedSong = lyrics.find(s => s.id === song.id);
+        }
+      }
+
+      if (updatedSong) {
+        setSong(updatedSong);
+
+        const updatedLyrics = Lyrics.map(item =>
+          item.id === updatedSong.id ? updatedSong : item,
+        );
+
+        if (isSingerMode) {
+          const findNumericTag = tags => {
+            if (!tags || !Array.isArray(tags)) return null;
+
+            for (const tag of tags) {
+              const tagValue = Array.isArray(tag) ? getString(tag) : tag;
+              if (/^[1-9]$/.test(tagValue)) {
+                return tagValue;
+              }
+            }
+            return null;
+          };
+
+          const songNumericTag = findNumericTag(updatedSong.tags);
+
+          if (songNumericTag) {
+            const matchingSongs = updatedLyrics.filter(
+              item =>
+                item.id !== updatedSong.id &&
+                Array.isArray(item.tags) &&
+                item.tags.some(tag => {
+                  const tagValue = Array.isArray(tag) ? getString(tag) : tag;
+                  return tagValue === songNumericTag;
+                }),
+            );
+
+            const related = shuffleArray(matchingSongs).slice(0, 5);
+
+            setRelatedSongs(related);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing song data:', error);
+    }
+  }, [song, Lyrics, isSingerMode, getString]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (route.params?.songUpdated) {
+        refreshSongData();
+
+        navigation.setParams({
+          songUpdated: undefined,
+          listNeedsRefresh: true,
+          updatedSongId: route.params?.updatedSongId || (song ? song.id : null),
+        });
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, refreshSongData, route.params?.songUpdated, song]);
+
   useEffect(() => {
     try {
       Sound.setCategory('Playback');
@@ -108,63 +212,85 @@ const DetailPage = ({navigation, route}) => {
     }),
   ).current;
 
-  // Function to get content in the user's selected language
   const getLocalizedContent = item => {
     if (!item) return '';
 
-    // Handle array-based content structure
     if (Array.isArray(item.content)) {
       return getString(item.content);
     }
 
-    // Fallback to string-based content for backward compatibility
     return item.content;
   };
 
-  // Function to get title in the user's selected language
   const getLocalizedTitle = item => {
     if (!item) return '';
 
-    // Handle array-based title structure
     if (Array.isArray(item.title)) {
       return getString(item.title);
     }
 
-    // Fallback to string-based title for backward compatibility
     return item.title;
   };
 
-  // Function to get artist in the user's selected language
   const getLocalizedArtist = item => {
     if (!item) return '';
 
-    // Handle array-based artist structure
     if (Array.isArray(item.artist)) {
       return getString(item.artist);
     }
 
-    // Fallback to string-based artist for backward compatibility
     return item.artist;
   };
 
-  // Function to get the correct display number for the song
   const getDisplayNumber = useCallback(songItem => {
     if (!songItem) return '';
-    
-    if (songItem.displayNumbering !== null && songItem.displayNumbering !== undefined) {
+
+    if (
+      songItem.displayNumbering !== null &&
+      songItem.displayNumbering !== undefined
+    ) {
       return songItem.displayNumbering.toString();
     } else if (songItem.order !== null && songItem.order !== undefined) {
       return songItem.order.toString();
-    } else if (songItem.numbering !== null && songItem.numbering !== undefined) {
+    } else if (
+      songItem.numbering !== null &&
+      songItem.numbering !== undefined
+    ) {
       return songItem.numbering.toString();
-    } else if (songItem.filteredIndex !== null && songItem.filteredIndex !== undefined) {
+    } else if (
+      songItem.filteredIndex !== null &&
+      songItem.filteredIndex !== undefined
+    ) {
       return songItem.filteredIndex.toString();
     } else {
-      return "1"; // Default to 1
+      return '1';
     }
   }, []);
 
-  // Load collections on mount
+  const isImageDataUrl = url => {
+    return url && url.startsWith('data:image/');
+  };
+
+  const isAudioDataUrl = url => {
+    return url && url.startsWith('data:audio/');
+  };
+
+  const getMediaFormat = url => {
+    if (!url || !url.startsWith('data:')) return null;
+
+    const parts = url.split(',')[0].split(':')[1].split(';')[0];
+    return parts;
+  };
+
+  const hasMultipleImages = songItem => {
+    return (
+      songItem &&
+      songItem.images &&
+      Array.isArray(songItem.images) &&
+      songItem.images.length > 0
+    );
+  };
+
   useEffect(() => {
     loadCollections();
   }, []);
@@ -180,10 +306,11 @@ const DetailPage = ({navigation, route}) => {
     }
   };
 
-  // Header options with localized title and proper song numbering
   const headerOptions = useCallback(
     () => ({
-      headerTitle: song ? `${getDisplayNumber(song)}. ${getLocalizedTitle(song)}` : '',
+      headerTitle: song
+        ? `${getDisplayNumber(song)}. ${getLocalizedTitle(song)}`
+        : '',
       headerRight: () =>
         song && (
           <CustomMaterialMenu
@@ -201,7 +328,6 @@ const DetailPage = ({navigation, route}) => {
     navigation.setOptions(headerOptions());
   }, [navigation, headerOptions]);
 
-  // Set song based on current numbering
   const setSongByNumbering = useCallback(
     number => {
       return Lyrics.find(item => item.filteredIndex === number);
@@ -213,38 +339,34 @@ const DetailPage = ({navigation, route}) => {
     const foundSong = setSongByNumbering(itemNumbering);
     setSong(foundSong);
 
-    // Find related songs with the same numeric tag when singer mode is enabled
     if (foundSong && isSingerMode) {
-      // Check song tags for numeric values (1, 2, 3, 4, etc.)
-      const findNumericTag = (tags) => {
+      const findNumericTag = tags => {
         if (!tags || !Array.isArray(tags)) return null;
-        
-        // Process tag arrays or strings to find numeric tags
+
         for (const tag of tags) {
           const tagValue = Array.isArray(tag) ? getString(tag) : tag;
-          // Check if the tag is a numeric value (1-9)
           if (/^[1-9]$/.test(tagValue)) {
             return tagValue;
           }
         }
         return null;
       };
-      
+
       const songNumericTag = findNumericTag(foundSong.tags);
-      
-      // If we found a numeric tag, find other songs with the same tag
+
       if (songNumericTag) {
-        const related = Lyrics.filter(item => 
-          // Different song than current
-          item.id !== foundSong.id && 
-          // Has matching numeric tag
-          Array.isArray(item.tags) && 
-          item.tags.some(tag => {
-            const tagValue = Array.isArray(tag) ? getString(tag) : tag;
-            return tagValue === songNumericTag;
-          })
-        ).slice(0, 5); // Limit to 5 related songs
-        
+        const matchingSongs = Lyrics.filter(
+          item =>
+            item.id !== foundSong.id &&
+            Array.isArray(item.tags) &&
+            item.tags.some(tag => {
+              const tagValue = Array.isArray(tag) ? getString(tag) : tag;
+              return tagValue === songNumericTag;
+            }),
+        );
+
+        const related = shuffleArray(matchingSongs).slice(0, 5);
+
         setRelatedSongs(related);
       } else {
         setRelatedSongs([]);
@@ -254,43 +376,35 @@ const DetailPage = ({navigation, route}) => {
     }
   }, [itemNumbering, setSongByNumbering, isSingerMode, Lyrics, getString]);
 
-  // Update the beforeRemove handler for smoother transitions
   useEffect(() => {
     let hasNavigated = false;
     let isAnimating = false;
 
     const unsubscribe = navigation.addListener('beforeRemove', e => {
-      // Prevent handling the event multiple times or during animation
       if (hasNavigated || isAnimating) return;
       hasNavigated = true;
 
-      // Store the current index with proper type conversion
       const currentIndex = parseInt(itemNumbering, 10);
 
-      // Cancel the default navigation behavior
       e.preventDefault();
 
-      // Add a smoother fade out animation
       isAnimating = true;
 
-      // Sequential animations for smoother transition
       Animated.sequence([
-        // First gently fade and scale for a more natural transition
         Animated.parallel([
           Animated.timing(opacityAnim, {
             toValue: 0.7,
-            duration: 220, // Slightly longer for smoother effect
+            duration: 220,
             useNativeDriver: true,
-            easing: Easing.bezier(0.4, 0, 0.2, 1), // Material Design natural easing
+            easing: Easing.bezier(0.4, 0, 0.2, 1),
           }),
           Animated.timing(scaleAnim, {
-            toValue: 0.98, // Subtle scale change
+            toValue: 0.98,
             duration: 220,
             useNativeDriver: true,
             easing: Easing.bezier(0.4, 0, 0.2, 1),
           }),
         ]),
-        // Then continue fading to complete the transition
         Animated.timing(opacityAnim, {
           toValue: 0.4,
           duration: 120,
@@ -298,28 +412,31 @@ const DetailPage = ({navigation, route}) => {
           easing: Easing.bezier(0.4, 0, 0.2, 1),
         }),
       ]).start(() => {
-        // Then navigate back with the current index
         setTimeout(() => {
           navigation.navigate({
             name: route.params?.previousScreen || 'List',
             params: {
               returnToIndex: currentIndex,
               transitionType: 'fade',
-              updatedFilters: true, // Add a flag to indicate the filters should be preserved
+              updatedFilters: true,
+              listNeedsRefresh:
+                route.params?.songUpdated ||
+                route.params?.listNeedsRefresh ||
+                false,
+              updatedSongId:
+                route.params?.updatedSongId || (song ? song.id : null),
             },
             merge: true,
           });
-        }, 50); // Short delay before navigation completes the effect
+        }, 50);
       });
     });
 
     return unsubscribe;
-  }, [navigation, itemNumbering, opacityAnim, scaleAnim]);
+  }, [navigation, itemNumbering, opacityAnim, scaleAnim, route.params, song]);
 
-  // Handle song navigation with animations
   const navigateSong = direction => {
     try {
-      // Animate FAB out
       Animated.timing(fabAnim, {
         toValue: 0,
         duration: 200,
@@ -355,18 +472,17 @@ const DetailPage = ({navigation, route}) => {
           useNativeDriver: true,
         }),
       ]).start(() => {
-        // Change to next/previous song using filtered indexes for consistency
         setItemNumbering(prev => {
           const currentIndex = parseInt(prev, 10);
-          const currentSong = Lyrics.find(item => item.filteredIndex === currentIndex);
-          
-          // Find the current song's position in the filtered list
-          const currentPosition = currentSong ? Lyrics.findIndex(
-            item => item.stableId === currentSong.stableId
-          ) : -1;
-          
+          const currentSong = Lyrics.find(
+            item => item.filteredIndex === currentIndex,
+          );
+
+          const currentPosition = currentSong
+            ? Lyrics.findIndex(item => item.stableId === currentSong.stableId)
+            : -1;
+
           if (currentPosition === -1) {
-            // Fallback to simple numeric navigation if we can't find the current item
             let newIndex = currentIndex + toValue;
             if (newIndex < 1) {
               newIndex = Lyrics.length;
@@ -375,26 +491,21 @@ const DetailPage = ({navigation, route}) => {
             }
             return newIndex;
           }
-          
-          // Calculate the next position based on direction
+
           let nextPosition = currentPosition + toValue;
-          
-          // Handle circular navigation
+
           if (nextPosition < 0) {
             nextPosition = Lyrics.length - 1;
           } else if (nextPosition >= Lyrics.length) {
             nextPosition = 0;
           }
-          
-          // Get the filtered index of the next song
+
           const nextSong = Lyrics[nextPosition];
           return nextSong ? nextSong.filteredIndex : 1;
         });
 
-        // Reset slide position for entry animation
         slideAnim.setValue(toValue * -1);
 
-        // Animate back in
         Animated.parallel([
           Animated.timing(slideAnim, {
             toValue: 0,
@@ -423,7 +534,6 @@ const DetailPage = ({navigation, route}) => {
       });
     } catch (error) {
       console.error('Error navigating song:', error);
-      // Reset FAB animation if error occurs
       Animated.timing(fabAnim, {
         toValue: 1,
         duration: 300,
@@ -432,12 +542,10 @@ const DetailPage = ({navigation, route}) => {
     }
   };
 
-  // Collection management
   const handleCreateCollection = async () => {
     if (!newCollectionName.trim()) return;
 
     try {
-      // Check if collection name already exists
       const collectionExists = collections.some(
         collection =>
           collection.name.toLowerCase() ===
@@ -450,7 +558,6 @@ const DetailPage = ({navigation, route}) => {
         return;
       }
 
-      // Reset error message
       setHasError(false);
       setErrorMessage('');
 
@@ -483,13 +590,11 @@ const DetailPage = ({navigation, route}) => {
         if (collection.id === collectionId) {
           const songIndex = collection.songs?.findIndex(s => s.id === song.id);
           if (songIndex === -1 || songIndex === undefined) {
-            // Add song to collection
             return {
               ...collection,
               songs: [...(collection.songs || []), song],
             };
           } else {
-            // Remove song from collection
             return {
               ...collection,
               songs: collection.songs.filter(s => s.id !== song.id),
@@ -509,7 +614,6 @@ const DetailPage = ({navigation, route}) => {
     }
   };
 
-  // Show collections modal with animation
   const handleFABClick = () => {
     setShowCollectionsModal(true);
     Animated.spring(slideUpAnim, {
@@ -528,7 +632,6 @@ const DetailPage = ({navigation, route}) => {
     }).start(() => setShowCollectionsModal(false));
   };
 
-  // Audio playback functions
   const togglePlayback = async () => {
     if (!song?.audio) return;
 
@@ -564,7 +667,6 @@ const DetailPage = ({navigation, route}) => {
           setSound(newSound);
           setIsPlaying(true);
 
-          // Start progress tracking
           if (progressIntervalRef.current) {
             clearInterval(progressIntervalRef.current);
           }
@@ -608,6 +710,62 @@ const DetailPage = ({navigation, route}) => {
     }
   };
 
+  const deleteSong = async () => {
+    if (!song) return;
+
+    Alert.alert(
+      'Delete Song',
+      'Are you sure you want to delete this song? This action cannot be undone.',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+
+              const lyricsData =
+                await AsyncStorage.getItem('cachedData_lyrics');
+              if (lyricsData) {
+                const lyrics = JSON.parse(lyricsData);
+                const updatedLyrics = lyrics.filter(
+                  item => item.id !== song.id,
+                );
+                await AsyncStorage.setItem(
+                  'cachedData_lyrics',
+                  JSON.stringify(updatedLyrics),
+                );
+              }
+
+              const addedSongsData = await AsyncStorage.getItem(
+                'cachedData_added-songs',
+              );
+              if (addedSongsData) {
+                const addedSongs = JSON.parse(addedSongsData);
+                const updatedAddedSongs = addedSongs.filter(
+                  item => item.id !== song.id,
+                );
+                await AsyncStorage.setItem(
+                  'cachedData_added-songs',
+                  JSON.stringify(updatedAddedSongs),
+                );
+              }
+
+              navigation.goBack();
+            } catch (error) {
+              console.error('Error deleting song:', error);
+              Alert.alert('Error', 'Failed to delete song. Please try again.');
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
   if (!song) {
     return (
       <View
@@ -622,7 +780,6 @@ const DetailPage = ({navigation, route}) => {
     );
   }
 
-  // Define a specific value for translateX based on animation instead of passing Animated.Value directly
   const translateXValue = slideAnim.interpolate({
     inputRange: [-1, 0, 1],
     outputRange: [175, 0, -175],
@@ -640,7 +797,6 @@ const DetailPage = ({navigation, route}) => {
       <View
         style={{flex: 1, backgroundColor: themeColors.background}}
         {...panResponder.panHandlers}>
-        {/* Lyrics Content */}
         <Animated.View
           style={[
             animatedStyle,
@@ -661,22 +817,35 @@ const DetailPage = ({navigation, route}) => {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{paddingBottom: 30}}>
             <Text
-              style={{fontSize: fontSize, textAlign: '', color: themeColors.text}}
+              style={{
+                fontSize: fontSize,
+                textAlign: '',
+                color: themeColors.text,
+              }}
               {...panResponder.panHandlers}>
               {getLocalizedContent(song)}
             </Text>
-            
-            {/* Related Songs - Only visible in Singer Mode and part of scrollable content */}
+
+            {(song.mediaUrl || hasMultipleImages(song)) && (
+              <MediaContent
+                mediaUrl={song.mediaUrl}
+                themeColors={themeColors}
+                images={song.images}
+              />
+            )}
+
             {isSingerMode && relatedSongs.length > 0 && (
-              <View style={{ marginTop: 60 }}>
+              <View style={{marginTop: 60}}>
                 <RelatedSongs
                   relatedSongs={relatedSongs}
                   themeColors={themeColors}
-                  onSongPress={(relatedSong) => {
-                    // Switch to the related song
+                  onSongPress={relatedSong => {
                     setItemNumbering(relatedSong.filteredIndex);
-                    // Scroll back to top when switching to new song
-                    scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
+                    scrollViewRef.current?.scrollTo({
+                      x: 0,
+                      y: 0,
+                      animated: true,
+                    });
                   }}
                   getLocalizedTitle={getLocalizedTitle}
                   getDisplayNumber={getDisplayNumber}
@@ -686,7 +855,6 @@ const DetailPage = ({navigation, route}) => {
           </ScrollView>
         </Animated.View>
 
-        {/* Audio Player */}
         <AudioPlayer
           song={song}
           sound={sound}
@@ -702,7 +870,6 @@ const DetailPage = ({navigation, route}) => {
           onSeekComplete={handleSeekComplete}
         />
 
-        {/* Action Buttons (FABs) */}
         <ActionButtons
           song={song}
           collections={collections}
@@ -712,7 +879,48 @@ const DetailPage = ({navigation, route}) => {
           onYoutubePress={openYouTubeApp}
         />
 
-        {/* Collections Modal */}
+        {isSingerMode && song?.collectionName === 'added-songs' && (
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 80,
+              right: 16,
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 10,
+            }}>
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#4CAF50',
+                borderRadius: 50,
+                padding: 15,
+                elevation: 5,
+              }}
+              onPress={() => {
+                navigation.navigate('AddSong', {
+                  songToEdit: song,
+                  isEditing: true,
+                  returnToDetailPage: true,
+                  returnScreen: 'DetailPage',
+                  previousScreen: route.params?.previousScreen || 'List',
+                });
+              }}>
+              <Icon name="edit" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#FF5252',
+                borderRadius: 50,
+                padding: 15,
+                elevation: 5,
+              }}
+              onPress={deleteSong}>
+              <Icon name="delete" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        )}
+
         <CollectionsModal
           visible={showCollectionsModal}
           themeColors={themeColors}
