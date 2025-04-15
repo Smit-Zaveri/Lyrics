@@ -41,6 +41,34 @@ import {
   DeleteConfirmationModal,
 } from './DetailPageComponents';
 
+// Helper function: Seeded random generator (Mulberry32)
+function seededRandom(seed) {
+  let t = seed;
+  return function () {
+    t += 0x6d2b79f5;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Helper function to shuffle an array using a seeded random
+const shuffleArray = (array, seedStr) => {
+  // Convert seed string to a number
+  let hash = 0;
+  for (let i = 0; i < seedStr.length; i++) {
+    hash = (hash << 5) - hash + seedStr.charCodeAt(i);
+    hash |= 0;
+  }
+  const rand = seededRandom(hash);
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
 const DetailPage = ({navigation, route}) => {
   const {themeColors} = useContext(ThemeContext);
   const {getString} = useContext(LanguageContext);
@@ -90,16 +118,6 @@ const DetailPage = ({navigation, route}) => {
 
   // Add new state for delete modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  // Helper function to shuffle an array (Fisher-Yates algorithm)
-  const shuffleArray = array => {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-  };
 
   // Function to refresh song data
   const refreshSongData = useCallback(async () => {
@@ -157,7 +175,16 @@ const DetailPage = ({navigation, route}) => {
                 }),
             );
 
-            const related = shuffleArray(matchingSongs).slice(0, 5);
+            // Use seeded shuffle for consistency
+            const now = new Date();
+            const hour = now.getHours();
+            const songOrder =
+              updatedSong.filteredIndex ||
+              updatedSong.order ||
+              updatedSong.numbering ||
+              1;
+            const seedStr = `${hour}-${songOrder}`;
+            const related = shuffleArray(matchingSongs, seedStr).slice(0, 5);
 
             setRelatedSongs(related);
           }
@@ -371,7 +398,16 @@ const DetailPage = ({navigation, route}) => {
             }),
         );
 
-        const related = shuffleArray(matchingSongs).slice(0, 5);
+        // Use seeded shuffle for consistency
+        const now = new Date();
+        const hour = now.getHours();
+        const songOrder =
+          foundSong.filteredIndex ||
+          foundSong.order ||
+          foundSong.numbering ||
+          1;
+        const seedStr = `${hour}-${songOrder}`;
+        const related = shuffleArray(matchingSongs, seedStr).slice(0, 5);
 
         setRelatedSongs(related);
       } else {
