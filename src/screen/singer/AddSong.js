@@ -45,6 +45,7 @@ const AddSong = () => {
   const [loading, setLoading] = useState(false);
   const [availableTags, setAvailableTags] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
+  const [sortedAvailableTags, setSortedAvailableTags] = useState([]);
   const [images, setImages] = useState([]);
   const [hasPermission, setHasPermission] = useState(false);
   const [permissionChecked, setPermissionChecked] = useState(false);
@@ -52,6 +53,7 @@ const AddSong = () => {
   const [isFullScreen, setFullScreen] = useState(false);
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
   const flatListRef = useRef(null);
+  const tagsScrollViewRef = useRef(null);
 
   useEffect(() => {
     if (isEditing && songToEdit) {
@@ -79,6 +81,29 @@ const AddSong = () => {
       }
     }
   }, [isEditing, songToEdit, getString]);
+
+  // Effect to sort tags when selectedTags or availableTags change
+  useEffect(() => {
+    if (availableTags.length > 0) {
+      // Sort tags by putting selected ones first, then the rest in their original order
+      const sorted = [...availableTags].sort((a, b) => {
+        const aSelected = selectedTags.includes(a.name);
+        const bSelected = selectedTags.includes(b.name);
+
+        if (aSelected && !bSelected) return -1;
+        if (!aSelected && bSelected) return 1;
+
+        // If both are selected or both are not selected, keep original order
+        const numA = a.numbering !== undefined ? a.numbering : 0;
+        const numB = b.numbering !== undefined ? b.numbering : 0;
+        return numA - numB;
+      });
+
+      setSortedAvailableTags(sorted);
+    } else {
+      setSortedAvailableTags([]);
+    }
+  }, [selectedTags, availableTags]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -566,7 +591,7 @@ const AddSong = () => {
             showsHorizontalScrollIndicator={false}
             style={styles.tagsContainer}
             contentContainerStyle={styles.tagsScrollContent}>
-            {availableTags.map(tag => (
+            {sortedAvailableTags.map(tag => (
               <TouchableOpacity
                 key={tag.id || tag.name}
                 onPress={() => handleTagToggle(tag)}
@@ -854,7 +879,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    marginRight: 5,
+    marginRight: 7,
     // borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 1},
