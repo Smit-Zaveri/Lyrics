@@ -765,7 +765,10 @@ const AddSong = () => {
                   {backgroundColor: themeColors.error},
                 ]}
                 onPress={() => setShowMediaOptions(false)}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text
+                  style={[{color: themeColors.text}, styles.cancelButtonText]}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
@@ -780,7 +783,7 @@ const AddSong = () => {
                   loading ||
                   !title.trim() ||
                   (!content.trim() && images.length === 0)
-                    ? themeColors.disabled
+                    ? themeColors.primaryDisabled
                     : themeColors.primary,
               },
             ]}
@@ -983,7 +986,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   cancelButtonText: {
-    color: '#fff',
+    // color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },

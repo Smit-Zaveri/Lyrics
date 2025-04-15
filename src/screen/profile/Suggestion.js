@@ -220,7 +220,7 @@ const Suggestion = () => {
             style={{
               backgroundColor: themeColors.surface,
               borderColor: themeColors.border,
-              borderWidth: 1,
+              borderWidth: 0,
               borderRadius: 8,
             }}
             textStyle={{
@@ -234,7 +234,6 @@ const Suggestion = () => {
             dropDownContainerStyle={{
               backgroundColor: themeColors.surface,
               borderColor: themeColors.border,
-              borderWidth: 1,
               borderRadius: 8,
             }}
             theme={themeColors.background === '#1E1E2F' ? 'DARK' : 'LIGHT'}
@@ -386,7 +385,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   form: {
-    gap: 15,
+    gap: 0,
   },
   fieldLabel: {
     fontSize: 15,
@@ -403,7 +402,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    borderWidth: 1,
   },
   textArea: {
     height: 150,
