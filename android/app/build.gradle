@@ -49,7 +49,7 @@ react {
     //
     //   The list of flags to pass to the Hermes compiler. By default is "-O", "-output-source-map"
     // hermesFlags = ["-O", "-output-source-map"]
-    
+
     /* Autolinking */
     autolinkLibrariesWithApp()
 }
@@ -135,3 +135,13 @@ dependencies {
 }
 
 apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
+
+// Fix for Vector Icons build error
+afterEvaluate {
+    tasks.named("generateDebugLintReportModel").configure {
+        dependsOn(tasks.named("copyReactNativeVectorIconFonts"))
+    }
+    tasks.named("generateReleaseLintReportModel").configure {
+        dependsOn(tasks.named("copyReactNativeVectorIconFonts"))
+    }
+}

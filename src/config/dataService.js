@@ -196,20 +196,29 @@ const getFromAsyncStorage = async (
     return allData.flat().filter(item => {
       if (!item) return false;
 
-      // Handle tags for filtering
+      // Handle tags for filtering with proper null checking
       const tags = Array.isArray(item.tags) ? item.tags : [];
+
+      // Defensive: ensure collectionName is a string
+      const collectionNameStr =
+        typeof collectionName === 'string' ? collectionName : '';
 
       // Handle artist which could be a string or potentially an array in the future
       let artistMatches = false;
-      if (typeof item.artist === 'string') {
+      if (typeof item.artist === 'string' && item.artist) {
         artistMatches = item.artist
           .toLowerCase()
-          .includes(collectionName.toLowerCase());
+          .includes(collectionNameStr.toLowerCase());
       }
 
       return (
-        tags.some(tag => tag?.toLowerCase() === collectionName.toLowerCase()) ||
-        artistMatches
+        tags.some(tag => {
+          // Make sure tag exists and is a string before calling toLowerCase()
+          if (tag && typeof tag === 'string' && collectionNameStr) {
+            return tag.toLowerCase() === collectionNameStr.toLowerCase();
+          }
+          return false;
+        }) || artistMatches
       );
     });
   } catch (error) {
@@ -241,8 +250,13 @@ const getContentInLanguage = (item, languageIndex = LANGUAGES.ENGLISH) => {
     processedItem.titleDisplay = '';
   }
 
+  // Make sure content exists before processing it
+  if (!processedItem.content) {
+    processedItem.content = '';
+    processedItem.contentDisplay = '';
+  }
   // Process content - convert from array to string based on language
-  if (Array.isArray(processedItem.content)) {
+  else if (Array.isArray(processedItem.content)) {
     if (languageIndex >= 0 && languageIndex < processedItem.content.length) {
       processedItem.contentDisplay = processedItem.content[languageIndex];
     } else {
@@ -304,8 +318,19 @@ const refreshAllData = async () => {
 // Dedicated function to save user-added songs to both collections
 const saveUserSong = async songData => {
   try {
-    if (!songData || !songData.title || !songData.content) {
-      throw new Error('Invalid song data provided');
+    // Updated validation to make content optional if images are present
+    if (!songData || !songData.title) {
+      throw new Error('Invalid song data provided: Missing title');
+    }
+
+    // Allow empty content if images are present
+    if (
+      !songData.content &&
+      (!songData.images || songData.images.length === 0)
+    ) {
+      throw new Error(
+        'Invalid song data provided: Need either content or images',
+      );
     }
 
     // Create a unique ID if not provided
@@ -319,6 +344,8 @@ const saveUserSong = async songData => {
       addedByUser: true,
       addedDate: timestamp,
       numbering: 0, // Will be updated for each collection
+      // Ensure content is at least an empty string, not undefined
+      content: songData.content || '',
     };
 
     // 1. Add to lyrics collection
@@ -410,12 +437,29 @@ const updateUserSong = async songData => {
       throw new Error('Invalid song data or missing ID');
     }
 
+    // Match the same validation as saveUserSong
+    if (!songData.title) {
+      throw new Error('Invalid song data provided: Missing title');
+    }
+
+    // Allow empty content if images are present
+    if (
+      !songData.content &&
+      (!songData.images || songData.images.length === 0)
+    ) {
+      throw new Error(
+        'Invalid song data provided: Need either content or images',
+      );
+    }
+
     // Update timestamp for the edit
     const updateTimestamp = new Date().toISOString();
     const updatedSong = {
       ...songData,
       updatedDate: updateTimestamp,
       addedByUser: true, // Ensure this flag is set
+      // Ensure content is at least an empty string, not undefined
+      content: songData.content || '',
     };
 
     // 1. Update in lyrics collection

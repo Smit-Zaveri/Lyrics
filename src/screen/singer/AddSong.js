@@ -83,20 +83,6 @@ const AddSong = () => {
   useEffect(() => {
     navigation.setOptions({
       title: isEditing ? 'Edit Song' : 'Add New Song',
-      headerRight: () => (
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={handleSave}
-          disabled={
-            loading || !title.trim() || (!content.trim() && images.length === 0)
-          }>
-          {loading ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.saveButtonText}>Save</Text>
-          )}
-        </TouchableOpacity>
-      ),
     });
 
     loadTags();
@@ -571,7 +557,9 @@ const AddSong = () => {
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={[styles.label, {color: themeColors.text}]}>Tags</Text>
+          <Text style={[styles.label, {color: themeColors.text}]}>
+            Tags (Optional)
+          </Text>
 
           <ScrollView
             horizontal
@@ -773,11 +761,7 @@ const AddSong = () => {
             ]}
             activeOpacity={0.7}
             onPress={handleSave}
-            disabled={
-              loading ||
-              !title.trim() ||
-              (!content.trim() && images.length === 0)
-            }>
+            disabled={loading || !title.trim()}>
             {loading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
@@ -863,11 +847,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     height: 54,
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 3,
   },
   buttonText: {
     color: '#fff',

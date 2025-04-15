@@ -30,7 +30,7 @@ const SingerMode = () => {
       headerStyle: {
         backgroundColor: themeColors.primary,
       },
-      headerTintColor: themeColors.background,
+      headerTintColor: "#fff",
       headerTitleStyle: {
         fontWeight: 'bold',
       },
