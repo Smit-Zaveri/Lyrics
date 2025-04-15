@@ -538,7 +538,7 @@ const AddSong = () => {
         keyboardShouldPersistTaps="handled">
         <View style={styles.formGroup}>
           <Text style={[styles.label, {color: themeColors.text}]}>
-            Song Title *
+            Song Title*
           </Text>
           <TextInput
             style={[
@@ -795,7 +795,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   formGroup: {
-    marginBottom: 24,
+    marginBottom: 10,
   },
   label: {
     fontWeight: '600',
@@ -803,30 +803,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   input: {
-    height: 50,
-    borderWidth: 1,
+    height: 45,
     borderRadius: 12,
     paddingHorizontal: 14,
     fontSize: 16,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-    elevation: 1,
   },
   textArea: {
     height: 200,
-    borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingTop: 14,
     fontSize: 16,
     textAlignVertical: 'top',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-    elevation: 1,
   },
   saveButton: {
     paddingHorizontal: 16,
@@ -839,7 +827,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   buttonContainer: {
-    marginVertical: 24,
+    marginVertical: 10,
   },
   button: {
     flexDirection: 'row',
@@ -861,14 +849,13 @@ const styles = StyleSheet.create({
   },
   tagsScrollContent: {
     alignItems: 'center',
-    paddingVertical: 4,
   },
   tagChip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    marginRight: 10,
-    borderWidth: 1,
+    marginRight: 5,
+    // borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.1,
@@ -939,7 +926,7 @@ const styles = StyleSheet.create({
   modalContent: {
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: 24,
+    // padding: 24,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: -3},
     shadowOpacity: 0.2,
@@ -949,13 +936,14 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginVertical: 20,
     textAlign: 'center',
   },
   modalOption: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 16,
+    paddingHorizontal: 24,
     borderBottomWidth: 1,
   },
   modalOptionText: {
@@ -968,11 +956,6 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     marginTop: 24,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 3,
   },
   cancelButtonText: {
     color: '#fff',
