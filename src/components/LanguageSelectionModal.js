@@ -80,21 +80,7 @@ const LanguageSelectionModal = ({visible}) => {
                 {LANGUAGE_NAMES[LANGUAGES.HINDI]}
               </Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.languageButton,
-                {backgroundColor: themeColors.primary},
-              ]}
-              onPress={() => handleLanguageSelect(LANGUAGES.ENGLISH)}>
-              <Text
-                style={[
-                  styles.languageButtonText,
-                  {color: themeColors.onPrimary},
-                ]}>
-                {LANGUAGE_NAMES[LANGUAGES.ENGLISH]}
-              </Text>
-            </TouchableOpacity>
+            {/* English option removed from UI, still available for search/fallback */}
           </View>
         </View>
       </View>
