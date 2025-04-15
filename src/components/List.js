@@ -70,6 +70,7 @@ const List = ({route}) => {
   const [forceUpdate, setForceUpdate] = useState(0);
   const [lastFilteredList, setLastFilteredList] = useState([]);
   const [listKey, setListKey] = useState('lyrics-list-0');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     const localizedTitle = Array.isArray(title) ? getString(title) : title;
@@ -155,6 +156,13 @@ const List = ({route}) => {
       setIsLoading(true);
       setRefreshing(true);
       setError(null);
+
+      console.log(
+        '[List] Loading data, isRefresh:',
+        isRefresh,
+        'collection:',
+        collectionName,
+      );
 
       if (isRefresh) {
         targetItemId.current = null;
@@ -265,9 +273,55 @@ const List = ({route}) => {
   };
 
   useEffect(() => {
-    // Refresh the data when the singer mode status changes
+    if (refreshTrigger > 0) {
+      console.log('[List] Refresh triggered:', refreshTrigger);
+      loadData(true);
+    }
+  }, [refreshTrigger, loadData]);
+
+  useEffect(() => {
+    // Refresh the data when the singer mode status changes or when returning from delete action
     loadData();
   }, [Tags, collectionName, isSingerMode]); // Add isSingerMode as a dependency
+
+  // Always reload data on focus
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadData(true);
+    });
+    return unsubscribe;
+  }, [navigation, Tags, collectionName, isSingerMode]);
+
+  // Enhanced focus listener to handle route parameter changes
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      // Check if any refresh flags are set
+      const needsRefresh =
+        route.params?.listNeedsRefresh ||
+        route.params?.songDeleted ||
+        route.params?.songUpdated ||
+        route.params?.newSongAdded;
+
+      if (needsRefresh) {
+        console.log('[List] Refresh needed:', route.params);
+        setRefreshTrigger(prev => prev + 1);
+
+        // Clear the parameters after processing
+        requestAnimationFrame(() => {
+          navigation.setParams({
+            listNeedsRefresh: undefined,
+            songDeleted: undefined,
+            deletedSongId: undefined,
+            songUpdated: undefined,
+            updatedSongId: undefined,
+            newSongAdded: undefined,
+          });
+        });
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, route.params]);
 
   useEffect(() => {
     if (!customLyrics && tags.length > 0) {
