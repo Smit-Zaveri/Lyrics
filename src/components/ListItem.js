@@ -1,119 +1,138 @@
-import React, { useContext } from 'react';
+import React, {useContext} from 'react';
 import {Pressable, View, Text, StyleSheet} from 'react-native';
-import { LanguageContext } from '../context/LanguageContext';
+import {LanguageContext} from '../context/LanguageContext';
 
-const ListItem = React.memo(({item, themeColors, onItemPress, searchTerms, highlightFunction}) => {
-  const { getString } = useContext(LanguageContext);
-  const {numbering, order, title, content, publishDate, newFlag} = item;
-  const currentDate = new Date();
-  const publishDateTime = publishDate?.seconds
-    ? new Date(publishDate.seconds * 1000)
-    : null;
+const ListItem = React.memo(
+  ({item, themeColors, onItemPress, searchTerms, highlightFunction}) => {
+    const {getString} = useContext(LanguageContext);
+    const {numbering, order, title, content, publishDate, newFlag} = item;
+    const currentDate = new Date();
+    const publishDateTime = publishDate?.seconds
+      ? new Date(publishDate.seconds * 1000)
+      : null;
 
-  const timeDiff = publishDateTime
-    ? Math.ceil((currentDate - publishDateTime) / (1000 * 60 * 60 * 24))
-    : null;
+    const timeDiff = publishDateTime
+      ? Math.ceil((currentDate - publishDateTime) / (1000 * 60 * 60 * 24))
+      : null;
 
-  const isNew = newFlag && timeDiff !== null && timeDiff >= 0 && timeDiff < 7;
+    const isNew = newFlag && timeDiff !== null && timeDiff >= 0 && timeDiff < 7;
 
-  // Get display number safely handling null values
-  const getDisplayNumber = () => {
-    if (item.displayNumbering !== null && item.displayNumbering !== undefined) {
-      return item.displayNumbering.toString();
-    } else if (order !== null && order !== undefined) {
-      return order.toString();
-    } else if (numbering !== null && numbering !== undefined) {
-      return numbering.toString();
-    } else if (item.filteredIndex !== null && item.filteredIndex !== undefined) {
-      return item.filteredIndex.toString();
-    } else {
-      return "1"; // Default to 1 instead of "-"
-    }
-  };
+    // Get display number safely handling null values
+    const getDisplayNumber = () => {
+      if (
+        item.displayNumbering !== null &&
+        item.displayNumbering !== undefined
+      ) {
+        return item.displayNumbering.toString();
+      } else if (order !== null && order !== undefined) {
+        return order.toString();
+      } else if (numbering !== null && numbering !== undefined) {
+        return numbering.toString();
+      } else if (
+        item.filteredIndex !== null &&
+        item.filteredIndex !== undefined
+      ) {
+        return item.filteredIndex.toString();
+      } else {
+        return '1'; // Default to 1 instead of "-"
+      }
+    };
 
-  // Get title text in the user's preferred language
-  const getTitle = () => {
-    if (Array.isArray(title)) {
-      return getString(title);
-    }
-    return title;
-  };
+    // Get title text in the user's preferred language
+    const getTitle = () => {
+      if (Array.isArray(title)) {
+        return getString(title);
+      }
+      return title;
+    };
 
-  // Get content text in the user's preferred language
-  const getContent = () => {
-    if (Array.isArray(content)) {
-      const localizedContent = getString(content);
-      return localizedContent.split('\n')[0];
-    }
-    return content ? content.split('\n')[0] : '';
-  };
+    // Get content text in the user's preferred language
+    const getContent = () => {
+      if (Array.isArray(content)) {
+        const localizedContent = getString(content);
+        return localizedContent.split('\n')[0];
+      }
+      if (content && typeof content === 'string') {
+        return content.split('\n')[0];
+      }
+      // If no content, but has mediaUrl or images, show (media Context)
+      if (
+        (item.mediaUrl && item.mediaUrl.length > 0) ||
+        (item.images && Array.isArray(item.images) && item.images.length > 0)
+      ) {
+        return '(media Context)';
+      }
+      return '';
+    };
 
-  const displayTitle = getTitle();
-  const displayContent = getContent();
+    const displayTitle = getTitle();
+    const displayContent = getContent();
 
-  return (
-    <Pressable
-      onPress={() => onItemPress(item)}
-      style={({pressed}) => [
-        styles.itemContainer,
-        {
-          backgroundColor: pressed ? themeColors.surface : 'transparent', // Change press color based on theme
-          borderBottomColor:
+    return (
+      <Pressable
+        onPress={() => onItemPress(item)}
+        style={({pressed}) => [
+          styles.itemContainer,
+          {
+            backgroundColor: pressed ? themeColors.surface : 'transparent', // Change press color based on theme
+            borderBottomColor:
               themeColors.border || themeColors.divder || '#444',
-        },
-      ]}>
-      <View style={styles.leftContainer}>
-        <View style={styles.numberingContainer}>
-          <Text
-            style={[
-              styles.numberingText,
-              {
-                backgroundColor: themeColors.primary, // Numbering background color
-                color: '#fff', // Text color
-                borderColor: themeColors.primary, // Border color
-              },
-            ]}>
-            {getDisplayNumber()}
-          </Text>
+          },
+        ]}>
+        <View style={styles.leftContainer}>
+          <View style={styles.numberingContainer}>
+            <Text
+              style={[
+                styles.numberingText,
+                {
+                  backgroundColor: themeColors.primary, // Numbering background color
+                  color: '#fff', // Text color
+                  borderColor: themeColors.primary, // Border color
+                },
+              ]}>
+              {getDisplayNumber()}
+            </Text>
+          </View>
+          <View style={styles.detailsContainer}>
+            <Text
+              style={[styles.title, {color: themeColors.text}]}
+              numberOfLines={1}
+              ellipsizeMode="tail">
+              {highlightFunction && searchTerms
+                ? highlightFunction(displayTitle, searchTerms)
+                : displayTitle}
+            </Text>
+            <Text
+              style={[styles.content, {color: themeColors.text}]}
+              numberOfLines={1}
+              ellipsizeMode="tail">
+              {highlightFunction && searchTerms
+                ? highlightFunction(displayContent, searchTerms)
+                : displayContent}
+            </Text>
+          </View>
         </View>
-        <View style={styles.detailsContainer}>
-          <Text
-            style={[styles.title, {color: themeColors.text}]}
-            numberOfLines={1}
-            ellipsizeMode="tail">
-            {highlightFunction && searchTerms
-              ? highlightFunction(displayTitle, searchTerms)
-              : displayTitle}
-          </Text>
-          <Text
-            style={[styles.content, {color: themeColors.text}]}
-            numberOfLines={1}
-            ellipsizeMode="tail">
-            {highlightFunction && searchTerms
-              ? highlightFunction(displayContent, searchTerms)
-              : displayContent}
-          </Text>
-        </View>
-      </View>
 
-      {/* Display "NEW" on the right side if the item is new */}
-      {isNew && (
-        <View style={styles.newFlagContainer}>
-          <Text style={[styles.newFlagText, {color: themeColors.primary}]}>
-            NEW
-          </Text>
-        </View>
-      )}
-    </Pressable>
-  );
-}, (prevProps, nextProps) => {
-  return (
-    prevProps.item.id === nextProps.item.id &&
-    prevProps.item.numbering === nextProps.item.numbering &&
-    prevProps.themeColors === nextProps.themeColors &&
-    prevProps.searchTerms === nextProps.searchTerms
-  );
-});
+        {/* Display "NEW" on the right side if the item is new */}
+        {isNew && (
+          <View style={styles.newFlagContainer}>
+            <Text style={[styles.newFlagText, {color: themeColors.primary}]}>
+              NEW
+            </Text>
+          </View>
+        )}
+      </Pressable>
+    );
+  },
+  (prevProps, nextProps) => {
+    return (
+      prevProps.item.id === nextProps.item.id &&
+      prevProps.item.numbering === nextProps.item.numbering &&
+      prevProps.themeColors === nextProps.themeColors &&
+      prevProps.searchTerms === nextProps.searchTerms
+    );
+  },
+);
 
 const styles = StyleSheet.create({
   itemContainer: {
