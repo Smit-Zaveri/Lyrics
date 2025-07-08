@@ -9,7 +9,7 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
-import {colors} from '../theme/Theme';
+import {colors} from '../theme/theme';
 
 // Get device dimensions for responsive design
 const {width, height} = Dimensions.get('window');

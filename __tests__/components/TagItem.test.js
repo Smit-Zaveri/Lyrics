@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, fireEvent, StyleSheet } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import TagItem from '../../src/components/TagItem';
 
 const mockItem = {
@@ -49,7 +50,7 @@ describe('TagItem Component', () => {
   });
 
   it('shows selected state correctly', () => {
-    const { getByText } = render(
+    const { getByTestId } = render(
       <TagItem
         item={mockItem}
         selectedTags={['TestTag']}
@@ -58,8 +59,9 @@ describe('TagItem Component', () => {
       />
     );
 
-    const tagElement = getByText('Test Tag').parent;
-    const flattenedStyle = StyleSheet.flatten(tagElement.props.style);
+    // Get the TouchableOpacity container using testID
+    const touchableContainer = getByTestId('tag-item-TestTag');
+    const flattenedStyle = StyleSheet.flatten(touchableContainer.props.style);
     expect(flattenedStyle).toMatchObject({ backgroundColor: '#FFC107' });
   });
 

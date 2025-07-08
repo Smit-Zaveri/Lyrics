@@ -20,8 +20,8 @@ import {
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {Searchbar, List, Portal, Provider, Chip} from 'react-native-paper';
-import {getFromAsyncStorage} from '../config/DataService';
-import {colors} from '../theme/Theme';
+import {getFromAsyncStorage} from '../config/dataService';
+import {colors} from '../theme/theme';
 import EmptyList from './EmptyList';
 import ListItem from './ListItem';
 import {ThemeContext} from '../../App';

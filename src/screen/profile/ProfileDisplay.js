@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import NetInfo from '@react-native-community/netinfo';
-import {refreshAllData} from '../../config/DataService';
+import {refreshAllData} from '../../config/dataService';
 import {ThemeContext} from '../../../App';
 
 // Import from package.json (for version)
