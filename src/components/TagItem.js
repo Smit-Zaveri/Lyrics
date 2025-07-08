@@ -23,6 +23,7 @@ const TagItem = ({ item, selectedTags, onTagPress, themeColors, isSticky }) => {
       ]}
     >
       <TouchableOpacity
+        testID={`tag-item-${item.name}`}
         style={[
           styles.container,
           {

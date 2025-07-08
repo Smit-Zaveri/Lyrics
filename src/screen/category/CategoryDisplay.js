@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import {View, ScrollView, Dimensions, RefreshControl} from 'react-native';
 import ItemGrid from '../../components/ItemGrid';
-import {getFromAsyncStorage} from '../../config/DataService';
+import {getFromAsyncStorage} from '../../config/dataService';
 import { ThemeContext } from '../../../App';
 import { LanguageContext } from '../../context/LanguageContext';
 

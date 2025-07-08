@@ -14,7 +14,7 @@ import {
 import NetInfo from '@react-native-community/netinfo';
 import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {getFromAsyncStorage, refreshAllData} from '../../config/DataService';
+import {getFromAsyncStorage, refreshAllData} from '../../config/dataService';
 import {ThemeContext} from '../../../App';
 import {LanguageContext} from '../../context/LanguageContext';
 import {useSingerMode} from '../../context/SingerModeContext';

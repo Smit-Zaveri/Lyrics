@@ -14,7 +14,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import {ThemeContext} from '../../../App';
 import {LanguageContext} from '../../context/LanguageContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {verifyAddedSongsCollection} from '../../config/DataService';
+import {verifyAddedSongsCollection} from '../../config/dataService';
 
 const SingerMode = () => {
   const navigation = useNavigation();

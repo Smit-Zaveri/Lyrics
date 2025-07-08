@@ -11,7 +11,7 @@ jest.mock('@react-navigation/native', () => ({
   }),
 }));
 
-jest.mock('../../src/config/DataService', () => ({
+jest.mock('../../src/config/dataService', () => ({
   getFromAsyncStorage: jest.fn(() => Promise.resolve([])),
 }));
 
