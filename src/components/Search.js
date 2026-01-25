@@ -17,11 +17,13 @@ import {
   StyleSheet,
   Pressable,
   TouchableOpacity,
+  Animated,
+  Easing,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {Searchbar, List, Portal, Provider, Chip} from 'react-native-paper';
-import {getFromAsyncStorage} from '../config/DataService';
-import {colors} from '../theme/Theme';
+import {getFromAsyncStorage} from '../config/dataService';
+import {colors} from '../theme/theme';
 import EmptyList from './EmptyList';
 import ListItem from './ListItem';
 import {ThemeContext} from '../../App';
@@ -185,6 +187,32 @@ const Search = ({route}) => {
   const [didYouMean, setDidYouMean] = useState('');
   const [fuzzyResults, setFuzzyResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  // Focus animation for search bar
+  const focusAnim = useRef(new Animated.Value(0)).current;
+  
+  const handleFocus = useCallback(() => {
+    Animated.timing(focusAnim, {
+      toValue: 1,
+      duration: 150,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start();
+  }, [focusAnim]);
+
+  const handleBlur = useCallback(() => {
+    Animated.timing(focusAnim, {
+      toValue: 0,
+      duration: 150,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start();
+  }, [focusAnim]);
+
+  const searchBarScale = focusAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.02],
+  });
 
   useEffect(() => {
     const focusTimeout = setTimeout(() => {
@@ -607,19 +635,23 @@ const Search = ({route}) => {
       </Portal>
       <SafeAreaView
         style={[{backgroundColor: themeColors.background}, styles.container]}>
-        <Searchbar
-          placeholder="Search lyrics, artist, or tags"
-          ref={searchbarRef}
-          onChangeText={handleSearch}
-          value={searchQuery}
-          iconColor={themeColors.text}
-          style={[
-            styles.searchbar,
-            {backgroundColor: themeColors.cardBackground},
-          ]}
-          inputStyle={{fontSize: 16, color: themeColors.text}}
-          placeholderTextColor={themeColors.text}
-        />
+        <Animated.View style={{transform: [{scale: searchBarScale}]}}>
+          <Searchbar
+            placeholder="Search lyrics, artist, or tags"
+            ref={searchbarRef}
+            onChangeText={handleSearch}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            value={searchQuery}
+            iconColor={themeColors.text}
+            style={[
+              styles.searchbar,
+              {backgroundColor: themeColors.cardBackground},
+            ]}
+            inputStyle={{fontSize: 16, color: themeColors.text}}
+            placeholderTextColor={themeColors.text}
+          />
+        </Animated.View>
 
         {/* Did you mean suggestion */}
         {didYouMean && searchQuery.trim() && filteredLyrics.length === 0 && (

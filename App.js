@@ -5,7 +5,7 @@ import React, {
   useMemo,
   createContext,
 } from 'react';
-import {StatusBar, useColorScheme, Animated} from 'react-native';
+import {StatusBar, useColorScheme, Animated, Easing} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createMaterialBottomTabNavigator} from '@react-navigation/material-bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -15,12 +15,12 @@ import HomeStack from './src/screen/home/HomeStack';
 import Profile from './src/screen/profile/Profile';
 import Category from './src/screen/category/Category';
 import {LogLevel, OneSignal} from 'react-native-onesignal';
-import {colors} from './src/theme/Theme';
+import {colors} from './src/theme/theme';
 import {LanguageProvider, LanguageContext} from './src/context/LanguageContext';
 import LanguageSelectionModal from './src/components/LanguageSelectionModal';
 import {FontSizeProvider} from './src/context/FontSizeContext';
 import { SingerModeProvider } from './src/context/SingerModeContext';
-import { checkAndRefreshIfDateChanged, updateLastOpenDate } from './src/config/DataService';
+import { checkAndRefreshIfDateChanged, updateLastOpenDate } from './src/config/dataService';
 
 // Create bottom tab navigator
 const Tab = createMaterialBottomTabNavigator();
@@ -54,37 +54,52 @@ const AppContent = () => {
     [currentTheme],
   );
 
-  // Animate theme changes
-  useEffect(() => {
-    Animated.sequence([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [currentTheme, fadeAnim]);
+  // Reference to track pending theme change
+  const pendingThemeRef = React.useRef(null);
 
   const themeContextValue = useMemo(
     () => ({
       themePreference,
       setThemePreference: async newTheme => {
-        try {
-          await AsyncStorage.setItem('themePreference', newTheme);
-          setThemePreference(newTheme);
-        } catch (error) {
-          console.error('Error saving theme preference:', error);
+        // Skip if same theme or animation in progress
+        if (newTheme === themePreference || pendingThemeRef.current) {
+          return;
         }
+        
+        pendingThemeRef.current = newTheme;
+        
+        // Smooth fade out with easing
+        Animated.timing(fadeAnim, {
+          toValue: 0.7,
+          duration: 200,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }).start(async () => {
+          try {
+            await AsyncStorage.setItem('themePreference', newTheme);
+            setThemePreference(newTheme);
+          } catch (error) {
+            console.error('Error saving theme preference:', error);
+          }
+          
+          // Small delay to allow React to render new theme colors
+          setTimeout(() => {
+            // Smooth fade back in with easing
+            Animated.timing(fadeAnim, {
+              toValue: 1,
+              duration: 280,
+              easing: Easing.out(Easing.quad),
+              useNativeDriver: true,
+            }).start(() => {
+              pendingThemeRef.current = null;
+            });
+          }, 16); // One frame delay (~16ms at 60fps)
+        });
       },
       currentTheme,
       themeColors,
     }),
-    [themePreference, currentTheme, themeColors],
+    [themePreference, currentTheme, themeColors, fadeAnim],
   );
 
   // 4. useCallback hooks

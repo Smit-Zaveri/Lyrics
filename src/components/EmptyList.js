@@ -1,22 +1,139 @@
-import React, { useContext } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useContext, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { ThemeContext } from '../../App';
 
 const EmptyList = () => {
   const { themeColors } = useContext(ThemeContext);
+  
+  // Pulse animation for icon
+  const pulseScale = useRef(new Animated.Value(1)).current;
+  
+  // Entrance animations
+  const iconOpacity = useRef(new Animated.Value(0)).current;
+  const iconScale = useRef(new Animated.Value(0.8)).current;
+  const textOpacity = useRef(new Animated.Value(0)).current;
+  const textTranslateY = useRef(new Animated.Value(10)).current;
+  const subtextOpacity = useRef(new Animated.Value(0)).current;
+  const subtextTranslateY = useRef(new Animated.Value(10)).current;
+
+  useEffect(() => {
+    // Icon entrance animation
+    Animated.parallel([
+      Animated.timing(iconOpacity, {
+        toValue: 1,
+        duration: 300,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.spring(iconScale, {
+        toValue: 1,
+        bounciness: 10,
+        speed: 12,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Text entrance with delay
+    setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(textOpacity, {
+          toValue: 1,
+          duration: 250,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(textTranslateY, {
+          toValue: 0,
+          duration: 250,
+          easing: Easing.out(Easing.back(1.5)),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, 200);
+
+    // Subtext entrance with more delay
+    setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(subtextOpacity, {
+          toValue: 1,
+          duration: 250,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(subtextTranslateY, {
+          toValue: 0,
+          duration: 250,
+          easing: Easing.out(Easing.back(1.5)),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, 350);
+
+    // Start pulse animation loop
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseScale, {
+          toValue: 1.08,
+          duration: 800,
+          easing: Easing.inOut(Easing.sine),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseScale, {
+          toValue: 1,
+          duration: 800,
+          easing: Easing.inOut(Easing.sine),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    
+    // Start pulse after entrance completes
+    const pulseTimer = setTimeout(() => pulse.start(), 400);
+
+    return () => {
+      pulse.stop();
+      clearTimeout(pulseTimer);
+    };
+  }, [iconOpacity, iconScale, textOpacity, textTranslateY, subtextOpacity, subtextTranslateY, pulseScale]);
 
   return (
     <View style={styles.emptyListContainer}>
-      <View style={[styles.iconContainer, { backgroundColor: `${themeColors.primary}15` }]}>
+      <Animated.View 
+        style={[
+          styles.iconContainer, 
+          { 
+            backgroundColor: `${themeColors.primary}15`,
+            opacity: iconOpacity,
+            transform: [
+              {scale: Animated.multiply(iconScale, pulseScale)},
+            ],
+          },
+        ]}>
         <Icon name="playlist-remove" size={50} color={themeColors.primary} />
-      </View>
-      <Text style={[styles.emptyListText, { color: themeColors.text }]}>
+      </Animated.View>
+      <Animated.Text 
+        style={[
+          styles.emptyListText, 
+          { 
+            color: themeColors.text,
+            opacity: textOpacity,
+            transform: [{translateY: textTranslateY}],
+          },
+        ]}>
         No results found
-      </Text>
-      <Text style={[styles.emptyListSubText, { color: themeColors.placeholder }]}>
+      </Animated.Text>
+      <Animated.Text 
+        style={[
+          styles.emptyListSubText, 
+          { 
+            color: themeColors.placeholder,
+            opacity: subtextOpacity,
+            transform: [{translateY: subtextTranslateY}],
+          },
+        ]}>
         Try adjusting your filters or search criteria
-      </Text>
+      </Animated.Text>
     </View>
   );
 };

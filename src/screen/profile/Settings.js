@@ -1,4 +1,4 @@
-import React, {useContext, useCallback} from 'react';
+import React, {useContext, useCallback, useRef, useEffect} from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   ScrollView,
   Animated,
+  Easing,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {ThemeContext} from '../../../App';
@@ -17,6 +18,126 @@ import {
 } from '../../../src/context/LanguageContext';
 import {FontSizeContext} from '../../context/FontSizeContext';
 import {useSingerMode} from '../../context/SingerModeContext';
+
+// Animated Option Component with press feedback and selection animation
+const AnimatedOption = ({isSelected, onPress, children, themeColors, style}) => {
+  const pressScale = useRef(new Animated.Value(1)).current;
+  const selectionScale = useRef(new Animated.Value(1)).current;
+  const prevSelected = useRef(isSelected);
+
+  useEffect(() => {
+    // Trigger selection pop animation when becoming selected
+    if (isSelected && !prevSelected.current) {
+      Animated.sequence([
+        Animated.timing(selectionScale, {
+          toValue: 1.08,
+          duration: 100,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.spring(selectionScale, {
+          toValue: 1,
+          bounciness: 10,
+          speed: 14,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+    prevSelected.current = isSelected;
+  }, [isSelected, selectionScale]);
+
+  const handlePressIn = () => {
+    Animated.timing(pressScale, {
+      toValue: 0.96,
+      duration: 80,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(pressScale, {
+      toValue: 1,
+      bounciness: 8,
+      speed: 12,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      activeOpacity={1}>
+      <Animated.View
+        style={[
+          style,
+          {
+            transform: [{scale: Animated.multiply(pressScale, selectionScale)}],
+          },
+        ]}>
+        {children}
+      </Animated.View>
+    </TouchableOpacity>
+  );
+};
+
+// Animated Toggle Component with spring animation
+const AnimatedToggle = ({isOn, onToggle, themeColors}) => {
+  const translateX = useRef(new Animated.Value(isOn ? 20 : 2)).current;
+  const bgOpacity = useRef(new Animated.Value(isOn ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(translateX, {
+        toValue: isOn ? 20 : 2,
+        bounciness: 10,
+        speed: 14,
+        useNativeDriver: true,
+      }),
+      Animated.timing(bgOpacity, {
+        toValue: isOn ? 1 : 0,
+        duration: 150,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: false,
+      }),
+    ]).start();
+  }, [isOn, translateX, bgOpacity]);
+
+  const backgroundColor = bgOpacity.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['transparent', themeColors.primary],
+  });
+
+  const borderColor = bgOpacity.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#444', themeColors.primary],
+  });
+
+  return (
+    <TouchableOpacity onPress={onToggle} activeOpacity={0.8}>
+      <Animated.View
+        style={[
+          styles.toggleButton,
+          {
+            backgroundColor,
+            borderColor,
+          },
+        ]}>
+        <Animated.View
+          style={[
+            styles.toggleIndicator,
+            {
+              backgroundColor: '#fff',
+              transform: [{translateX}],
+            },
+          ]}
+        />
+      </Animated.View>
+    </TouchableOpacity>
+  );
+};
 
 const Settings = () => {
   const {fontSize, changeFontSize} = useContext(FontSizeContext);
@@ -42,8 +163,10 @@ const Settings = () => {
   // Memoized option components to avoid unnecessary re-renders
   const ThemeOption = useCallback(
     ({theme, label, icon}) => (
-      <TouchableOpacity
+      <AnimatedOption
+        isSelected={themePreference === theme}
         onPress={() => handleThemeChange(theme)}
+        themeColors={themeColors}
         style={[
           styles.option,
           {
@@ -65,15 +188,17 @@ const Settings = () => {
           ]}>
           {label}
         </Text>
-      </TouchableOpacity>
+      </AnimatedOption>
     ),
     [handleThemeChange, themePreference, themeColors],
   );
 
   const LanguageOption = useCallback(
     ({langValue, label}) => (
-      <TouchableOpacity
+      <AnimatedOption
+        isSelected={language === langValue}
         onPress={() => handleLanguageChange(langValue)}
+        themeColors={themeColors}
         style={[
           styles.option,
           {
@@ -89,7 +214,7 @@ const Settings = () => {
           ]}>
           {label}
         </Text>
-      </TouchableOpacity>
+      </AnimatedOption>
     ),
     [handleLanguageChange, language, themeColors],
   );
@@ -190,27 +315,11 @@ const Settings = () => {
             Singer Mode
           </Text>
           <View style={styles.optionContainer}>
-            <TouchableOpacity
-              onPress={toggleSingerMode}
-              style={[
-                styles.toggleButton,
-                {
-                  backgroundColor: isSingerMode
-                    ? themeColors.primary
-                    : 'transparent',
-                  borderColor: isSingerMode ? themeColors.primary : '#444',
-                },
-              ]}>
-              <Animated.View
-                style={[
-                  styles.toggleIndicator,
-                  {
-                    backgroundColor: isSingerMode ? '#fff' : '#fff',
-                    transform: [{translateX: isSingerMode ? 20 : 2}],
-                  },
-                ]}
-              />
-            </TouchableOpacity>
+            <AnimatedToggle
+              isOn={isSingerMode}
+              onToggle={toggleSingerMode}
+              themeColors={themeColors}
+            />
           </View>
         </View>
       </ScrollView>

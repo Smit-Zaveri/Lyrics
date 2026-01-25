@@ -82,3 +82,5 @@ yarn-error.log
 
 # google-services.json should not be in version control for production
 android/app/google-services.json
+RUNNING_INSTRUCTIONS.md
+.qoder/*

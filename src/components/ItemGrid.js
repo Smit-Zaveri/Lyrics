@@ -9,11 +9,107 @@ import {
   Animated,
   Dimensions,
   useWindowDimensions,
+  Easing,
 } from 'react-native';
 import {Card} from 'react-native-elements';
 import PropTypes from 'prop-types';
 import { ThemeContext } from '../../App';
 import { LanguageContext } from '../context/LanguageContext';
+
+// Animated Grid Item Component with entrance and press animations
+const AnimatedGridItem = ({item, index, itemWidth, themeColors, onPress, displayText}) => {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.85)).current;
+  const pressScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const delay = index * 50;
+    const timer = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 280,
+          easing: Easing.out(Easing.back(1.5)),
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          bounciness: 8,
+          speed: 12,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [index, opacity, scale]);
+
+  const handlePressIn = () => {
+    Animated.timing(pressScale, {
+      toValue: 0.96,
+      duration: 80,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(pressScale, {
+      toValue: 1,
+      bounciness: 8,
+      speed: 12,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  return (
+    <View style={styles.itemWrapper}>
+      <Animated.View 
+        style={[
+          styles.itemContainer, 
+          {
+            opacity,
+            transform: [{scale: Animated.multiply(scale, pressScale)}],
+          },
+        ]}>
+        <TouchableOpacity 
+          onPress={onPress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          activeOpacity={1}>
+          {item.picture ? (
+            <Image
+              source={{uri: item.picture}}
+              style={[styles.imageStyle, {width: itemWidth, height: itemWidth}]}
+              resizeMode="cover"
+            />
+          ) : (
+            <View
+              style={[
+                styles.placeholderImage,
+                {
+                  backgroundColor: themeColors.surface,
+                  width: itemWidth,
+                  height: itemWidth,
+                },
+              ]}>
+              <Text style={[styles.placeholderText, {color: themeColors.text}]}>
+                {displayText.charAt(0)}
+              </Text>
+            </View>
+          )}
+          <Text 
+            style={[styles.itemText, {color: themeColors.text}]}
+            numberOfLines={2}
+            ellipsizeMode="tail"
+          >
+            {displayText}
+          </Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
+  );
+};
 
 const {width} = Dimensions.get('window');
 
@@ -40,7 +136,6 @@ const ItemGrid = ({
 }) => {
   const { themeColors } = useContext(ThemeContext);
   const { getString } = useContext(LanguageContext); // Remove language from context
-  const fadeAnim = useRef(new Animated.Value(0)).current;
   const isSingleLayout = layout === 'single';
   const windowDimensions = useWindowDimensions();
 
@@ -67,14 +162,6 @@ const ItemGrid = ({
       return numA - numB;
     });
   }, [data]);
-
-  useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
 
   // Updated getLocalizedDisplayName to be more responsive
   const getLocalizedDisplayName = useCallback((item) => {
@@ -110,48 +197,22 @@ const ItemGrid = ({
 
   // Add language as a dependency to force re-render when language changes
   const renderItem = useCallback(
-    ({item}) => {
+    ({item, index}) => {
       // Move displayText calculation inside render to ensure fresh value
       const displayText = getLocalizedDisplayName(item);
       
       return (
-        <View style={styles.itemWrapper}>
-          <Animated.View style={[styles.itemContainer, {opacity: fadeAnim}]}>
-            <TouchableOpacity onPress={() => handlePress(item)}>
-              {item.picture ? (
-                <Image
-                  source={{uri: item.picture}}
-                  style={[styles.imageStyle, {width: itemWidth, height: itemWidth}]}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View
-                  style={[
-                    styles.placeholderImage,
-                    {
-                      backgroundColor: themeColors.surface,
-                      width: itemWidth,
-                      height: itemWidth,
-                    },
-                  ]}>
-                  <Text style={[styles.placeholderText, {color: themeColors.text}]}>
-                    {displayText.charAt(0)}
-                  </Text>
-                </View>
-              )}
-              <Text 
-                style={[styles.itemText, {color: themeColors.text}]}
-                numberOfLines={2}
-                ellipsizeMode="tail"
-              >
-                {displayText}
-              </Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
+        <AnimatedGridItem
+          item={item}
+          index={index}
+          itemWidth={itemWidth}
+          themeColors={themeColors}
+          onPress={() => handlePress(item)}
+          displayText={displayText}
+        />
       );
     },
-    [fadeAnim, handlePress, itemWidth, themeColors, getLocalizedDisplayName],
+    [handlePress, itemWidth, themeColors, getLocalizedDisplayName],
   );
 
   // Get localized title if it's an array

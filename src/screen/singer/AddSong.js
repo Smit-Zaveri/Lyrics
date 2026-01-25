@@ -22,7 +22,7 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {pick, PickOptions} from '@react-native-documents/picker';
 import RNFS from 'react-native-fs';
-import {saveUserSong, updateUserSong} from '../../config/DataService';
+import {saveUserSong, updateUserSong} from '../../config/dataService';
 import {ThemeContext} from '../../../App';
 import {LanguageContext} from '../../context/LanguageContext';
 import PermissionService from '../../utils/PermissionService';
