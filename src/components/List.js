@@ -10,7 +10,6 @@ import {
   SafeAreaView,
   RefreshControl,
   View,
-  ActivityIndicator,
   Text,
   StyleSheet,
   ScrollView,
@@ -28,6 +27,7 @@ import {getFromAsyncStorage} from '../config/dataService';
 import TagItem from './TagItem';
 import ListItem from './ListItem';
 import EmptyList from './EmptyList';
+import SkeletonItem from './SkeletonItem';
 import {ThemeContext} from '../../App';
 import {LanguageContext} from '../context/LanguageContext';
 import {useSingerMode} from '../context/SingerModeContext';
@@ -663,16 +663,57 @@ const List = ({route}) => {
 
   if (isLoading) {
     return (
-      <View style={[styles.centerContainer, {backgroundColor: themeColors.background}]}>
-        <ActivityIndicator size="large" color={themeColors.primary} />
-      </View>
+      <SafeAreaView
+        style={[styles.container, {backgroundColor: themeColors.background}]}>
+        <View style={styles.contentWrapper}>
+          {/* Skeleton tags */}
+          {!customLyrics && (
+            <View style={styles.tagContainer}>
+              <View style={styles.tagListContent}>
+                {[1, 2, 3, 4, 5].map(i => (
+                  <View
+                    key={`skeleton-tag-${i}`}
+                    style={[
+                      styles.skeletonTag,
+                      {
+                        backgroundColor: themeColors.isDark
+                          ? 'rgba(255,255,255,0.06)'
+                          : 'rgba(0,0,0,0.04)',
+                      },
+                    ]}
+                  />
+                ))}
+              </View>
+            </View>
+          )}
+          {/* Skeleton list items */}
+          <View style={styles.listWrapper}>
+            {[0, 1, 2, 3, 4, 5, 6, 7].map(i => (
+              <SkeletonItem
+                key={`skeleton-${i}`}
+                themeColors={themeColors}
+                index={i}
+              />
+            ))}
+          </View>
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View style={[styles.errorContainer, {backgroundColor: themeColors.background}]}>
-        <Icon name="error-outline" color={themeColors.primary} size={48} style={styles.errorIcon} />
+      <View
+        style={[
+          styles.errorContainer,
+          {backgroundColor: themeColors.background},
+        ]}>
+        <Icon
+          name="error-outline"
+          color={themeColors.primary}
+          size={48}
+          style={styles.errorIcon}
+        />
         <Text style={[styles.errorText, {color: themeColors.text}]}>
           {error}
         </Text>
@@ -680,7 +721,12 @@ const List = ({route}) => {
           style={[styles.retryButton, {backgroundColor: themeColors.primary}]}
           onPress={loadData}
           activeOpacity={0.8}>
-          <Icon name="refresh" color="#fff" size={20} style={styles.retryIcon} />
+          <Icon
+            name="refresh"
+            color="#fff"
+            size={20}
+            style={styles.retryIcon}
+          />
           <Text style={styles.retryText}>Try Again</Text>
         </TouchableOpacity>
       </View>
@@ -688,7 +734,8 @@ const List = ({route}) => {
   }
 
   return (
-    <SafeAreaView style={[styles.container, {backgroundColor: themeColors.background}]}>
+    <SafeAreaView
+      style={[styles.container, {backgroundColor: themeColors.background}]}>
       <View style={styles.contentWrapper}>
         {!customLyrics && tags && tags.length > 0 && (
           <View style={styles.tagContainer}>
@@ -724,72 +771,72 @@ const List = ({route}) => {
 
         <View style={styles.listWrapper}>
           <Animated.FlatList
-          key={listKey}
-          ref={flatListRef}
-          style={[styles.lyricsList, {opacity: animatedOpacity}]}
-          contentContainerStyle={styles.lyricsListContent}
-          data={lastFilteredList}
-          keyExtractor={item => item.stableId}
-          renderItem={renderItem}
-          ListEmptyComponent={<EmptyList />}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={() => loadData(true)}
-              colors={[themeColors.primary]}
-              tintColor={themeColors.primary}
-            />
-          }
-          windowSize={7}
-          maxToRenderPerBatch={12}
-          updateCellsBatchingPeriod={30}
-          getItemLayout={(data, index) => ({
-            length: itemHeight,
-            offset: itemHeight * index,
-            index,
-          })}
-          removeClippedSubviews={Platform.OS === 'android' ? false : true}
-          initialNumToRender={20}
-          onScroll={Animated.event(
-            [{nativeEvent: {contentOffset: {y: scrollY}}}],
-            {useNativeDriver: true},
-          )}
-          scrollEventThrottle={16}
-          decelerationRate={Platform.OS === 'ios' ? 'fast' : 0.85}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          onScrollToIndexFailed={info => {
-            console.warn('Scroll to index failed:', info);
+            key={listKey}
+            ref={flatListRef}
+            style={[styles.lyricsList, {opacity: animatedOpacity}]}
+            contentContainerStyle={styles.lyricsListContent}
+            data={lastFilteredList}
+            keyExtractor={item => item.stableId}
+            renderItem={renderItem}
+            ListEmptyComponent={<EmptyList />}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => loadData(true)}
+                colors={[themeColors.primary]}
+                tintColor={themeColors.primary}
+              />
+            }
+            windowSize={7}
+            maxToRenderPerBatch={12}
+            updateCellsBatchingPeriod={30}
+            getItemLayout={(data, index) => ({
+              length: itemHeight,
+              offset: itemHeight * index,
+              index,
+            })}
+            removeClippedSubviews={Platform.OS === 'android' ? false : true}
+            initialNumToRender={20}
+            onScroll={Animated.event(
+              [{nativeEvent: {contentOffset: {y: scrollY}}}],
+              {useNativeDriver: true},
+            )}
+            scrollEventThrottle={16}
+            decelerationRate={Platform.OS === 'ios' ? 'fast' : 0.85}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            onScrollToIndexFailed={info => {
+              console.warn('Scroll to index failed:', info);
 
-            const targetItem = lastFilteredList[info.index];
-            if (!targetItem) return;
+              const targetItem = lastFilteredList[info.index];
+              if (!targetItem) return;
 
-            targetItemId.current = targetItem.stableId;
+              targetItemId.current = targetItem.stableId;
 
-            const offset = info.index * itemHeight;
-            const finalOffset = Math.max(0, offset - 100);
+              const offset = info.index * itemHeight;
+              const finalOffset = Math.max(0, offset - 100);
 
-            requestAnimationFrame(() => {
-              flatListRef.current?.scrollToOffset({
-                offset: finalOffset,
-                animated: true,
+              requestAnimationFrame(() => {
+                flatListRef.current?.scrollToOffset({
+                  offset: finalOffset,
+                  animated: true,
+                });
+
+                setTimeout(() => {
+                  highlightedItemId.current =
+                    targetItem.id?.toString() || `item-${info.index}`;
+
+                  highlightAnim.setValue(0);
+                  Animated.timing(highlightAnim, {
+                    toValue: 1,
+                    duration: 450,
+                    useNativeDriver: true,
+                    easing: Easing.out(Easing.cubic),
+                  }).start();
+                }, 500);
               });
-
-              setTimeout(() => {
-                highlightedItemId.current =
-                  targetItem.id?.toString() || `item-${info.index}`;
-
-                highlightAnim.setValue(0);
-                Animated.timing(highlightAnim, {
-                  toValue: 1,
-                  duration: 450,
-                  useNativeDriver: true,
-                  easing: Easing.out(Easing.cubic),
-                }).start();
-              }, 500);
-            });
-          }}
-        />
+            }}
+          />
         </View>
 
         {/* Floating Action Button */}
@@ -900,6 +947,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 6,
     zIndex: 10,
+  },
+  skeletonTag: {
+    width: 70,
+    height: 32,
+    borderRadius: 16,
+    marginRight: 8,
+    opacity: 0.7,
   },
 });
 

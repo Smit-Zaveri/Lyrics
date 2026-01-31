@@ -6,7 +6,6 @@ import {
   View,
   SafeAreaView,
   Pressable,
-  ActivityIndicator,
   RefreshControl,
   Image,
   TouchableOpacity,
@@ -19,6 +18,7 @@ import {getFromAsyncStorage, refreshAllData} from '../../config/dataService';
 import {ThemeContext} from '../../../App';
 import {LanguageContext} from '../../context/LanguageContext';
 import {useSingerMode} from '../../context/SingerModeContext';
+import HomeSkeleton from '../../components/HomeSkeleton';
 
 const HomeList = () => {
   const navigation = useNavigation();
@@ -70,13 +70,15 @@ const HomeList = () => {
               return true;
             })
             .sort((a, b) => (a.numbering || 0) - (b.numbering || 0));
-          
+
           // Re-number collections sequentially after filtering and sorting
-          const renumberedCollections = sortedCollections.map((collection, index) => ({
-            ...collection,
-            numbering: index + 1,
-          }));
-          
+          const renumberedCollections = sortedCollections.map(
+            (collection, index) => ({
+              ...collection,
+              numbering: index + 1,
+            }),
+          );
+
           setData(renumberedCollections);
         } else {
           const isConnected = await refreshAllData();
@@ -94,13 +96,15 @@ const HomeList = () => {
                   return true;
                 })
                 .sort((a, b) => (a.numbering || 0) - (b.numbering || 0));
-              
+
               // Re-number collections sequentially after filtering and sorting
-              const renumberedCollections = sortedCollections.map((collection, index) => ({
-                ...collection,
-                numbering: index + 1,
-              }));
-              
+              const renumberedCollections = sortedCollections.map(
+                (collection, index) => ({
+                  ...collection,
+                  numbering: index + 1,
+                }),
+              );
+
               setData(renumberedCollections);
             } else {
               setData([]);
@@ -159,7 +163,7 @@ const HomeList = () => {
 
   const renderItem = ({item, index}) => {
     const displayName = getLocalizedDisplayName(item);
-  
+
     return (
       <Pressable
         onPress={handleItemPress(item)}
@@ -173,7 +177,7 @@ const HomeList = () => {
             ...Platform.select({
               ios: {
                 shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
+                shadowOffset: {width: 0, height: 1},
                 shadowOpacity: 0.08,
                 shadowRadius: 3,
               },
@@ -185,23 +189,19 @@ const HomeList = () => {
         ]}>
         <View style={styles.leftContainer}>
           <View style={styles.numberingContainer}>
-            <Text
-              style={[
-                styles.numberingText,
-                {color: themeColors.primary},
-              ]}>
+            <Text style={[styles.numberingText, {color: themeColors.primary}]}>
               {item.numbering}
             </Text>
           </View>
           <View style={styles.detailsContainer}>
-            <Text style={[styles.title, {color: themeColors.text}]}> 
+            <Text style={[styles.title, {color: themeColors.text}]}>
               {displayName}
             </Text>
           </View>
-          <Icon 
-            name="chevron-right" 
-            size={24} 
-            color={themeColors.textSecondary || '#797979'} 
+          <Icon
+            name="chevron-right"
+            size={24}
+            color={themeColors.textSecondary || '#797979'}
             style={styles.chevronIcon}
           />
         </View>
@@ -241,10 +241,10 @@ const HomeList = () => {
 
   if (isLoading) {
     return (
-      <View
-        style={[styles.centered, {backgroundColor: themeColors.background}]}>
-        <ActivityIndicator size="large" color={themeColors.primary} />
-      </View>
+      <SafeAreaView
+        style={[styles.flex, {backgroundColor: themeColors.background}]}>
+        <HomeSkeleton themeColors={themeColors} />
+      </SafeAreaView>
     );
   }
 
