@@ -5,6 +5,7 @@ import React, {
   useContext,
   useCallback,
   useLayoutEffect,
+  useMemo,
 } from 'react';
 import {
   View,
@@ -230,21 +231,27 @@ const DetailPage = ({navigation, route}) => {
     };
   }, []);
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (evt, gestureState) => {
-        return Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
-      },
-      onPanResponderRelease: (e, gestureState) => {
-        if (gestureState.dx > 50) {
-          navigateSong('prev');
-        } else if (gestureState.dx < -50) {
-          navigateSong('next');
-        }
-      },
-    }),
-  ).current;
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => Lyrics.length > 1,
+        onMoveShouldSetPanResponder: (evt, gestureState) => {
+          return (
+            Lyrics.length > 1 &&
+            Math.abs(gestureState.dx) > Math.abs(gestureState.dy)
+          );
+        },
+        onPanResponderRelease: (e, gestureState) => {
+          if (Lyrics.length <= 1) return;
+          if (gestureState.dx > 50) {
+            navigateSong('prev');
+          } else if (gestureState.dx < -50) {
+            navigateSong('next');
+          }
+        },
+      }),
+    [Lyrics.length],
+  );
 
   const getLocalizedContent = item => {
     if (!item) return '';
@@ -479,6 +486,7 @@ const DetailPage = ({navigation, route}) => {
   }, [navigation, itemNumbering, opacityAnim, scaleAnim, route.params, song]);
 
   const navigateSong = direction => {
+    if (Lyrics.length <= 1) return;
     try {
       // Animate all FABs out
       Animated.parallel([
@@ -829,8 +837,14 @@ const DetailPage = ({navigation, route}) => {
 
   if (!song) {
     return (
-      <View style={[styles.loadingContainer, {backgroundColor: themeColors.background}]}>
-        <Text style={[styles.loadingText, {color: themeColors.text}]}>Loading...</Text>
+      <View
+        style={[
+          styles.loadingContainer,
+          {backgroundColor: themeColors.background},
+        ]}>
+        <Text style={[styles.loadingText, {color: themeColors.text}]}>
+          Loading...
+        </Text>
       </View>
     );
   }
@@ -848,11 +862,17 @@ const DetailPage = ({navigation, route}) => {
 
   return (
     <NavigationHandler onNavigate={navigateSong}>
-      <View style={[styles.container, {backgroundColor: themeColors.background}]} {...panResponder.panHandlers}>
+      <View
+        style={[styles.container, {backgroundColor: themeColors.background}]}
+        {...panResponder.panHandlers}>
         <Animated.View style={animatedStyle}>
           {getLocalizedArtist(song) && (
             <View style={styles.artistContainer}>
-              <Text style={[styles.artistLabel, {color: themeColors.textSecondary}]}>
+              <Text
+                style={[
+                  styles.artistLabel,
+                  {color: themeColors.textSecondary},
+                ]}>
                 રચનાર
               </Text>
               <Text style={[styles.artistName, {color: themeColors.text}]}>
