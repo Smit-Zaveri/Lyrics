@@ -1,18 +1,18 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
-import { StyleSheet } from 'react-native';
+import {render, fireEvent} from '@testing-library/react-native';
+import {StyleSheet} from 'react-native';
 import TagItem from '../../src/components/TagItem';
 
 const mockItem = {
   id: '1',
   name: 'TestTag',
-  displayName: 'Test Tag'
+  displayName: 'Test Tag',
 };
 
 const mockThemeColors = {
   primary: '#000',
   surface: '#fff',
-  text: '#000'
+  text: '#000',
 };
 
 describe('TagItem Component', () => {
@@ -23,55 +23,57 @@ describe('TagItem Component', () => {
   });
 
   it('renders with display name when provided', () => {
-    const { getByText } = render(
+    const {getByText} = render(
       <TagItem
         item={mockItem}
         selectedTags={[]}
         onTagPress={onTagPress}
         themeColors={mockThemeColors}
-      />
+      />,
     );
 
     expect(getByText('Test Tag')).toBeTruthy();
   });
 
   it('renders with name when no display name is provided', () => {
-    const itemWithoutDisplay = { ...mockItem, displayName: null };
-    const { getByText } = render(
+    const itemWithoutDisplay = {...mockItem, displayName: null};
+    const {getByText} = render(
       <TagItem
         item={itemWithoutDisplay}
         selectedTags={[]}
         onTagPress={onTagPress}
         themeColors={mockThemeColors}
-      />
+      />,
     );
 
     expect(getByText('TestTag')).toBeTruthy();
   });
 
   it('shows selected state correctly', () => {
-    const { getByText } = render(
+    const {getByText} = render(
       <TagItem
         item={mockItem}
         selectedTags={['TestTag']}
         onTagPress={onTagPress}
         themeColors={mockThemeColors}
-      />
+      />,
     );
 
     const tagElement = getByText('Test Tag').parent;
     const flattenedStyle = StyleSheet.flatten(tagElement.props.style);
-    expect(flattenedStyle).toMatchObject({ backgroundColor: '#FFC107' });
+    expect(flattenedStyle).toMatchObject({
+      backgroundColor: mockThemeColors.primary,
+    });
   });
 
   it('calls onTagPress with correct tag name when pressed', () => {
-    const { getByText } = render(
+    const {getByText} = render(
       <TagItem
         item={mockItem}
         selectedTags={[]}
         onTagPress={onTagPress}
         themeColors={mockThemeColors}
-      />
+      />,
     );
 
     fireEvent.press(getByText('Test Tag'));
