@@ -58,6 +58,11 @@ const HomeList = () => {
         setRefreshing(true);
       }
       try {
+        // If refreshing and internet is available, refresh data first
+        if (isRefresh && networkStatus) {
+          await refreshAllData();
+        }
+
         const collections = await getFromAsyncStorage('collections');
         if (collections && collections.length > 0) {
           // Make sure collections is an array before sorting
@@ -80,6 +85,7 @@ const HomeList = () => {
           );
 
           setData(renumberedCollections);
+          setError(null);
         } else {
           const isConnected = await refreshAllData();
           if (isConnected) {
@@ -106,6 +112,7 @@ const HomeList = () => {
               );
 
               setData(renumberedCollections);
+              setError(null);
             } else {
               setData([]);
             }
@@ -124,7 +131,7 @@ const HomeList = () => {
         if (isRefresh) setRefreshing(false);
       }
     },
-    [isSingerMode],
+    [isSingerMode, networkStatus],
   );
 
   useEffect(() => {
@@ -216,26 +223,46 @@ const HomeList = () => {
         styles.noConnectionContainer,
         {backgroundColor: themeColors.background},
       ]}>
-      <Image
-        source={require('../../assets/logo.png')}
-        style={styles.noConnectionImage}
-        resizeMode="contain"
-      />
-      <Text style={[styles.noConnectionTitle, {color: themeColors.text}]}>
-        No Internet Connection
-      </Text>
-      <Text
+      <View
         style={[
-          styles.noConnectionSubtitle,
-          {color: themeColors.textSecondary},
+          styles.noConnectionCard,
+          {backgroundColor: themeColors.surface},
         ]}>
-        Please check your internet connection and try again
-      </Text>
-      <Pressable
-        onPress={() => loadData(true)}
-        style={[styles.retryButton, {backgroundColor: themeColors.primary}]}>
-        <Text style={styles.retryText}>Retry</Text>
-      </Pressable>
+        <View
+          style={[
+            styles.noConnectionIconWrap,
+            {backgroundColor: `${themeColors.primary}1A`},
+          ]}>
+          <Icon
+            name="signal-wifi-off"
+            size={40}
+            color={themeColors.primary}
+          />
+        </View>
+        <Text style={[styles.noConnectionTitle, {color: themeColors.text}]}>
+          Internet Required
+        </Text>
+        <Text
+          style={[
+            styles.noConnectionSubtitle,
+            {color: themeColors.textSecondary},
+          ]}>
+          Connect once to load content. After that, offline works.
+        </Text>
+        <Pressable
+          onPress={() => loadData(true)}
+          disabled={refreshing}
+          style={({pressed}) => [
+            styles.retryButton,
+            {backgroundColor: themeColors.primary},
+            pressed && !refreshing && styles.retryButtonPressed,
+            refreshing && styles.retryButtonDisabled,
+          ]}>
+          <Text style={styles.retryText}>
+            {refreshing ? 'Retrying...' : 'Retry'}
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 
@@ -257,8 +284,16 @@ const HomeList = () => {
         <Text style={{color: themeColors.error}}>{error}</Text>
         <Pressable
           onPress={() => loadData(true)}
-          style={[styles.retryButton, {backgroundColor: themeColors.primary}]}>
-          <Text style={styles.retryText}>Retry</Text>
+          disabled={refreshing}
+          style={({pressed}) => [
+            styles.retryButton,
+            {backgroundColor: themeColors.primary},
+            pressed && !refreshing && styles.retryButtonPressed,
+            refreshing && styles.retryButtonDisabled,
+          ]}>
+          <Text style={styles.retryText}>
+            {refreshing ? 'Retrying...' : 'Retry'}
+          </Text>
         </Pressable>
       </View>
     );
@@ -358,32 +393,73 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     marginTop: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
-  retryText: {color: '#fff', fontWeight: 'bold'},
+  retryButtonPressed: {
+    opacity: 0.7,
+    transform: [{scale: 0.95}],
+  },
+  retryButtonDisabled: {
+    opacity: 0.6,
+  },
+  retryText: {color: '#fff', fontWeight: 'bold', fontSize: 16},
   noConnectionContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 24,
   },
-  noConnectionImage: {
-    width: 150,
-    height: 150,
+  noConnectionCard: {
+    width: '100%',
+    maxWidth: 360,
+    paddingVertical: 28,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 4},
+        shadowOpacity: 0.12,
+        shadowRadius: 14,
+      },
+      android: {
+        elevation: 7,
+      },
+    }),
+  },
+  noConnectionIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 20,
   },
   noConnectionTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginBottom: 10,
     textAlign: 'center',
   },
   noConnectionSubtitle: {
-    fontSize: 16,
+    fontSize: 15,
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 24,
+    lineHeight: 22,
   },
   fab: {
     position: 'absolute',

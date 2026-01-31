@@ -182,6 +182,22 @@ const getFromAsyncStorage = async (
       return results.flat().filter(Boolean);
     }
 
+    if (collectionName === 'collections') {
+      // Special case for collections list
+      const storedCollections = await AsyncStorage.getItem(`${DATA_KEY_PREFIX}collections`);
+      if (storedCollections) {
+        return JSON.parse(storedCollections);
+      } else {
+        // Derive from all groups
+        return all.map((name, index) => ({
+          id: name,
+          name,
+          displayName: name.charAt(0).toUpperCase() + name.slice(1).replace('-', ' '),
+          numbering: index + 1,
+        }));
+      }
+    }
+
     if (collectionGroups.includes(collectionName)) {
       const data = await AsyncStorage.getItem(
         `${DATA_KEY_PREFIX}${collectionName}`,
