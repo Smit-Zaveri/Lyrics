@@ -17,14 +17,56 @@ jest.mock('firebase/auth', () => ({
   onAuthStateChanged: jest.fn(),
 }));
 
+// Mock entire react-native to override Dimensions and Platform
+jest.mock('react-native', () => {
+  const RN = jest.requireActual('react-native');
+  RN.Dimensions = {
+    get: jest.fn(() => ({ width: 375, height: 667 })),
+    set: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+  };
+  // Override Platform without spreading to avoid calling getters
+  RN.Platform = {
+    OS: 'ios',
+    select: jest.fn((obj) => obj.ios || obj.default),
+    isPad: false,
+    isTV: false,
+    constants: {
+      forceTouchAvailable: false,
+      interfaceIdiom: 'phone',
+      osVersion: '13.0',
+      systemName: 'iOS',
+      isTesting: true,
+    },
+  };
+  return RN;
+});
+
 // Mock react-native utilities
 jest.mock('react-native/Libraries/Utilities/Dimensions', () => ({
   get: jest.fn(() => ({ width: 375, height: 667 })),
+  set: jest.fn(),
+  addEventListener: jest.fn(),
+  removeEventListener: jest.fn(),
 }));
 
 jest.mock('react-native/Libraries/Utilities/PixelRatio', () => ({
   get: jest.fn(() => 2),
   getPixelSizeForLayoutSize: jest.fn((size) => size * 2),
+}));
+
+// Mock Platform constants for iOS
+jest.mock('react-native/Libraries/Utilities/NativePlatformConstantsIOS', () => ({
+  default: {
+    getConstants: jest.fn(() => ({
+      forceTouchAvailable: false,
+      interfaceIdiom: 'phone',
+      osVersion: '13.0',
+      systemName: 'iOS',
+      isTesting: true,
+    })),
+  },
 }));
 
 // Mock StyleSheet
@@ -90,8 +132,8 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 jest.mock('react-native-sound', () => {
   return jest.fn().mockImplementation(() => ({
     play: jest.fn(),
-    stop: jest.fn(),
     pause: jest.fn(),
+    stop: jest.fn(),
     release: jest.fn(),
   }));
 });
