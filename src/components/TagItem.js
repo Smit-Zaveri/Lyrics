@@ -1,11 +1,11 @@
-import React, { useContext } from 'react';
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
-import { LanguageContext } from '../context/LanguageContext';
+import React, {useContext} from 'react';
+import {TouchableOpacity, Text, StyleSheet, View} from 'react-native';
+import {LanguageContext} from '../context/LanguageContext';
 
 // Simplified TagItem without complex animations
-const TagItem = ({ item, selectedTags, onTagPress, themeColors, isSticky }) => {
+const TagItem = ({item, selectedTags, onTagPress, themeColors, isSticky}) => {
   const isSelected = selectedTags.includes(item.name);
-  const { getString } = useContext(LanguageContext);
+  const {getString} = useContext(LanguageContext);
 
   // Get localized display name if it's an array (multi-language support)
   const getLocalizedDisplayName = () => {
@@ -15,18 +15,28 @@ const TagItem = ({ item, selectedTags, onTagPress, themeColors, isSticky }) => {
     return item.displayName || item.name;
   };
 
+  const displayName = getLocalizedDisplayName();
+
   return (
     <View style={[styles.outerContainer, isSticky && styles.stickyContainer]}>
       <TouchableOpacity
         style={[
           styles.container,
           {
-            backgroundColor: isSelected ? themeColors.primary : themeColors.surface,
-            borderColor: isSelected ? themeColors.primary : themeColors.border || 'rgba(0,0,0,0.12)',
+            backgroundColor: isSelected
+              ? themeColors.primary
+              : themeColors.surface,
+            borderColor: isSelected
+              ? themeColors.primary
+              : themeColors.border || 'rgba(0,0,0,0.12)',
           },
         ]}
         activeOpacity={0.7}
-        onPress={() => onTagPress(item.name)}>
+        onPress={() => onTagPress(item.name)}
+        accessibilityLabel={`${displayName} filter`}
+        accessibilityHint={`${isSelected ? 'Remove' : 'Apply'} ${displayName} filter`}
+        accessibilityRole="button"
+        accessibilityState={{selected: isSelected}}>
         <Text
           style={[
             styles.chipText,
@@ -35,7 +45,7 @@ const TagItem = ({ item, selectedTags, onTagPress, themeColors, isSticky }) => {
             },
           ]}
           numberOfLines={1}>
-          {getLocalizedDisplayName()}
+          {displayName}
         </Text>
       </TouchableOpacity>
     </View>
@@ -51,15 +61,17 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   container: {
-    height: 36,
+    minHeight: 36,
+    minWidth: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 18,
+    borderRadius: 22,
     paddingHorizontal: 16,
+    paddingVertical: 10,
     borderWidth: 1,
     elevation: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.08,
     shadowRadius: 2,
   },

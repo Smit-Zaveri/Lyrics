@@ -1,14 +1,14 @@
-import React, { useContext, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import React, {useContext, useEffect, useRef} from 'react';
+import {View, Text, StyleSheet, Animated} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { ThemeContext } from '../../App';
+import {ThemeContext} from '../../App';
 
 const EmptyList = () => {
-  const { themeColors } = useContext(ThemeContext);
-  
+  const {themeColors} = useContext(ThemeContext);
+
   // Pulse animation for icon
   const pulseScale = useRef(new Animated.Value(1)).current;
-  
+
   // Entrance animations
   const iconOpacity = useRef(new Animated.Value(0)).current;
   const iconScale = useRef(new Animated.Value(0.8)).current;
@@ -80,7 +80,7 @@ const EmptyList = () => {
         }),
       ]),
     );
-    
+
     // Start pulse after entrance completes
     const pulseTimer = setTimeout(() => pulse.start(), 400);
 
@@ -88,43 +88,57 @@ const EmptyList = () => {
       pulse.stop();
       clearTimeout(pulseTimer);
     };
-  }, [iconOpacity, iconScale, textOpacity, textTranslateY, subtextOpacity, subtextTranslateY, pulseScale]);
+  }, [
+    iconOpacity,
+    iconScale,
+    textOpacity,
+    textTranslateY,
+    subtextOpacity,
+    subtextTranslateY,
+    pulseScale,
+  ]);
 
   return (
-    <View style={styles.emptyListContainer}>
-      <Animated.View 
+    <View
+      style={styles.emptyListContainer}
+      accessibilityLabel="No results found"
+      accessibilityHint="The search returned no results. Try adjusting your filters or search criteria"
+      accessibilityRole="alert">
+      <Animated.View
         style={[
-          styles.iconContainer, 
-          { 
+          styles.iconContainer,
+          {
             backgroundColor: `${themeColors.primary}15`,
             opacity: iconOpacity,
-            transform: [
-              {scale: Animated.multiply(iconScale, pulseScale)},
-            ],
+            transform: [{scale: Animated.multiply(iconScale, pulseScale)}],
           },
-        ]}>
+        ]}
+        accessibilityLabel="Empty list icon"
+        accessibilityRole="image">
         <Icon name="playlist-remove" size={50} color={themeColors.primary} />
       </Animated.View>
-      <Animated.Text 
+      <Animated.Text
         style={[
-          styles.emptyListText, 
-          { 
+          styles.emptyListText,
+          {
             color: themeColors.text,
             opacity: textOpacity,
             transform: [{translateY: textTranslateY}],
           },
-        ]}>
+        ]}
+        accessibilityLabel="No results found">
         No results found
       </Animated.Text>
-      <Animated.Text 
+      <Animated.Text
         style={[
-          styles.emptyListSubText, 
-          { 
+          styles.emptyListSubText,
+          {
             color: themeColors.placeholder,
             opacity: subtextOpacity,
             transform: [{translateY: subtextTranslateY}],
           },
-        ]}>
+        ]}
+        accessibilityLabel="Try adjusting your filters or search criteria">
         Try adjusting your filters or search criteria
       </Animated.Text>
     </View>

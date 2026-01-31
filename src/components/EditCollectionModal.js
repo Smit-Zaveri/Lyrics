@@ -13,9 +13,9 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { BlurView } from '@react-native-community/blur';
+import {BlurView} from '@react-native-community/blur';
 
-const { width, height } = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 
 const EditCollectionModal = ({
   visible,
@@ -33,16 +33,11 @@ const EditCollectionModal = ({
       transparent
       visible={visible}
       animationType="none"
-      onRequestClose={onClose}
-    >
+      onRequestClose={onClose}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={onClose}
-        >
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{flex: 1}}>
+        <Pressable style={styles.modalOverlay} onPress={onClose}>
           {Platform.OS === 'ios' && (
             <BlurView
               style={StyleSheet.absoluteFill}
@@ -54,58 +49,103 @@ const EditCollectionModal = ({
           <Animated.View
             style={[
               styles.modalContainer,
-              { 
-                backgroundColor: themeColors.surface, 
-                transform: [{ 
-                  translateY: editSlideAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [300, 0],
-                  }) 
-                }],
-              }
-            ]}
-          >
+              {
+                backgroundColor: themeColors.surface,
+                transform: [
+                  {
+                    translateY: editSlideAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [300, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}>
             <View style={styles.iconContainer}>
-              <MaterialCommunityIcons 
-                name="playlist-edit" 
-                size={36} 
-                color={themeColors.primary} 
+              <MaterialCommunityIcons
+                name="playlist-edit"
+                size={36}
+                color={themeColors.primary}
               />
             </View>
-            <Text style={[styles.modalTitle, { color: themeColors.text }]}>Edit Collection</Text>
+            <Text
+              style={[styles.modalTitle, {color: themeColors.text}]}
+              accessibilityLabel="Edit Collection"
+              accessibilityRole="header">
+              Edit Collection
+            </Text>
             <TextInput
-              style={[styles.textInput, { 
-                borderColor: errorMessage ? "#FF5252" : themeColors.border, 
-                color: themeColors.text,
-                backgroundColor: themeColors.background
-              }]}
+              style={[
+                styles.textInput,
+                {
+                  borderColor: errorMessage ? '#FF5252' : themeColors.border,
+                  color: themeColors.text,
+                  backgroundColor: themeColors.background,
+                },
+              ]}
               value={value}
               onChangeText={onChangeText}
               placeholder="Enter new name"
               placeholderTextColor={themeColors.placeholder}
               autoFocus={true}
               selectionColor={themeColors.primary}
+              accessibilityLabel="Collection name input"
+              accessibilityHint="Enter a new name for this collection"
+              accessibilityRole="text"
             />
             {errorMessage ? (
-              <View style={styles.errorContainer}>
-                <MaterialCommunityIcons name="alert-circle" size={18} color="#FF5252" style={styles.errorIcon} />
-                <Text style={styles.errorText}>{errorMessage}</Text>
+              <View
+                style={styles.errorContainer}
+                accessibilityLabel="Error"
+                accessibilityRole="alert">
+                <MaterialCommunityIcons
+                  name="alert-circle"
+                  size={18}
+                  color="#FF5252"
+                  style={styles.errorIcon}
+                />
+                <Text
+                  style={styles.errorText}
+                  accessibilityLabel={errorMessage}>
+                  {errorMessage}
+                </Text>
               </View>
             ) : null}
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { borderColor: themeColors.border }]}
+                style={[
+                  styles.modalButton,
+                  styles.cancelButton,
+                  {borderColor: themeColors.border},
+                ]}
                 onPress={onClose}
-              >
-                <Text style={[styles.buttonText, { color: themeColors.text }]}>Cancel</Text>
+                accessibilityLabel="Cancel"
+                accessibilityHint="Close this dialog without saving changes"
+                accessibilityRole="button">
+                <Text style={[styles.buttonText, {color: themeColors.text}]}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton, { backgroundColor: themeColors.primary }]}
+                style={[
+                  styles.modalButton,
+                  styles.saveButton,
+                  {backgroundColor: themeColors.primary},
+                ]}
                 onPress={onConfirm}
                 testID="confirm-edit"
-              >
-                <MaterialCommunityIcons name="content-save" size={18} color="#FFFFFF" style={styles.buttonIcon} />
-                <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>Save</Text>
+                accessibilityLabel="Save changes"
+                accessibilityHint="Save the new name for this collection"
+                accessibilityRole="button">
+                <MaterialCommunityIcons
+                  name="content-save"
+                  size={18}
+                  color="#FFFFFF"
+                  style={styles.buttonIcon}
+                />
+                <Text style={[styles.buttonText, {color: '#FFFFFF'}]}>
+                  Save
+                </Text>
               </TouchableOpacity>
             </View>
           </Animated.View>
@@ -118,7 +158,8 @@ const EditCollectionModal = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(0, 0, 0, 0.6)',
+    backgroundColor:
+      Platform.OS === 'ios' ? 'transparent' : 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -133,7 +174,7 @@ const styles = StyleSheet.create({
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
+        shadowOffset: {width: 0, height: 6},
         shadowOpacity: 0.3,
         shadowRadius: 8,
       },
@@ -153,7 +194,7 @@ const styles = StyleSheet.create({
     ...Platform.select({
       ios: {
         shadowColor: '#673AB7',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: {width: 0, height: 2},
         shadowOpacity: 0.2,
         shadowRadius: 4,
       },
@@ -175,7 +216,7 @@ const styles = StyleSheet.create({
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
+        shadowOffset: {width: 0, height: 1},
         shadowOpacity: 0.1,
         shadowRadius: 2,
       },

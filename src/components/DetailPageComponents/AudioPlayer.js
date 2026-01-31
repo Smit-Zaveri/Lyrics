@@ -40,6 +40,9 @@ const AudioPlayer = ({
           testID="play-button"
           style={[styles.playButton, { backgroundColor: themeColors.primary }]}
           onPress={onTogglePlayback}
+          accessibilityLabel={isPlaying ? 'Pause audio' : 'Play audio'}
+          accessibilityHint="Control playback of the song audio"
+          accessibilityRole="button"
         >
           <MaterialCommunityIcons
             name={isPlaying ? 'pause' : 'play'}
@@ -67,6 +70,8 @@ const AudioPlayer = ({
             onSlidingComplete={onSeekComplete}
             minimumTrackTintColor={themeColors.primary}
             maximumTrackTintColor={themeColors.border}
+            accessibilityLabel="Audio progress slider"
+            accessibilityHint="Seek to a different position in the audio"
           />
           <Text style={[styles.timeText, { color: themeColors.text }]}>
             {formatTime(duration)}

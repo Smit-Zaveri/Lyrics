@@ -668,12 +668,17 @@ const Search = ({route}) => {
             ]}
             inputStyle={{fontSize: 16, color: themeColors.text, paddingLeft: 8}}
             placeholderTextColor={`${themeColors.text}80`}
+            accessibilityLabel="Search lyrics"
+            accessibilityHint="Enter text to search for songs, artists, or tags"
           />
         </Animated.View>
 
         {/* Did you mean suggestion */}
         {didYouMean && searchQuery.trim() && filteredLyrics.length === 0 && (
-          <TouchableOpacity onPress={handleDidYouMeanClick}>
+          <TouchableOpacity onPress={handleDidYouMeanClick}
+            accessibilityLabel="Did you mean suggestion"
+            accessibilityHint="Tap to use this suggested search term"
+            accessibilityRole="button">
             <View style={styles.didYouMeanContainer}>
               <Text style={[styles.didYouMeanText, {color: themeColors.text}]}>
                 Did you mean:{' '}
@@ -703,6 +708,9 @@ const Search = ({route}) => {
                     styles.suggestionItem,
                     {color: themeColors.primary},
                   ]}
+                  accessibilityLabel={`Search suggestion: ${item}`}
+                  accessibilityHint="Tap to use this term in your search"
+                  accessibilityRole="button"
                 />
               )}
               keyExtractor={(item, index) => index.toString()}

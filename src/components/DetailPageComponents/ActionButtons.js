@@ -50,7 +50,10 @@ const ActionButtons = ({
         ]}>
         <TouchableOpacity
           style={[styles.fab, {backgroundColor: themeColors.primary}]}
-          onPress={onBookmarkPress}>
+          onPress={onBookmarkPress}
+          accessibilityLabel={isBookmarked ? 'Remove bookmark' : 'Bookmark song'}
+          accessibilityHint={isBookmarked ? 'Remove this song from your collections' : 'Add this song to your collections'}
+          accessibilityRole="button">
           <MaterialCommunityIcons
             name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
             color="#fff"
@@ -69,7 +72,10 @@ const ActionButtons = ({
           ]}>
           <TouchableOpacity
             style={[styles.fab, {backgroundColor: themeColors.primary}]}
-            onPress={onYoutubePress}>
+            onPress={onYoutubePress}
+            accessibilityLabel="Open on YouTube"
+            accessibilityHint="Watch the music video for this song"
+            accessibilityRole="button">
             <MaterialCommunityIcons name="youtube" color="#fff" size={25} />
           </TouchableOpacity>
         </Animated.View>
@@ -86,7 +92,10 @@ const ActionButtons = ({
             ]}>
             <TouchableOpacity
               style={[styles.fab, {backgroundColor: '#4CAF50'}]}
-              onPress={onEditPress}>
+              onPress={onEditPress}
+              accessibilityLabel="Edit song"
+              accessibilityHint="Modify the details of this song"
+              accessibilityRole="button">
               <Icon name="edit" size={24} color="#FFFFFF" />
             </TouchableOpacity>
           </Animated.View>
@@ -99,7 +108,10 @@ const ActionButtons = ({
             ]}>
             <TouchableOpacity
               style={[styles.fab, {backgroundColor: '#FF5252'}]}
-              onPress={onDeletePress}>
+              onPress={onDeletePress}
+              accessibilityLabel="Delete song"
+              accessibilityHint="Permanently remove this song"
+              accessibilityRole="button">
               <Icon name="delete" size={24} color="#FFFFFF" />
             </TouchableOpacity>
           </Animated.View>

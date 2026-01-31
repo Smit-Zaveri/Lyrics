@@ -186,7 +186,11 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item}) => {
   return (
     <View>
       {isIcon ? (
-        <TouchableOpacity onPress={showMenu} testID="menu-button">
+        <TouchableOpacity onPress={showMenu} testID="menu-button"
+          accessibilityLabel="More options"
+          accessibilityHint="Open menu for additional actions"
+          accessibilityRole="button"
+          style={{padding: 8, minWidth: 44, minHeight: 44, justifyContent: 'center', alignItems: 'center'}}>
           <MaterialCommunityIcons name="dots-vertical" size={24} color="#fff" />
         </TouchableOpacity>
       ) : (
@@ -197,7 +201,10 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item}) => {
       <Menu visible={visible} onRequestClose={hideMenu}>
         <MenuItem
           onPress={openReportPopup}
-          textStyle={{color: '#333333', fontWeight: 'bold'}}>
+          textStyle={{color: '#333333', fontWeight: 'bold'}}
+          accessibilityLabel="Report lyrics"
+          accessibilityHint="Report this song for issues or inappropriate content"
+          accessibilityRole="menuitem">
           Report
         </MenuItem>
       </Menu>
@@ -286,8 +293,12 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item}) => {
                 paddingVertical: 10,
                 paddingHorizontal: 20,
                 flexDirection: 'row',
+                minHeight: 44,
               })}
-              onPress={submitReport}>
+              onPress={submitReport}
+              accessibilityLabel="Submit report"
+              accessibilityHint="Send the report to the developers"
+              accessibilityRole="button">
               {isSubmitting ? (
                 <ActivityIndicator
                   size="small"

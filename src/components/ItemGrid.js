@@ -1,4 +1,10 @@
-import React, {useEffect, useRef, useMemo, useCallback, useContext} from 'react';
+import React, {
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+  useContext,
+} from 'react';
 import {
   Text,
   View,
@@ -13,11 +19,18 @@ import {
 } from 'react-native';
 import {Card} from 'react-native-elements';
 import PropTypes from 'prop-types';
-import { ThemeContext } from '../../App';
-import { LanguageContext } from '../context/LanguageContext';
+import {ThemeContext} from '../../App';
+import {LanguageContext} from '../context/LanguageContext';
 
 // Animated Grid Item Component with entrance and press animations
-const AnimatedGridItem = ({item, index, itemWidth, themeColors, onPress, displayText}) => {
+const AnimatedGridItem = ({
+  item,
+  index,
+  itemWidth,
+  themeColors,
+  onPress,
+  displayText,
+}) => {
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.85)).current;
   const pressScale = useRef(new Animated.Value(1)).current;
@@ -64,24 +77,29 @@ const AnimatedGridItem = ({item, index, itemWidth, themeColors, onPress, display
 
   return (
     <View style={styles.itemWrapper}>
-      <Animated.View 
+      <Animated.View
         style={[
-          styles.itemContainer, 
+          styles.itemContainer,
           {
             opacity,
             transform: [{scale: Animated.multiply(scale, pressScale)}],
           },
         ]}>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={onPress}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
-          activeOpacity={1}>
+          activeOpacity={1}
+          accessibilityLabel={`${displayText}`}
+          accessibilityHint="Tap to view collection details"
+          accessibilityRole="button">
           {item.picture ? (
             <Image
               source={{uri: item.picture}}
               style={[styles.imageStyle, {width: itemWidth, height: itemWidth}]}
               resizeMode="cover"
+              accessibilityLabel={`Image for ${displayText}`}
+              accessibilityRole="image"
             />
           ) : (
             <View
@@ -92,17 +110,19 @@ const AnimatedGridItem = ({item, index, itemWidth, themeColors, onPress, display
                   width: itemWidth,
                   height: itemWidth,
                 },
-              ]}>
+              ]}
+              accessibilityLabel={`Placeholder for ${displayText}`}
+              accessibilityRole="image">
               <Text style={[styles.placeholderText, {color: themeColors.text}]}>
                 {displayText.charAt(0)}
               </Text>
             </View>
           )}
-          <Text 
+          <Text
             style={[styles.itemText, {color: themeColors.text}]}
             numberOfLines={2}
             ellipsizeMode="tail"
-          >
+            accessibilityLabel={displayText}>
             {displayText}
           </Text>
         </TouchableOpacity>
@@ -132,10 +152,10 @@ const ItemGrid = ({
   data = [], // Default parameter instead of defaultProps
   redirect,
   layout,
-  language // Add language prop
+  language, // Add language prop
 }) => {
-  const { themeColors } = useContext(ThemeContext);
-  const { getString } = useContext(LanguageContext); // Remove language from context
+  const {themeColors} = useContext(ThemeContext);
+  const {getString} = useContext(LanguageContext); // Remove language from context
   const isSingleLayout = layout === 'single';
   const windowDimensions = useWindowDimensions();
 
@@ -164,16 +184,19 @@ const ItemGrid = ({
   }, [data]);
 
   // Updated getLocalizedDisplayName to be more responsive
-  const getLocalizedDisplayName = useCallback((item) => {
-    if (!item) return '';
-    
-    if (Array.isArray(item.displayName)) {
-      const localizedName = getString(item.displayName);
-      return localizedName || item.name || '';
-    }
-    
-    return item.displayName || item.name || '';
-  }, [getString]); // Remove language dependency since getString handles it
+  const getLocalizedDisplayName = useCallback(
+    item => {
+      if (!item) return '';
+
+      if (Array.isArray(item.displayName)) {
+        const localizedName = getString(item.displayName);
+        return localizedName || item.name || '';
+      }
+
+      return item.displayName || item.name || '';
+    },
+    [getString],
+  ); // Remove language dependency since getString handles it
 
   // Update handlePress to use the latest localized name
   const handlePress = useCallback(
@@ -191,7 +214,7 @@ const ItemGrid = ({
     navigation.navigate('FullGrid', {
       title: title,
       data: data,
-      redirect: redirect // Add the redirect parameter
+      redirect: redirect, // Add the redirect parameter
     });
   }, [navigation, title, data, redirect]); // Add redirect to dependencies
 
@@ -200,7 +223,7 @@ const ItemGrid = ({
     ({item, index}) => {
       // Move displayText calculation inside render to ensure fresh value
       const displayText = getLocalizedDisplayName(item);
-      
+
       return (
         <AnimatedGridItem
           item={item}
@@ -224,10 +247,15 @@ const ItemGrid = ({
     <View style={styles.container}>
       {isSingleLayout && (
         <View style={styles.cardHeadingStyle}>
-          <Text style={[styles.cardHeadingTextStyle, {color: themeColors.text}]}>
+          <Text
+            style={[styles.cardHeadingTextStyle, {color: themeColors.text}]}>
             {Array.isArray(title) ? getString(title) : title}
           </Text>
-          <TouchableOpacity onPress={handleMorePress}>
+          <TouchableOpacity
+            onPress={handleMorePress}
+            accessibilityLabel="View more items"
+            accessibilityHint="Tap to see all items in this collection"
+            accessibilityRole="button">
             <Text style={[styles.moreLink, {color: themeColors.link}]}>
               MORE
             </Text>
@@ -237,7 +265,9 @@ const ItemGrid = ({
       {sortedData.length > 0 ? (
         <FlatList
           style={styles.flatListStyle}
-          contentContainerStyle={isSingleLayout ? styles.horizontalContent : styles.gridContent}
+          contentContainerStyle={
+            isSingleLayout ? styles.horizontalContent : styles.gridContent
+          }
           showsHorizontalScrollIndicator={false}
           horizontal={isSingleLayout}
           numColumns={isSingleLayout ? 1 : numColumns}
@@ -302,7 +332,7 @@ const styles = StyleSheet.create({
   imageStyle: {
     borderRadius: 100,
     marginBottom: 6,
-    backgroundColor:'#E0E0E0'
+    backgroundColor: '#E0E0E0',
   },
   placeholderImage: {
     justifyContent: 'center',
@@ -347,14 +377,14 @@ ItemGrid.propTypes = {
   navigation: PropTypes.object.isRequired,
   title: PropTypes.oneOfType([
     PropTypes.string,
-    PropTypes.arrayOf(PropTypes.string)
+    PropTypes.arrayOf(PropTypes.string),
   ]).isRequired,
   data: PropTypes.arrayOf(
     PropTypes.shape({
       name: PropTypes.string.isRequired,
       displayName: PropTypes.oneOfType([
         PropTypes.string,
-        PropTypes.arrayOf(PropTypes.string)
+        PropTypes.arrayOf(PropTypes.string),
       ]),
       picture: PropTypes.string,
       numbering: PropTypes.number,

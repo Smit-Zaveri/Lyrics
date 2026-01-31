@@ -77,7 +77,10 @@ const ListItem = React.memo(
             backgroundColor: pressed ? themeColors.cardBackground + '40' : 'transparent',
             borderBottomColor: themeColors.border || 'rgba(0,0,0,0.06)',
           },
-        ]}>
+        ]}
+        accessibilityLabel={`Song ${getDisplayNumber()}: ${displayTitle}`}
+        accessibilityHint="Tap to view song details and lyrics"
+        accessibilityRole="button">
         <View style={styles.leftContainer}>
           <View
             style={[
