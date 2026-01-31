@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, fireEvent, StyleSheet } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import TagItem from '../../src/components/TagItem';
 
 const mockItem = {

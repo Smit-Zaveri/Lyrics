@@ -1,5 +1,69 @@
+// Mock Firebase
+jest.mock('firebase/app', () => ({
+  initializeApp: jest.fn(),
+  getApps: jest.fn(() => []),
+  getApp: jest.fn(),
+}));
+
+jest.mock('firebase/firestore', () => ({
+  getFirestore: jest.fn(() => ({})),
+}));
+
+jest.mock('firebase/auth', () => ({
+  getAuth: jest.fn(() => ({})),
+  signInWithEmailAndPassword: jest.fn(),
+  createUserWithEmailAndPassword: jest.fn(),
+  signOut: jest.fn(),
+  onAuthStateChanged: jest.fn(),
+}));
+
+// Mock react-native utilities
+jest.mock('react-native/Libraries/Utilities/Dimensions', () => ({
+  get: jest.fn(() => ({ width: 375, height: 667 })),
+}));
+
+jest.mock('react-native/Libraries/Utilities/PixelRatio', () => ({
+  get: jest.fn(() => 2),
+  getPixelSizeForLayoutSize: jest.fn((size) => size * 2),
+}));
+
+// Mock StyleSheet
+jest.mock('react-native/Libraries/StyleSheet/StyleSheet', () => ({
+  create: jest.fn((styles) => styles),
+  flatten: jest.fn((style) => {
+    if (Array.isArray(style)) {
+      return Object.assign({}, ...style.filter(s => s));
+    }
+    return style || {};
+  }),
+  hairlineWidth: 1,
+  absoluteFill: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 },
+  absoluteFillObject: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 },
+}));
+
+// Mock TurboModuleRegistry for New Architecture issues
+jest.mock('react-native/Libraries/TurboModule/TurboModuleRegistry', () => ({
+  getEnforcing: jest.fn(() => ({})),
+  get: jest.fn(() => ({})),
+}));
+
+// Mock incompatible libraries
+jest.mock('@react-native-documents/picker', () => ({
+  pick: jest.fn(() => Promise.resolve([])),
+  PickOptions: {},
+}));
+
+jest.mock('react-native-fs', () => ({}));
+
+jest.mock('@react-navigation/material-bottom-tabs', () => ({
+  createMaterialBottomTabNavigator: jest.fn(() => ({
+    Navigator: () => null,
+    Screen: () => null,
+  })),
+}));
+
 // Mock modules
-jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper');
+// jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper');
 jest.mock("react-native-vector-icons/MaterialCommunityIcons", () => "MaterialCommunityIcons");
 jest.mock("react-native-vector-icons/MaterialIcons", () => "MaterialIcons");
 
