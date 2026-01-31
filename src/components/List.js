@@ -71,11 +71,13 @@ const List = ({route}) => {
   const [lastFilteredList, setLastFilteredList] = useState([]);
   const [listKey, setListKey] = useState('lyrics-list-0');
 
+  const [hasLyrics, setHasLyrics] = useState(true);
+
   useEffect(() => {
     const localizedTitle = Array.isArray(title) ? getString(title) : title;
     navigation.setOptions({
       title: localizedTitle || 'List',
-      headerRight: () => (
+      headerRight: hasLyrics ? () => (
         <Icon
           name="search"
           color="#fff"
@@ -87,10 +89,10 @@ const List = ({route}) => {
           }
           size={26}
         />
-      ),
+      ) : null,
       headerShown: header,
     });
-  }, [navigation, header, title, collectionName, language]);
+  }, [navigation, header, title, collectionName, language, hasLyrics]);
 
   const filterAndSortLyrics = useCallback(
     (tags, lyrics) => {
@@ -170,6 +172,7 @@ const List = ({route}) => {
 
       if (customLyrics) {
         setLyrics(Array.isArray(customLyrics) ? customLyrics : []);
+        setHasLyrics((Array.isArray(customLyrics) ? customLyrics : []).length > 0);
         setTags([]);
       } else {
         const fetchedDataTags = await getFromAsyncStorage(Tags);
@@ -235,6 +238,7 @@ const List = ({route}) => {
         if (!isSingerMode && collectionName === 'added-songs') {
           setLyrics([]);
           setTags(sortedTags);
+          setHasLyrics(false);
           setIsLoading(false);
           setRefreshing(false);
           return;
@@ -261,6 +265,7 @@ const List = ({route}) => {
 
         setLyrics(lyricsWithNumbering);
         setTags(sortedTags);
+        setHasLyrics(lyricsWithNumbering.length > 0);
       }
     } catch (error) {
       console.error('Error loading data:', error);

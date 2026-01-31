@@ -21,7 +21,7 @@ import {
   Easing,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {Searchbar, List, Portal, Provider, Chip} from 'react-native-paper';
+import {Searchbar, List, Portal, Provider, Chip, Snackbar} from 'react-native-paper';
 import {getFromAsyncStorage} from '../config/dataService';
 import {colors} from '../theme/theme';
 import EmptyList from './EmptyList';
@@ -188,6 +188,10 @@ const Search = ({route}) => {
   const [fuzzyResults, setFuzzyResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+
+  // Snackbar state
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   // Focus animation for search bar
   const focusAnim = useRef(new Animated.Value(0)).current;
@@ -390,13 +394,23 @@ const Search = ({route}) => {
         };
 
         setFuseInstance(new Fuse(processedData, fuseOptions));
+
+        // Check if collection is empty
+        if (fetchedData.length === 0) {
+          setSnackbarMessage('no songs for search');
+          setSnackbarVisible(true);
+          // Navigate back after a short delay to show the snackbar
+          setTimeout(() => {
+            navigation.goBack();
+          }, 1500);
+        }
       }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
     }
-  }, [collectionName, generateSuggestions, processDataForFuzzy]);
+  }, [collectionName, generateSuggestions, processDataForFuzzy, navigation]);
 
   useEffect(() => {
     loadData();
@@ -734,6 +748,19 @@ const Search = ({route}) => {
           ]}
         />
       </SafeAreaView>
+      <Snackbar
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        duration={Snackbar.DURATION_SHORT}
+        action={{
+          label: 'Go back',
+          onPress: () => {
+            setSnackbarVisible(false);
+            navigation.goBack();
+          },
+        }}>
+        {snackbarMessage}
+      </Snackbar>
     </Provider>
   );
 };
