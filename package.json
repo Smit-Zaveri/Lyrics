@@ -1,6 +1,6 @@
 {
   "name": "@lyrics/lyrics",
-  "version": "2.8.0",
+  "version": "3.0.0",
   "private": true,
   "scripts": {
     "android:release": "cd android && gradlew.bat installRelease",
