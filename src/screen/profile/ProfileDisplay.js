@@ -117,43 +117,54 @@ const ProfileDisplay = ({navigation}) => {
 
   return (
     <View style={[styles.container, {backgroundColor: themeColors.background}]}>
-      {/* Menu Items */}
-      <MenuItem
-        icon="settings"
-        label="Settings"
-        onPress={() => navigation.navigate('Settings')}
-        themeColors={themeColors}
-      />
-      <MenuItem
-        icon="collections-bookmark"
-        label="My Collections"
-        onPress={() => navigation.navigate('Collections')}
-        themeColors={themeColors}
-      />
-      <MenuItem
-        icon="info"
-        label="Suggestion"
-        onPress={() => navigation.navigate('Suggestion')}
-        themeColors={themeColors}
-      />
-      <MenuItem
-        icon={isRefreshing ? 'sync' : 'refresh'}
-        label={isRefreshing ? 'Refreshing Data...' : 'Refresh Data'}
-        onPress={handleRefresh}
-        disabled={isRefreshing}
-        themeColors={themeColors}
-      />
-      <MenuItem
-        icon="share"
-        label="Share App"
-        onPress={handleShare}
-        themeColors={themeColors}
-      />
+      {/* Menu Items Container */}
+      <View style={styles.menuSection}>
+        <View style={[styles.menuCard, {backgroundColor: themeColors.surface}]}>
+          <MenuItem
+            icon="settings"
+            label="Settings"
+            subtitle="Preferences and configuration"
+            onPress={() => navigation.navigate('Settings')}
+            themeColors={themeColors}
+            isFirst
+          />
+          <MenuItem
+            icon="collections-bookmark"
+            label="My Collections"
+            subtitle="Manage your saved items"
+            onPress={() => navigation.navigate('Collections')}
+            themeColors={themeColors}
+          />
+          <MenuItem
+            icon="info"
+            label="Suggestion"
+            subtitle="Share your feedback"
+            onPress={() => navigation.navigate('Suggestion')}
+            themeColors={themeColors}
+          />
+          <MenuItem
+            icon={isRefreshing ? 'sync' : 'refresh'}
+            label={isRefreshing ? 'Refreshing Data...' : 'Refresh Data'}
+            subtitle="Update latest content"
+            onPress={handleRefresh}
+            disabled={isRefreshing}
+            themeColors={themeColors}
+          />
+          <MenuItem
+            icon="share"
+            label="Share App"
+            subtitle="Tell your friends about us"
+            onPress={handleShare}
+            themeColors={themeColors}
+            isLast
+          />
+        </View>
+      </View>
 
       {/* Version Display */}
-      <View style={styles.versionContainer}>
-        <Text style={[styles.versionText, {color: themeColors.placeholder}]}>
-          v{appVersion}
+      <View style={[styles.versionContainer, {backgroundColor: themeColors.surface}]}>
+        <Text style={[styles.versionText, {color: themeColors.textSecondary}]}>
+          Version {appVersion}
         </Text>
       </View>
 
@@ -172,20 +183,41 @@ const ProfileDisplay = ({navigation}) => {
 };
 
 const MenuItem = memo(
-  ({icon, label, onPress, disabled = false, themeColors}) => (
-    <TouchableOpacity onPress={onPress} disabled={disabled}>
+  ({icon, label, subtitle, onPress, disabled = false, themeColors, isFirst = false, isLast = false}) => (
+    <TouchableOpacity 
+      onPress={onPress} 
+      disabled={disabled}
+      activeOpacity={0.7}
+      style={[
+        styles.menuItemTouchable,
+        isFirst && styles.firstItem,
+        isLast && styles.lastItem,
+      ]}>
       <View
         style={[
           styles.item,
-          {borderBottomColor: themeColors.border || '#444'},
+          !isLast && {borderBottomColor: themeColors.border || 'rgba(0,0,0,0.05)', borderBottomWidth: 0.5},
+          disabled && styles.itemDisabled,
         ]}>
+        <View style={[styles.iconContainer, {backgroundColor: themeColors.primary + '15'}]}>
+          <Icon
+            name={icon}
+            color={disabled ? themeColors.placeholder : themeColors.primary}
+            size={24}
+          />
+        </View>
+        <View style={styles.textContainer}>
+          <Text style={[styles.text, {color: disabled ? themeColors.placeholder : themeColors.text}]}>{label}</Text>
+          {subtitle && (
+            <Text style={[styles.subtitle, {color: themeColors.textSecondary}]}>{subtitle}</Text>
+          )}
+        </View>
         <Icon
-          style={{marginLeft: 5}}
-          name={icon}
-          color={themeColors.primary}
-          size={25}
+          name="chevron-right"
+          color={themeColors.placeholder}
+          size={24}
+          style={styles.chevronIcon}
         />
-        <Text style={[styles.text, {color: themeColors.text}]}>{label}</Text>
       </View>
     </TouchableOpacity>
   ),
@@ -243,56 +275,116 @@ const AlertModal = memo(
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // padding: 5,
+    paddingTop: 16,
+  },
+  menuSection: {
+    paddingHorizontal: 16,
+    marginBottom: 20,
+  },
+  menuCard: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
+  menuItemTouchable: {
+    overflow: 'hidden',
+  },
+  firstItem: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  lastItem: {
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
   },
   item: {
-    borderBottomWidth: 0.5,
-    padding: 10,
-    height: 70,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
+    minHeight: 72,
+  },
+  itemDisabled: {
+    opacity: 0.6,
+  },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  textContainer: {
+    flex: 1,
+    justifyContent: 'center',
   },
   text: {
-    flex: 1,
-    fontSize: 18,
-    marginLeft: 20,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  subtitle: {
+    fontSize: 13,
+    marginTop: 2,
+    lineHeight: 18,
+  },
+  chevronIcon: {
+    marginLeft: 8,
+    opacity: 0.5,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   alertContainer: {
-    width: '80%',
-    maxWidth: 300,
-    borderRadius: 20,
-    padding: 20,
-    elevation: 5,
+    width: '85%',
+    maxWidth: 320,
+    borderRadius: 24,
+    padding: 32,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
     alignItems: 'center',
   },
   alertTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginVertical: 10,
+    fontSize: 24,
+    fontWeight: '700',
+    marginTop: 16,
+    marginBottom: 8,
   },
   alertMessage: {
-    fontSize: 16,
+    fontSize: 15,
     textAlign: 'center',
     lineHeight: 22,
+    marginTop: 4,
   },
   versionContainer: {
     position: 'absolute',
-    bottom: 5,
+    bottom: 20,
     alignSelf: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 24,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
   },
   versionText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
 });
 

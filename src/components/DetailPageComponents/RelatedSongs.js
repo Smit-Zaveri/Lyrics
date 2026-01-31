@@ -49,21 +49,20 @@ const RelatedSongs = ({ relatedSongs, themeColors, onSongPress, getLocalizedTitl
             style={[
               styles.tagBubble,
               { 
-                backgroundColor: themeColors.background,
-                borderColor: themeColors.border || themeColors.primary + '40' 
+                backgroundColor: themeColors.surface,
+                borderColor: themeColors.primary + '20' 
               }
             ]}
             activeOpacity={0.7}
-            onPress={() => onSongPress(song)}
-          >
+            onPress={() => onSongPress(song)}>
             <View style={styles.tagContent}>
               <View 
                 style={[
                   styles.circleNumber, 
-                  { backgroundColor: themeColors.primary }
+                  { backgroundColor: themeColors.primary + '15' }
                 ]}
               >
-                <Text style={styles.circleNumberText}>
+                <Text style={[styles.circleNumberText, { color: themeColors.primary }]}>
                   {getDisplayNumber(song)}
                 </Text>
               </View>
@@ -86,59 +85,59 @@ const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 15,
-    marginTop: 10,
-    marginBottom: 10,
-    borderRadius: 10,
-    paddingHorizontal: 20
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginTop: 20,
+    borderRadius: 12,
   },
   heading: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
     marginBottom: 12,
-    letterSpacing: 0.1
+    letterSpacing: 0.2,
   },
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'flex-start'
+    justifyContent: 'flex-start',
   },
   tagBubble: {
-    borderRadius: 40,
-    paddingVertical: 4,
-    paddingHorizontal: 4,
-    paddingRight: 10,
-    marginRight: 5,
-    marginBottom: 5,
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    marginRight: 8,
+    marginBottom: 8,
     borderWidth: 1,
-    backgroundColor: 'transparent'
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   tagContent: {
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   circleNumber: {
-    width: 25,
-    height: 25,
-    borderRadius: 15,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8
+    marginRight: 8,
   },
   circleNumberText: {
-    color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '600',
     textAlign: 'center',
     includeFontPadding: false,
     textAlignVertical: 'center',
-    lineHeight: 16
   },
   songTitle: {
     fontSize: 14,
-    fontWeight: '500',
-    maxWidth: width * 0.3
-  }
+    fontWeight: '400',
+    maxWidth: width * 0.35,
+  },
 });
 
 export default RelatedSongs;

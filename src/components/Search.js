@@ -187,11 +187,13 @@ const Search = ({route}) => {
   const [didYouMean, setDidYouMean] = useState('');
   const [fuzzyResults, setFuzzyResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
 
   // Focus animation for search bar
   const focusAnim = useRef(new Animated.Value(0)).current;
   
   const handleFocus = useCallback(() => {
+    setIsFocused(true);
     Animated.timing(focusAnim, {
       toValue: 1,
       duration: 150,
@@ -201,6 +203,7 @@ const Search = ({route}) => {
   }, [focusAnim]);
 
   const handleBlur = useCallback(() => {
+    setIsFocused(false);
     Animated.timing(focusAnim, {
       toValue: 0,
       duration: 150,
@@ -211,7 +214,7 @@ const Search = ({route}) => {
 
   const searchBarScale = focusAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [1, 1.02],
+    outputRange: [1, 1.01],
   });
 
   useEffect(() => {
@@ -647,9 +650,10 @@ const Search = ({route}) => {
             style={[
               styles.searchbar,
               {backgroundColor: themeColors.cardBackground},
+              isFocused && {elevation: 6, shadowRadius: 16, shadowOpacity: 0.2},
             ]}
-            inputStyle={{fontSize: 16, color: themeColors.text}}
-            placeholderTextColor={themeColors.text}
+            inputStyle={{fontSize: 16, color: themeColors.text, paddingLeft: 8}}
+            placeholderTextColor={`${themeColors.text}80`}
           />
         </Animated.View>
 
@@ -738,49 +742,54 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 10,
+    paddingTop: 20,
+    paddingBottom: 10,
   },
   searchbar: {
-    marginVertical: 15,
+    marginVertical: 12,
     borderRadius: 25,
-    elevation: 3,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 0,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
   },
   suggestionsContainer: {
-    maxHeight: 250,
-    marginTop: 5,
-    borderRadius: 10,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    maxHeight: 240,
+    marginTop: 10,
+    borderRadius: 18,
+    borderWidth: 1,
+    elevation: 5,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowOffset: {width: 0, height: 3},
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
   },
   suggestionsList: {
     paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
   },
   suggestionItem: {
     fontSize: 16,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    fontWeight: '500',
   },
   itemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    marginVertical: 4,
-    borderRadius: 10,
-    elevation: 1,
+    padding: 18,
+    marginVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
   },
   leftContainer: {
     flexDirection: 'row',
@@ -792,49 +801,53 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 16,
+    borderRadius: 20,
+    opacity: 0.95,
   },
   numberingText: {
-    width: 40,
-    height: 40,
-    lineHeight: 40,
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    borderRadius: 20,
-    overflow: 'hidden',
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   detailsContainer: {
     flex: 1,
     flexDirection: 'column',
   },
   title: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 17,
+    fontWeight: '700',
     marginBottom: 4,
+    lineHeight: 24,
   },
   content: {
-    fontSize: 14,
+    fontSize: 15,
     lineHeight: 20,
+    opacity: 0.8,
   },
   highlight: {
-    backgroundColor: 'rgba(255, 235, 59, 0.4)',
-    borderRadius: 3,
+    backgroundColor: 'rgba(255, 235, 59, 0.3)',
+    borderRadius: 6,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    fontWeight: '600',
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
   loadingText: {
-    marginTop: 10,
+    marginTop: 12,
     fontSize: 16,
     color: '#fff',
+    fontWeight: '500',
   },
   listContainer: {
     flexGrow: 1,
-    paddingBottom: 20,
+    paddingTop: 12,
+    paddingBottom: 30,
   },
   emptyListContainer: {
     flex: 1,
@@ -843,44 +856,50 @@ const styles = StyleSheet.create({
     minHeight: 300,
   },
   noResultsContainer: {
-    padding: 10,
+    paddingVertical: 60,
     alignItems: 'center',
-    marginBottom: 10,
+    justifyContent: 'center',
   },
   noResultsText: {
     fontSize: 16,
     textAlign: 'center',
   },
   didYouMeanContainer: {
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 8,
+    marginHorizontal: 12,
+    marginVertical: 14,
+    padding: 18,
+    borderRadius: 16,
+    borderWidth: 1,
+    backgroundColor: 'rgba(103, 59, 183, 0.1)',
   },
   didYouMeanText: {
-    fontSize: 16,
+    fontSize: 15,
     textAlign: 'center',
+    lineHeight: 20,
   },
   searchingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 10,
-    marginBottom: 10,
+    paddingVertical: 30,
+    marginHorizontal: 16,
+    borderRadius: 12,
   },
   searchingText: {
-    fontSize: 16,
+    fontSize: 15,
     marginLeft: 10,
   },
   languageTag: {
     alignSelf: 'flex-start',
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    marginBottom: 4,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginBottom: 6,
+    opacity: 0.2,
   },
   languageTagText: {
-    fontSize: 10,
-    fontWeight: 'bold',
+    fontSize: 11,
+    fontWeight: '600',
   },
 });
 

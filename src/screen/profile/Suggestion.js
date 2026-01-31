@@ -40,7 +40,7 @@ const InputField = ({
               {
                 backgroundColor: themeColors.surface,
                 color: themeColors.text,
-                borderColor: themeColors.border,
+                borderColor: themeColors.primary + '30',
               },
             ]}
             placeholder={placeholder}
@@ -202,7 +202,19 @@ const Suggestion = () => {
       style={[styles.container, {backgroundColor: themeColors.background}]}
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}>
-      <View style={styles.form}>
+      {/* Header Section */}
+      <View style={styles.headerSection}>
+        <Text style={[styles.headerTitle, {color: themeColors.text}]}>
+          Share Your Feedback
+        </Text>
+        <Text style={[styles.headerSubtitle, {color: themeColors.textSecondary}]}>
+          Help us improve with your suggestions
+        </Text>
+      </View>
+
+      {/* Form Card */}
+      <View style={[styles.formCard, {backgroundColor: themeColors.surface}]}>
+        <View style={styles.form}>
         <View style={styles.fieldWrapper}>
           <Text style={[styles.fieldLabel, {color: themeColors.text}]}>
             Collection
@@ -218,10 +230,11 @@ const Suggestion = () => {
             }}
             placeholder="Select a collection"
             style={{
-              backgroundColor: themeColors.surface,
-              borderColor: themeColors.border,
-              borderWidth: 0,
-              borderRadius: 8,
+              backgroundColor: themeColors.cardBackground,
+              borderColor: themeColors.primary + '20',
+              borderWidth: 1,
+              borderRadius: 12,
+              minHeight: 50,
             }}
             textStyle={{
               color: themeColors.text,
@@ -233,8 +246,13 @@ const Suggestion = () => {
             }}
             dropDownContainerStyle={{
               backgroundColor: themeColors.surface,
-              borderColor: themeColors.border,
-              borderRadius: 8,
+              borderColor: themeColors.primary + '20',
+              borderRadius: 12,
+              elevation: 3,
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: 2},
+              shadowOpacity: 0.08,
+              shadowRadius: 6,
             }}
             theme={themeColors.background === '#1E1E2F' ? 'DARK' : 'LIGHT'}
             listItemContainerStyle={{
@@ -311,8 +329,9 @@ const Suggestion = () => {
           style={[styles.submitButton, {backgroundColor: themeColors.primary}]}
           labelStyle={styles.buttonLabel}
           loading={isSubmitting}>
-          {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
+          {isSubmitting ? 'Submitting...' : 'Submit'}
         </Button>
+        </View>
       </View>
 
       <Modal
@@ -381,8 +400,30 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    padding: 15,
-    paddingBottom: 30,
+    padding: 20,
+    paddingBottom: 40,
+  },
+  headerSection: {
+    marginBottom: 24,
+    paddingTop: 8,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  headerSubtitle: {
+    fontSize: 15,
+    lineHeight: 20,
+  },
+  formCard: {
+    borderRadius: 16,
+    padding: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   form: {
     gap: 0,
@@ -390,28 +431,30 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 15,
     fontWeight: '600',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   fieldWrapper: {
-    marginBottom: 15,
+    marginBottom: 20,
   },
   inputContainer: {
-    marginTop: 3,
+    marginTop: 0,
   },
   input: {
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 12,
+    padding: 14,
     fontSize: 16,
+    borderWidth: 1,
   },
   textArea: {
-    height: 150,
+    height: 140,
     textAlignVertical: 'top',
+    paddingTop: 14,
   },
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
-    marginLeft: 4,
+    marginTop: 6,
+    paddingHorizontal: 2,
   },
   errorIcon: {
     marginRight: 5,
@@ -421,14 +464,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   submitButton: {
-    marginTop: 10,
-    borderRadius: 8,
-    paddingVertical: 5,
+    marginTop: 8,
+    borderRadius: 12,
+    paddingVertical: 4,
   },
   buttonLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
-    paddingVertical: 2,
+    fontWeight: '600',
+    paddingVertical: 4,
   },
   modalOverlay: {
     flex: 1,
@@ -437,27 +480,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    width: '80%',
+    width: '85%',
     maxWidth: 300,
-    borderRadius: 16,
-    padding: 20,
-    elevation: 4,
+    borderRadius: 20,
+    padding: 28,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
   },
   modalInner: {
     alignItems: 'center',
   },
   alertTitle: {
-    marginTop: 15,
-    marginBottom: 10,
-    fontSize: 20,
-    fontWeight: 'bold',
+    marginTop: 16,
+    marginBottom: 8,
+    fontSize: 22,
+    fontWeight: '700',
     textAlign: 'center',
   },
   alertMessage: {
     textAlign: 'center',
-    marginBottom: 15,
-    fontSize: 16,
-    opacity: 0.9,
+    marginBottom: 12,
+    marginTop: 4,
+    fontSize: 15,
     lineHeight: 22,
   },
 });

@@ -79,7 +79,9 @@ const DeleteConfirmationModal = ({visible, themeColors, onClose, onDelete}) => {
               opacity: alertAnimation,
             },
           ]}>
-          <Icon name="delete-forever" size={60} color="#F44336" />
+          <View style={[styles.iconContainer, { backgroundColor: 'rgba(244, 67, 54, 0.15)' }]}>  
+            <Icon name="delete-forever" size={48} color="#F44336" />
+          </View>
           <Text style={[styles.alertTitle, {color: themeColors.text}]}>
             Delete Song
           </Text>
@@ -90,12 +92,12 @@ const DeleteConfirmationModal = ({visible, themeColors, onClose, onDelete}) => {
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
-              style={[styles.button, {backgroundColor: themeColors.border}]}
+              style={[styles.button, styles.cancelButton, { borderColor: themeColors.border }]}
               onPress={() => closeWithAnimation()}>
-              <Text style={styles.buttonText}>Cancel</Text>
+              <Text style={[styles.buttonText, { color: themeColors.text }]}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.button, {backgroundColor: '#F44336'}]}
+              style={[styles.button, styles.deleteButton]}
               onPress={() => closeWithAnimation(onDelete)}>
               <Text style={styles.buttonText}>Delete</Text>
             </TouchableOpacity>
@@ -109,44 +111,71 @@ const DeleteConfirmationModal = ({visible, themeColors, onClose, onDelete}) => {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   alertContainer: {
-    width: '80%',
-    maxWidth: 300,
-    borderRadius: 20,
-    padding: 20,
-    elevation: 5,
+    width: '75%',
+    maxWidth: 280,
+    borderRadius: 16,
+    padding: 18,
+    elevation: 8,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 14,
+    borderWidth: 2,
+    borderColor: 'rgba(244, 67, 54, 0.2)',
   },
   alertTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginVertical: 10,
+    fontSize: 18,
+    fontWeight: '700',
+    marginVertical: 8,
+    letterSpacing: 0.3,
   },
   alertMessage: {
-    fontSize: 16,
+    fontSize: 14,
     textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 20,
+    lineHeight: 20,
+    marginBottom: 18,
+    opacity: 0.85,
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     width: '100%',
   },
   button: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
     minWidth: 100,
     alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  cancelButton: {
+    borderWidth: 1.5,
+  },
+  deleteButton: {
+    backgroundColor: '#F44336',
   },
   buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
 });
 

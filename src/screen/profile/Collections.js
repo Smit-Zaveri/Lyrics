@@ -319,16 +319,19 @@ const Collections = ({ navigation }) => {
             styles.collectionItem,
             { 
               backgroundColor: themeColors.surface, 
-              borderColor: themeColors.border
+              borderColor: themeColors.primary + '15'
             }
           ]}
           onPress={() => handleCollectionPress(item)}
           activeOpacity={0.7}
         >
-          <View style={[styles.collectionIconContainer, { backgroundColor: `${themeColors.primary}20` }]}>
+          <View style={[styles.collectionIconContainer, { 
+            backgroundColor: `${themeColors.primary}15`,
+            borderColor: `${themeColors.primary}25`
+          }]}>
             <MaterialCommunityIcons 
               name="playlist-music" 
-              size={32} 
+              size={28} 
               color={themeColors.primary} 
             />
           </View>
@@ -343,17 +346,23 @@ const Collections = ({ navigation }) => {
           <View style={styles.collectionActions}>
             <TouchableOpacity
               onPress={() => showEditModal(item.id, item.name)}
-              style={styles.actionButton}
+              style={[styles.actionButton, { 
+                backgroundColor: themeColors.primary + '10',
+                borderColor: themeColors.primary + '20'
+              }]}
               testID={`edit-button-${item.id}`}
             >
-              <MaterialCommunityIcons name="pencil" size={22} color={themeColors.primary} />
+              <MaterialCommunityIcons name="pencil" size={20} color={themeColors.primary} />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => showDeleteModal(item.id, item.name)}
-              style={styles.actionButton}
+              style={[styles.actionButton, { 
+                backgroundColor: 'rgba(255, 82, 82, 0.1)',
+                borderColor: 'rgba(255, 82, 82, 0.25)'
+              }]}
               testID={`delete-button-${item.id}`}
             >
-              <MaterialCommunityIcons name="delete" size={22} color="#FF5252" />
+              <MaterialCommunityIcons name="delete" size={20} color="#FF5252" />
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -439,7 +448,7 @@ const Collections = ({ navigation }) => {
             style={[styles.createEmptyButton, { backgroundColor: themeColors.primary }]}
             onPress={showCreateModal}
           >
-            <MaterialCommunityIcons name="playlist-plus" size={24} color="#FFFFFF" style={{ marginRight: 8 }} />
+            <MaterialCommunityIcons name="playlist-plus" size={20} color="#FFFFFF" style={{ marginRight: 6 }} />
             <Text style={styles.createEmptyButtonText}>Create Collection</Text>
           </TouchableOpacity>
         </Animated.View>
@@ -472,12 +481,16 @@ const Collections = ({ navigation }) => {
         />
         
         {/* Floating Action Button */}
-        <TouchableOpacity 
-          style={[styles.fab, { backgroundColor: themeColors.primary }]}
-          onPress={showCreateModal}
-          testID="create-collection-fab"
-        >
-          <MaterialCommunityIcons name="playlist-plus" size={28} color="#FFFFFF" />
+          <TouchableOpacity
+            style={[styles.fab, { 
+              backgroundColor: themeColors.primary,
+              borderWidth: 2,
+              borderColor: 'rgba(255,255,255,0.2)'
+            }]}
+            onPress={showCreateModal}
+            testID="create-collection-fab"
+          >
+          <MaterialCommunityIcons name="playlist-plus" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         
         <DeleteConfirmationModal />
@@ -518,12 +531,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    padding: 16,
+    padding: 14,
   },
   listContentEmpty: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 16,
+    padding: 14,
   },
   emptyListContainer: {
     flexGrow: 1,
@@ -533,15 +546,17 @@ const styles = StyleSheet.create({
   collectionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    padding: 16,
-    borderRadius: 12,
+    marginBottom: 10,
+    padding: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderStyle: 'solid',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.08,
+        shadowRadius: 3,
       },
       android: {
         elevation: 2,
@@ -549,129 +564,151 @@ const styles = StyleSheet.create({
     }),
   },
   collectionIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 14,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
   },
   collectionInfo: {
     flex: 1,
   },
   collectionName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 3,
+    letterSpacing: 0.3,
   },
   songCount: {
-    fontSize: 14,
+    fontSize: 13,
+    opacity: 0.75,
   },
   collectionActions: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   actionButton: {
-    padding: 8,
-    marginLeft: 8,
+    padding: 7,
+    marginLeft: 7,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 18,
   },
   emptyIconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   emptyIcon: {
-    marginBottom: 16,
+    marginBottom: 14,
   },
   emptyText: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
+    letterSpacing: 0.3,
   },
   emptySubText: {
-    fontSize: 16,
+    fontSize: 14,
     textAlign: 'center',
-    maxWidth: '80%',
-    marginBottom: 16,
+    maxWidth: '85%',
+    marginBottom: 14,
+    lineHeight: 20,
+    opacity: 0.8,
   },
   createEmptyButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingVertical: 11,
+    paddingHorizontal: 18,
     borderRadius: 8,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   createEmptyButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContainer: {
-    width: width * 0.85,
-    maxWidth: 320,
-    borderRadius: 16,
-    paddingTop: 20,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
+    width: width * 0.82,
+    maxWidth: 300,
+    borderRadius: 14,
+    paddingTop: 18,
+    paddingHorizontal: 18,
+    paddingBottom: 14,
     alignItems: 'center',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.25,
-        shadowRadius: 4,
+        shadowRadius: 6,
       },
       android: {
-        elevation: 5,
+        elevation: 6,
       },
     }),
   },
   warningIconContainer: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(255, 193, 7, 0.2)',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255, 193, 7, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 193, 7, 0.3)',
   },
   errorIconContainer: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: 'rgba(255, 82, 82, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 10,
     textAlign: 'center',
+    letterSpacing: 0.3,
   },
   modalMessage: {
-    fontSize: 16,
+    fontSize: 14,
     textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 22,
+    marginBottom: 20,
+    lineHeight: 20,
+    opacity: 0.85,
   },
   modalButtons: {
     flexDirection: 'row',
@@ -680,60 +717,60 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 11,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   cancelButton: {
-    marginRight: 8,
-    borderWidth: 1,
+    marginRight: 6,
+    borderWidth: 1.5,
   },
   saveButton: {
-    marginLeft: 8,
+    marginLeft: 6,
   },
   buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   textInput: {
     width: '100%',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-    fontSize: 16,
+    padding: 11,
+    marginBottom: 14,
+    fontSize: 15,
   },
   singleButtonContainer: {
     width: '100%',
   },
   singleButton: {
     width: '100%',
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingVertical: 12,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
   fab: {
     position: 'absolute',
-    bottom: 24,
-    right: 24,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    bottom: 22,
+    right: 22,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
 });
 

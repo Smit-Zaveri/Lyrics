@@ -663,13 +663,7 @@ const List = ({route}) => {
 
   if (isLoading) {
     return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: themeColors.background,
-        }}>
+      <View style={[styles.centerContainer, {backgroundColor: themeColors.background}]}>
         <ActivityIndicator size="large" color={themeColors.primary} />
       </View>
     );
@@ -677,35 +671,25 @@ const List = ({route}) => {
 
   if (error) {
     return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: themeColors.background,
-          padding: 20,
-        }}>
-        <Text
-          style={{
-            color: themeColors.error,
-            textAlign: 'center',
-            marginBottom: 20,
-          }}>
+      <View style={[styles.errorContainer, {backgroundColor: themeColors.background}]}>
+        <Icon name="error-outline" color={themeColors.primary} size={48} style={styles.errorIcon} />
+        <Text style={[styles.errorText, {color: themeColors.text}]}>
           {error}
         </Text>
-        <Icon
-          name="refresh"
-          color={themeColors.primary}
-          size={40}
+        <TouchableOpacity
+          style={[styles.retryButton, {backgroundColor: themeColors.primary}]}
           onPress={loadData}
-        />
+          activeOpacity={0.8}>
+          <Icon name="refresh" color="#fff" size={20} style={styles.retryIcon} />
+          <Text style={styles.retryText}>Try Again</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: themeColors.background}}>
-      <View style={{flex: 1}}>
+    <SafeAreaView style={[styles.container, {backgroundColor: themeColors.background}]}>
+      <View style={styles.contentWrapper}>
         {!customLyrics && tags && tags.length > 0 && (
           <View style={styles.tagContainer}>
             <ScrollView
@@ -738,7 +722,8 @@ const List = ({route}) => {
           </View>
         )}
 
-        <Animated.FlatList
+        <View style={styles.listWrapper}>
+          <Animated.FlatList
           key={listKey}
           ref={flatListRef}
           style={[styles.lyricsList, {opacity: animatedOpacity}]}
@@ -805,6 +790,7 @@ const List = ({route}) => {
             });
           }}
         />
+        </View>
 
         {/* Floating Action Button */}
         {collectionName === 'added-songs' && isSingerMode && (
@@ -829,24 +815,75 @@ const List = ({route}) => {
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  contentWrapper: {
+    flex: 1,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  errorIcon: {
+    marginBottom: 16,
+  },
+  errorText: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 24,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  retryIcon: {
+    marginRight: 8,
+  },
+  retryText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
   tagContainer: {
-    maxHeight: 44,
+    maxHeight: 48,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
+    borderBottomColor: 'rgba(0,0,0,0.06)',
     backgroundColor: 'transparent',
+    paddingVertical: 4,
   },
   tagListContent: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
     alignItems: 'center',
     flexDirection: 'row',
     backgroundColor: 'transparent',
+  },
+  listWrapper: {
+    flex: 1,
   },
   lyricsList: {
     flex: 1,
   },
   lyricsListContent: {
     flexGrow: 1,
-    paddingBottom: 80, // Extra padding at bottom to account for FAB
+    paddingTop: 4,
+    paddingBottom: 80,
   },
   fab: {
     position: 'absolute',
@@ -857,11 +894,11 @@ const styles = StyleSheet.create({
     bottom: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 6,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 3},
-    shadowOpacity: 0.27,
-    shadowRadius: 4.65,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
     zIndex: 10,
   },
 });

@@ -10,6 +10,7 @@ import {
   RefreshControl,
   Image,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import {useNavigation} from '@react-navigation/native';
@@ -69,8 +70,14 @@ const HomeList = () => {
               return true;
             })
             .sort((a, b) => (a.numbering || 0) - (b.numbering || 0));
-
-          setData(sortedCollections);
+          
+          // Re-number collections sequentially after filtering and sorting
+          const renumberedCollections = sortedCollections.map((collection, index) => ({
+            ...collection,
+            numbering: index + 1,
+          }));
+          
+          setData(renumberedCollections);
         } else {
           const isConnected = await refreshAllData();
           if (isConnected) {
@@ -87,8 +94,14 @@ const HomeList = () => {
                   return true;
                 })
                 .sort((a, b) => (a.numbering || 0) - (b.numbering || 0));
-
-              setData(sortedCollections);
+              
+              // Re-number collections sequentially after filtering and sorting
+              const renumberedCollections = sortedCollections.map((collection, index) => ({
+                ...collection,
+                numbering: index + 1,
+              }));
+              
+              setData(renumberedCollections);
             } else {
               setData([]);
             }
@@ -144,20 +157,30 @@ const HomeList = () => {
     [navigation],
   );
 
-  const renderItem = ({item}) => {
+  const renderItem = ({item, index}) => {
     const displayName = getLocalizedDisplayName(item);
-
+  
     return (
       <Pressable
         onPress={handleItemPress(item)}
         style={({pressed}) => [
           styles.itemContainer,
+          index === 0 && styles.firstItem, // Apply top margin to first item
           {
             backgroundColor: pressed
-              ? themeColors.surface
-              : themeColors.background,
-            borderBottomColor:
-              themeColors.border || themeColors.divider || '#444',
+              ? themeColors.surface + '30'
+              : themeColors.surface,
+            ...Platform.select({
+              ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.08,
+                shadowRadius: 3,
+              },
+              android: {
+                elevation: 2,
+              },
+            }),
           },
         ]}>
         <View style={styles.leftContainer}>
@@ -165,16 +188,22 @@ const HomeList = () => {
             <Text
               style={[
                 styles.numberingText,
-                {backgroundColor: themeColors.primary, color: '#fff'},
+                {color: themeColors.primary},
               ]}>
               {item.numbering}
             </Text>
           </View>
           <View style={styles.detailsContainer}>
-            <Text style={[styles.title, {color: themeColors.text}]}>
+            <Text style={[styles.title, {color: themeColors.text}]}> 
               {displayName}
             </Text>
           </View>
+          <Icon 
+            name="chevron-right" 
+            size={24} 
+            color={themeColors.textSecondary || '#797979'} 
+            style={styles.chevronIcon}
+          />
         </View>
       </Pressable>
     );
@@ -296,32 +325,37 @@ const styles = StyleSheet.create({
   flex: {flex: 1},
   centered: {flex: 1, justifyContent: 'center', alignItems: 'center'},
   itemContainer: {
-    borderBottomWidth: 0.5,
-    padding: 12,
-    height: 70,
+    marginHorizontal: 16,
+    marginVertical: 6,
+    borderRadius: 12,
+    padding: 16,
+    height: 72,
     flexDirection: 'row',
     alignItems: 'center',
   },
+  firstItem: {
+    marginTop: 12,
+  },
   leftContainer: {flexDirection: 'row', alignItems: 'center', flex: 1},
   numberingContainer: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 14,
+    borderRadius: 12,
+    backgroundColor: 'rgba(103, 58, 183, 0.1)',
   },
   numberingText: {
-    width: 40,
-    height: 40,
-    lineHeight: 40,
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
     textAlign: 'center',
-    borderRadius: 20,
-    overflow: 'hidden',
   },
   detailsContainer: {flex: 1},
-  title: {fontWeight: 'bold', fontSize: 16},
+  title: {fontWeight: '600', fontSize: 16},
+  chevronIcon: {
+    opacity: 0.6,
+  },
   retryButton: {
     marginTop: 20,
     paddingVertical: 10,

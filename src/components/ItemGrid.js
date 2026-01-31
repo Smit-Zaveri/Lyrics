@@ -285,52 +285,60 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 12,
+    marginBottom: 4,
   },
   cardHeadingTextStyle: {
-    fontWeight: 'bold',
+    fontWeight: '700',
     fontSize: 18,
   },
   moreLink: {
-    fontWeight: 'bold',
-    fontSize: 16,
+    fontWeight: '600',
+    fontSize: 15,
   },
   flatListStyle: {
     flex: 1,
   },
   imageStyle: {
     borderRadius: 100,
-    marginBottom: 8,
+    marginBottom: 6,
     backgroundColor:'#E0E0E0'
   },
   placeholderImage: {
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 100,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
   },
   placeholderText: {
-    fontWeight: '200',
-    fontSize: 24,
+    fontWeight: '600',
+    fontSize: 28,
   },
   itemText: {
-    fontWeight: '200',
+    fontWeight: '500',
+    fontSize: 14,
     textAlign: 'center',
-    marginTop: 4,
+    marginTop: 6,
   },
   horizontalContent: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
   },
   gridContent: {
-    padding: 8,
+    padding: 12,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 32,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 15,
     textAlign: 'center',
   },
 });

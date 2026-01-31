@@ -19,6 +19,7 @@ import {
   Pressable,
   Image,
   Dimensions,
+  StyleSheet,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Sound from 'react-native-sound';
@@ -828,14 +829,8 @@ const DetailPage = ({navigation, route}) => {
 
   if (!song) {
     return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: themeColors.background,
-        }}>
-        <Text style={{color: themeColors.text}}>Loading...</Text>
+      <View style={[styles.loadingContainer, {backgroundColor: themeColors.background}]}>
+        <Text style={[styles.loadingText, {color: themeColors.text}]}>Loading...</Text>
       </View>
     );
   }
@@ -846,42 +841,34 @@ const DetailPage = ({navigation, route}) => {
   });
 
   const animatedStyle = {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    flex: 1,
     opacity: opacityAnim,
     transform: [{translateX: translateXValue}, {scale: scaleAnim}],
   };
 
   return (
     <NavigationHandler onNavigate={navigateSong}>
-      <View
-        style={{flex: 1, backgroundColor: themeColors.background}}
-        {...panResponder.panHandlers}>
-        <Animated.View
-          style={[
-            animatedStyle,
-            {paddingStart: 20, paddingEnd: 20, paddingBottom: 20},
-          ]}>
-          <Text
-            style={{
-              paddingTop: 10,
-              fontSize: getLocalizedArtist(song) ? 16 : 0,
-              marginBottom: getLocalizedArtist(song) ? 10 : 0,
-              color: themeColors.text,
-            }}>
-            {getLocalizedArtist(song) ? 'રચનાર :' : null}{' '}
-            {getLocalizedArtist(song)}
-          </Text>
+      <View style={[styles.container, {backgroundColor: themeColors.background}]} {...panResponder.panHandlers}>
+        <Animated.View style={animatedStyle}>
+          {getLocalizedArtist(song) && (
+            <View style={styles.artistContainer}>
+              <Text style={[styles.artistLabel, {color: themeColors.textSecondary}]}>
+                રચનાર
+              </Text>
+              <Text style={[styles.artistName, {color: themeColors.text}]}>
+                {getLocalizedArtist(song)}
+              </Text>
+            </View>
+          )}
           <ScrollView
             ref={scrollViewRef}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{paddingBottom: 30}}>
+            contentContainerStyle={styles.scrollContent}>
             <Text
-              style={{
-                fontSize: fontSize,
-                textAlign: '',
-                color: themeColors.text,
-              }}
+              style={[
+                styles.contentText,
+                {fontSize: fontSize, color: themeColors.text},
+              ]}
               {...panResponder.panHandlers}>
               {getLocalizedContent(song)}
             </Text>
@@ -895,7 +882,7 @@ const DetailPage = ({navigation, route}) => {
             )}
 
             {isSingerMode && relatedSongs.length > 0 && (
-              <View style={{marginTop: 60}}>
+              <View style={styles.relatedSongsContainer}>
                 <RelatedSongs
                   relatedSongs={relatedSongs}
                   themeColors={themeColors}
@@ -981,5 +968,45 @@ const DetailPage = ({navigation, route}) => {
     </NavigationHandler>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+  },
+  artistContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  artistLabel: {
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  artistName: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  contentText: {
+    lineHeight: 32,
+  },
+  relatedSongsContainer: {
+    marginTop: 48,
+  },
+});
 
 export default DetailPage;

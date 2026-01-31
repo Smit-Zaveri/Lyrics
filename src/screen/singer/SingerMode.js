@@ -81,15 +81,19 @@ const SingerMode = () => {
       <View
         style={[
           styles.headerWrapper,
-          {backgroundColor: themeColors.primary + '15'},
+          {backgroundColor: themeColors.primary + '10'},
         ]}>
         <View style={styles.headerContainer}>
           <View
             style={[
               styles.iconCircle,
-              {backgroundColor: themeColors.primary + '20'},
+              {
+                backgroundColor: themeColors.primary + '18',
+                borderWidth: 2,
+                borderColor: themeColors.primary + '30',
+              },
             ]}>
-            <Icon name="music-note" size={60} color={themeColors.primary} />
+            <Icon name="music-note" size={42} color={themeColors.primary} />
           </View>
           <Text style={[styles.headerText, {color: themeColors.text}]}>
             {getString('singerMode') || 'Singer Mode'}
@@ -112,7 +116,8 @@ const SingerMode = () => {
               styles.card,
               {
                 backgroundColor: themeColors.surface,
-                borderColor: themeColors.border,
+                borderColor: themeColors.primary + '12',
+                borderWidth: 1,
                 shadowColor: themeColors.primary,
                 transform: [{scale: scaleAnim}],
               },
@@ -127,9 +132,13 @@ const SingerMode = () => {
               <View
                 style={[
                   styles.cardIconContainer,
-                  {backgroundColor: themeColors.primary + '20'},
+                  {
+                    backgroundColor: themeColors.primary + '15',
+                    borderWidth: 1.5,
+                    borderColor: themeColors.primary + '25',
+                  },
                 ]}>
-                <Icon name="add-circle" size={40} color={themeColors.primary} />
+                <Icon name="add-circle" size={30} color={themeColors.primary} />
               </View>
               <View style={styles.cardTextContainer}>
                 <Text style={[styles.cardTitle, {color: themeColors.text}]}>
@@ -144,11 +153,13 @@ const SingerMode = () => {
                     'Create a new song with lyrics, tags, and media'}
                 </Text>
               </View>
-              <Icon
-                name="chevron-right"
-                size={24}
-                color={themeColors.primary}
-              />
+              <View style={styles.chevronContainer}>
+                <Icon
+                  name="chevron-right"
+                  size={20}
+                  color={themeColors.primary}
+                />
+              </View>
             </View>
           </Animated.View>
         </TouchableOpacity>
@@ -163,7 +174,8 @@ const SingerMode = () => {
               styles.card,
               {
                 backgroundColor: themeColors.surface,
-                borderColor: themeColors.border,
+                borderColor: themeColors.primary + '12',
+                borderWidth: 1,
                 shadowColor: themeColors.primary,
                 transform: [{scale: scaleAnim}],
               },
@@ -178,11 +190,15 @@ const SingerMode = () => {
               <View
                 style={[
                   styles.cardIconContainer,
-                  {backgroundColor: themeColors.primary + '20'},
+                  {
+                    backgroundColor: themeColors.primary + '15',
+                    borderWidth: 1.5,
+                    borderColor: themeColors.primary + '25',
+                  },
                 ]}>
                 <Icon
                   name="library-music"
-                  size={40}
+                  size={30}
                   color={themeColors.primary}
                 />
               </View>
@@ -199,11 +215,13 @@ const SingerMode = () => {
                     'View and edit your custom songs collection'}
                 </Text>
               </View>
-              <Icon
-                name="chevron-right"
-                size={24}
-                color={themeColors.primary}
-              />
+              <View style={styles.chevronContainer}>
+                <Icon
+                  name="chevron-right"
+                  size={20}
+                  color={themeColors.primary}
+                />
+              </View>
             </View>
           </Animated.View>
         </TouchableOpacity>
@@ -214,16 +232,20 @@ const SingerMode = () => {
           style={[
             styles.infoBox,
             {
-              backgroundColor: themeColors.primary + '08',
-              borderColor: themeColors.border,
+              backgroundColor: themeColors.primary + '06',
+              borderColor: themeColors.primary + '18',
             },
           ]}>
           <View
             style={[
               styles.infoIconContainer,
-              {backgroundColor: themeColors.primary + '15'},
+              {
+                backgroundColor: themeColors.primary + '12',
+                borderWidth: 1,
+                borderColor: themeColors.primary + '20',
+              },
             ]}>
-            <Icon name="info" size={24} color={themeColors.primary} />
+            <Icon name="info-outline" size={18} color={themeColors.primary} />
           </View>
           <Text style={[styles.infoText, {color: themeColors.textSecondary}]}>
             {getString('singerModeInfoText') ||
@@ -240,104 +262,130 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    paddingBottom: 24,
+    paddingBottom: 20,
   },
   headerWrapper: {
-    paddingVertical: 24,
+    paddingVertical: 20,
     paddingHorizontal: 16,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   headerContainer: {
     alignItems: 'center',
-    marginVertical: 16,
+    marginVertical: 10,
   },
   iconCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
   },
   headerText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginTop: 8,
+    fontSize: 24,
+    fontWeight: '700',
+    marginTop: 4,
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
   subHeaderText: {
-    fontSize: 18,
-    marginTop: 8,
+    fontSize: 13,
+    marginTop: 5,
     textAlign: 'center',
-    opacity: 0.8,
+    opacity: 0.72,
+    fontWeight: '400',
   },
   cardsContainer: {
-    marginVertical: 16,
+    marginVertical: 12,
     paddingHorizontal: 16,
   },
   card: {
-    borderRadius: 16,
-    marginBottom: 20,
-    // borderWidth: 0.5,
+    borderRadius: 12,
+    marginBottom: 12,
     overflow: 'hidden',
     position: 'relative',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
   },
   cardHighlight: {
     position: 'absolute',
     left: 0,
     top: 0,
-    width: 6,
+    width: 3,
     height: '100%',
   },
   cardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 18,
+    padding: 13,
+    paddingLeft: 15,
   },
   cardIconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 13,
   },
   cardTextContainer: {
     flex: 1,
   },
   cardTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 6,
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 3,
+    letterSpacing: 0.3,
   },
   cardDescription: {
-    fontSize: 14,
-    opacity: 0.8,
+    fontSize: 12,
+    opacity: 0.68,
+    lineHeight: 17,
+    fontWeight: '400',
+  },
+  chevronContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 6,
   },
   infoContainer: {
-    marginVertical: 8,
+    marginVertical: 6,
     paddingHorizontal: 16,
   },
   infoBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 0.5,
+    padding: 11,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderStyle: 'solid',
   },
   infoIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 11,
   },
   infoText: {
     flex: 1,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 12,
+    lineHeight: 17,
+    opacity: 0.78,
+    fontWeight: '400',
   },
 });
 

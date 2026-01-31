@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -27,6 +27,11 @@ const CreateCollectionModal = ({
   value,
   errorMessage,
 }) => {
+  const [isFocused, setIsFocused] = useState(false);
+  
+  const handleFocus = () => setIsFocused(true);
+  const handleBlur = () => setIsFocused(false);
+  
   return (
     <Modal
       transparent
@@ -46,8 +51,8 @@ const CreateCollectionModal = ({
             <BlurView
               style={StyleSheet.absoluteFill}
               blurType="dark"
-              blurAmount={10}
-              reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.5)"
+              blurAmount={15}
+              reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.6)"
             />
           )}
           <Animated.View
@@ -58,54 +63,91 @@ const CreateCollectionModal = ({
                 transform: [{ 
                   translateY: createSlideAnim.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [300, 0],
+                    outputRange: [400, 0],
                   }) 
                 }],
                 opacity: createSlideAnim.interpolate({
-                  inputRange: [0, 0.5, 1],
-                  outputRange: [0, 0.8, 1],
+                  inputRange: [0, 0.3, 1],
+                  outputRange: [0, 0.7, 1],
                 })
               }
             ]}
           >
-            <View style={styles.iconContainer}>
+            <View style={[styles.iconContainer, { backgroundColor: `${themeColors.primary}15` }]}>
               <MaterialCommunityIcons 
                 name="playlist-plus" 
                 size={36} 
                 color={themeColors.primary} 
               />
             </View>
-            <Text style={[styles.modalTitle, { color: themeColors.text }]}>Create Collection</Text>
-            <TextInput
-              style={[styles.textInput, { 
-                borderColor: errorMessage ? "#FF5252" : themeColors.border, 
-                color: themeColors.text,
-                backgroundColor: themeColors.background
-              }]}
-              value={value}
-              onChangeText={onChangeText}
-              placeholder="Enter collection name"
-              placeholderTextColor={themeColors.placeholder}
-              autoFocus={true}
-              selectionColor={themeColors.primary}
-            />
+            <Text style={[styles.modalTitle, { color: themeColors.text }]}>Create New Collection</Text>
+            <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>Organize your favorite songs</Text>
+            
+            <View style={styles.inputContainer}>
+              <Text style={[
+                styles.inputLabel, 
+                { 
+                  color: isFocused ? themeColors.primary : themeColors.textSecondary,
+                  top: isFocused || value ? -10 : 18,
+                  fontSize: isFocused || value ? 12 : 16,
+                  backgroundColor: themeColors.surface,
+                }
+              ]}>
+                Collection Name
+              </Text>
+              <TextInput
+                style={[styles.textInput, { 
+                  borderColor: errorMessage 
+                    ? "#FF5252" 
+                    : isFocused 
+                      ? themeColors.primary 
+                      : themeColors.border || '#E0E0E0', 
+                  color: themeColors.text,
+                  backgroundColor: themeColors.background,
+                  shadowColor: isFocused ? themeColors.primary : 'transparent',
+                }]}
+                value={value}
+                onChangeText={onChangeText}
+                placeholder=""
+                placeholderTextColor={themeColors.placeholder}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+                autoFocus={true}
+                selectionColor={themeColors.primary}
+              />
+            </View>
+            
             {errorMessage ? (
               <View style={styles.errorContainer}>
-                <MaterialCommunityIcons name="alert-circle" size={18} color="#FF5252" style={styles.errorIcon} />
+                <MaterialCommunityIcons name="alert-circle-outline" size={18} color="#FF5252" style={styles.errorIcon} />
                 <Text style={styles.errorText}>{errorMessage}</Text>
               </View>
-            ) : null}
+            ) : (
+              <View style={styles.helperContainer}>
+                <MaterialCommunityIcons name="information-outline" size={14} color={themeColors.textSecondary} style={styles.infoIcon} />
+                <Text style={[styles.helperText, { color: themeColors.textSecondary }]}>Name your collection to organize songs</Text>
+              </View>
+            )}
+            
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { borderColor: themeColors.border }]}
+                style={[styles.modalButton, styles.cancelButton, { 
+                  borderColor: themeColors.border || '#E0E0E0',
+                  backgroundColor: themeColors.surface
+                }]}
                 onPress={onClose}
+                activeOpacity={0.7}
               >
                 <Text style={[styles.buttonText, { color: themeColors.text }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.createButton, { backgroundColor: themeColors.primary }]}
+                style={[styles.modalButton, styles.createButton, { 
+                  backgroundColor: themeColors.primary,
+                  shadowColor: themeColors.primary,
+                }]}
                 onPress={onConfirm}
                 testID="confirm-create"
+                activeOpacity={0.8}
               >
                 <MaterialCommunityIcons name="check" size={18} color="#FFFFFF" style={styles.buttonIcon} />
                 <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>Create</Text>
@@ -121,85 +163,121 @@ const CreateCollectionModal = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
   },
   modalContainer: {
-    width: width * 0.85,
-    maxWidth: 340,
-    borderRadius: 24,
-    paddingTop: 28,
-    paddingHorizontal: 24,
-    paddingBottom: 28,
+    width: width * 0.9,
+    maxWidth: 360,
+    borderRadius: 28,
+    paddingTop: 36,
+    paddingHorizontal: 28,
+    paddingBottom: 32,
     alignItems: 'center',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.25,
+        shadowRadius: 24,
       },
       android: {
-        elevation: 10,
+        elevation: 16,
       },
     }),
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(103, 58, 183, 0.1)',
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
     ...Platform.select({
       ios: {
-        shadowColor: '#673AB7',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
       },
     }),
   },
   modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 6,
+    textAlign: 'center',
+    letterSpacing: -0.2,
+  },
+  subtitle: {
+    fontSize: 14,
+    fontWeight: '400',
     marginBottom: 24,
     textAlign: 'center',
+    opacity: 0.8,
+  },
+  inputContainer: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  inputLabel: {
+    position: 'absolute',
+    left: 14,
+    zIndex: 1,
+    paddingHorizontal: 4,
+    fontWeight: '500',
+    transitionDuration: '200ms',
   },
   textInput: {
     width: '100%',
-    borderWidth: 1,
+    borderWidth: 2,
     borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    fontSize: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 16,
+    fontSize: 15,
+    fontWeight: '500',
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
       },
       android: {
-        elevation: 2,
+        elevation: 3,
       },
     }),
   },
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 8,
+    marginBottom: 20,
+    paddingHorizontal: 4,
+    width: '100%',
+  },
+  helperContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    paddingHorizontal: 4,
     width: '100%',
   },
   errorIcon: {
-    marginRight: 6,
+    marginRight: 8,
+  },
+  infoIcon: {
+    marginRight: 8,
   },
   errorText: {
     color: '#FF5252',
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: '500',
+    flex: 1,
+  },
+  helperText: {
+    fontSize: 13,
+    fontWeight: '400',
     flex: 1,
   },
   modalButtons: {
@@ -210,25 +288,45 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     flex: 1,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
+    ...Platform.select({
+      ios: {
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   cancelButton: {
-    marginRight: 10,
-    borderWidth: 1,
+    marginRight: 12,
+    borderWidth: 2,
   },
   createButton: {
-    marginLeft: 10,
+    marginLeft: 12,
+    ...Platform.select({
+      ios: {
+        shadowOpacity: 0.2,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
+    letterSpacing: 0.2,
   },
   buttonIcon: {
-    marginRight: 8,
+    marginRight: 10,
   },
 });
 

@@ -16,34 +16,25 @@ const TagItem = ({ item, selectedTags, onTagPress, themeColors, isSticky }) => {
   };
 
   return (
-    <View
-      style={[
-        styles.outerContainer,
-        isSticky && styles.stickyContainer
-      ]}
-    >
+    <View style={[styles.outerContainer, isSticky && styles.stickyContainer]}>
       <TouchableOpacity
         style={[
           styles.container,
           {
-            backgroundColor: isSelected ? '#FFC107' : themeColors.surface,
-            borderColor: themeColors.primary,
-            borderWidth: 1.5,
-            transform: [{ scale: isSelected ? 1.05 : 1 }]
+            backgroundColor: isSelected ? themeColors.primary : themeColors.surface,
+            borderColor: isSelected ? themeColors.primary : themeColors.border || 'rgba(0,0,0,0.12)',
           },
         ]}
         activeOpacity={0.7}
-        onPress={() => onTagPress(item.name)}
-      >
+        onPress={() => onTagPress(item.name)}>
         <Text
           style={[
             styles.chipText,
             {
-              color: isSelected ? themeColors.surface : themeColors.primary,
+              color: isSelected ? '#fff' : themeColors.text,
             },
           ]}
-          numberOfLines={1}
-        >
+          numberOfLines={1}>
           {getLocalizedDisplayName()}
         </Text>
       </TouchableOpacity>
@@ -53,31 +44,28 @@ const TagItem = ({ item, selectedTags, onTagPress, themeColors, isSticky }) => {
 
 const styles = StyleSheet.create({
   outerContainer: {
-    margin: 2,
-    zIndex: 1,
+    marginHorizontal: 4,
+    marginVertical: 2,
   },
   stickyContainer: {
-    marginRight: 4,
-    zIndex: 10,
+    marginRight: 6,
   },
   container: {
-    height: 32,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    marginHorizontal: 2,
-    marginVertical: 4,
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    elevation: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.5,
-    elevation: 2,
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
   },
   chipText: {
-    fontSize: 13,
-    textTransform: 'capitalize',
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '600',
     includeFontPadding: false,
     textAlignVertical: 'center',
   },

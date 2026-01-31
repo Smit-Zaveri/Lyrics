@@ -50,6 +50,12 @@ const CollectionsModal = ({
               ],
             },
           ]}>
+          <View
+            style={[
+              styles.dragHandle,
+              {backgroundColor: themeColors.textSecondary + '40'},
+            ]}
+          />
           <View style={styles.modalHeader}>
             <Text style={[styles.modalTitle, {color: themeColors.text}]}>
               Save to Collection
@@ -62,10 +68,12 @@ const CollectionsModal = ({
                 styles.input,
                 {
                   color: themeColors.text,
-                  borderColor: hasError ? 'red' : themeColors.border,
+                  backgroundColor: themeColors.background,
+                  borderWidth: 1,
+                  borderColor: hasError ? 'red' : 'transparent',
                 },
               ]}
-              placeholder="Create new collection..."
+              placeholder="New collection name"
               placeholderTextColor={themeColors.placeholder}
               value={newCollectionName}
               onChangeText={onNewCollectionNameChange}
@@ -76,7 +84,7 @@ const CollectionsModal = ({
                 {backgroundColor: themeColors.primary},
               ]}
               onPress={onCreateCollection}>
-              <Text style={{color: '#fff'}}>Create</Text>
+              <MaterialCommunityIcons name="plus" size={24} color="#fff" />
             </TouchableOpacity>
           </View>
 
@@ -91,27 +99,29 @@ const CollectionsModal = ({
               );
               return (
                 <TouchableOpacity
-                  style={[
-                    styles.collectionItem,
-                    {
-                      borderBottomColor:
-                        themeColors.border || themeColors.divder || '#444',
-                    },
-                  ]}
+                  style={styles.collectionItem}
                   onPress={() => onToggleCollection(item.id)}>
-                  <Text
-                    style={[styles.collectionName, {color: themeColors.text}]}>
-                    {item.name}
-                  </Text>
+                  <View style={styles.collectionItemLeft}>
+                    <MaterialCommunityIcons
+                      name="playlist-music"
+                      size={20}
+                      color={themeColors.textSecondary}
+                      style={{marginRight: 12}}
+                    />
+                    <Text
+                      style={[styles.collectionName, {color: themeColors.text}]}>
+                      {item.name}
+                    </Text>
+                  </View>
                   <MaterialCommunityIcons
                     name={
                       isSavedInCollection ? 'check-circle' : 'circle-outline'
                     }
-                    size={24}
+                    size={22}
                     color={
                       isSavedInCollection
                         ? themeColors.primary
-                        : themeColors.text
+                        : themeColors.textSecondary
                     }
                   />
                 </TouchableOpacity>
@@ -131,46 +141,64 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   collectionsModal: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: '80%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 16,
+    maxHeight: '70%',
+  },
+  dragHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 16,
   },
   modalHeader: {
-    marginBottom: 20,
+    marginBottom: 16,
+    alignItems: 'center',
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
   },
   newCollectionInput: {
     flexDirection: 'row',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   input: {
     flex: 1,
-    height: 40,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
+    height: 44,
+    borderRadius: 12,
+    paddingHorizontal: 16,
     marginRight: 10,
+    fontSize: 14,
   },
   createButton: {
-    paddingHorizontal: 20,
-    height: 40,
-    borderRadius: 8,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   collectionItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+  },
+  collectionItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   collectionName: {
-    fontSize: 16,
+    fontSize: 15,
+    fontWeight: '500',
   },
   errorText: {
     color: 'red',

@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import {View, ScrollView, Dimensions, RefreshControl} from 'react-native';
+import {View, ScrollView, Dimensions, RefreshControl, StyleSheet} from 'react-native';
 import ItemGrid from '../../components/ItemGrid';
 import {getFromAsyncStorage} from '../../config/dataService';
 import { ThemeContext } from '../../../App';
@@ -62,15 +62,10 @@ const CategoryDisplay = ({navigation}) => {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: themeColors.background}}>
+    <View style={[styles.container, {backgroundColor: themeColors.background}]}>
       <ScrollView 
-        contentContainerStyle={{
-          flexGrow: 1, 
-          paddingVertical: 10,
-          paddingHorizontal: 5,
-          minHeight: Dimensions.get('window').height * 0.5
-        }}
-        showsVerticalScrollIndicator={true}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -87,7 +82,7 @@ const CategoryDisplay = ({navigation}) => {
           title={titles.tirth}
           data={tirthData}
           layout="single"
-          language={language} // Add language prop
+          language={language}
         />
         <ItemGrid
           key={`tirthankar-${language}`}
@@ -96,7 +91,7 @@ const CategoryDisplay = ({navigation}) => {
           title={titles.tirthankar}
           data={tirtankarData}
           layout="single"
-          language={language} // Add language prop
+          language={language}
         />
         <ItemGrid
           key={`artist-${language}`}
@@ -105,11 +100,23 @@ const CategoryDisplay = ({navigation}) => {
           title={titles.artist}
           data={artistData}
           layout="single"
-          language={language} // Add language prop
+          language={language}
         />
       </ScrollView>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingTop: 8,
+    paddingBottom: 20,
+    minHeight: Dimensions.get('window').height * 0.5,
+  },
+});
 
 export default CategoryDisplay;

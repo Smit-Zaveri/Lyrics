@@ -74,21 +74,20 @@ const ListItem = React.memo(
         style={({pressed}) => [
           styles.itemContainer,
           {
-            backgroundColor: pressed ? themeColors.surface : 'transparent', // Change press color based on theme
-            borderBottomColor:
-              themeColors.border || themeColors.divder || '#444',
+            backgroundColor: pressed ? themeColors.cardBackground + '40' : 'transparent',
+            borderBottomColor: themeColors.border || 'rgba(0,0,0,0.06)',
           },
         ]}>
         <View style={styles.leftContainer}>
-          <View style={styles.numberingContainer}>
+          <View
+            style={[
+              styles.numberingContainer,
+              {backgroundColor: themeColors.primary + '15'},
+            ]}>
             <Text
               style={[
                 styles.numberingText,
-                {
-                  backgroundColor: themeColors.primary, // Numbering background color
-                  color: '#fff', // Text color
-                  borderColor: themeColors.primary, // Border color
-                },
+                {color: themeColors.primary},
               ]}>
               {getDisplayNumber()}
             </Text>
@@ -102,23 +101,27 @@ const ListItem = React.memo(
                 ? highlightFunction(displayTitle, searchTerms)
                 : displayTitle}
             </Text>
-            <Text
-              style={[styles.content, {color: themeColors.text}]}
-              numberOfLines={1}
-              ellipsizeMode="tail">
-              {highlightFunction && searchTerms
-                ? highlightFunction(displayContent, searchTerms)
-                : displayContent}
-            </Text>
+            {displayContent && (
+              <Text
+                style={[styles.content, {color: themeColors.textSecondary}]}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {highlightFunction && searchTerms
+                  ? highlightFunction(displayContent, searchTerms)
+                  : displayContent}
+              </Text>
+            )}
           </View>
         </View>
 
         {/* Display "NEW" on the right side if the item is new */}
         {isNew && (
-          <View style={styles.newFlagContainer}>
-            <Text style={[styles.newFlagText, {color: themeColors.primary}]}>
-              NEW
-            </Text>
+          <View
+            style={[
+              styles.newFlagContainer,
+              {backgroundColor: themeColors.primary},
+            ]}>
+            <Text style={styles.newFlagText}>NEW</Text>
           </View>
         )}
       </Pressable>
@@ -136,57 +139,61 @@ const ListItem = React.memo(
 
 const styles = StyleSheet.create({
   itemContainer: {
-    borderBottomWidth: 0.2,
-    padding: 10,
-    height: 70,
+    borderBottomWidth: 0.5,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    minHeight: 76,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between', // Space between left and right
+    justifyContent: 'space-between',
   },
   leftContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1, // Ensure left side takes up most of the space
+    flex: 1,
+    paddingRight: 12,
   },
   numberingContainer: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 14,
+    borderRadius: 12,
   },
   numberingText: {
-    width: 40,
-    height: 40,
-    lineHeight: 40,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
     textAlign: 'center',
-    borderRadius: 20,
-    overflow: 'hidden',
   },
   detailsContainer: {
     flex: 1,
+    justifyContent: 'center',
   },
   title: {
-    fontWeight: 'bold',
+    fontWeight: '600',
     fontSize: 16,
     marginBottom: 4,
+    lineHeight: 22,
   },
   content: {
     fontSize: 14,
+    lineHeight: 20,
+    opacity: 0.8,
   },
   newFlagContainer: {
-    backgroundColor: '#FFD700', // Yellow background for NEW
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 10,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    marginLeft: 8,
   },
   newFlagText: {
-    fontWeight: 'bold',
-    fontSize: 12,
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 11,
+    letterSpacing: 0.5,
   },
 });
 

@@ -26,18 +26,17 @@ const AnimatedOption = ({isSelected, onPress, children, themeColors, style}) => 
   const prevSelected = useRef(isSelected);
 
   useEffect(() => {
-    // Trigger selection pop animation when becoming selected
     if (isSelected && !prevSelected.current) {
       Animated.sequence([
         Animated.timing(selectionScale, {
-          toValue: 1.08,
+          toValue: 1.05,
           duration: 100,
           easing: Easing.out(Easing.quad),
           useNativeDriver: true,
         }),
         Animated.spring(selectionScale, {
           toValue: 1,
-          bounciness: 10,
+          bounciness: 12,
           speed: 14,
           useNativeDriver: true,
         }),
@@ -48,7 +47,7 @@ const AnimatedOption = ({isSelected, onPress, children, themeColors, style}) => 
 
   const handlePressIn = () => {
     Animated.timing(pressScale, {
-      toValue: 0.96,
+      toValue: 0.95,
       duration: 80,
       easing: Easing.out(Easing.quad),
       useNativeDriver: true,
@@ -83,22 +82,74 @@ const AnimatedOption = ({isSelected, onPress, children, themeColors, style}) => 
   );
 };
 
+// Modern Section Component
+const Section = ({title, children, themeColors}) => (
+  <View style={styles.section}>
+    <Text style={[styles.sectionTitle, {color: themeColors.primary}]}>
+      {title}
+    </Text>
+    <View
+      style={[
+        styles.sectionCard,
+        {
+          backgroundColor: themeColors.surface,
+          borderColor: themeColors.border || 'rgba(0,0,0,0.05)',
+        },
+      ]}>
+      {children}
+    </View>
+  </View>
+);
+
+// Modern Setting Row Component
+const SettingRow = ({label, description, children, themeColors, isLast, horizontal}) => (
+  <View>
+    <View style={[styles.settingRow, horizontal && styles.settingRowHorizontal]}>
+      <View style={styles.settingInfo}>
+        <Text style={[styles.settingLabel, {color: themeColors.text}]}>
+          {label}
+        </Text>
+        {description && (
+          <Text
+            style={[
+              styles.settingDescription,
+              {color: themeColors.textSecondary},
+            ]}>
+            {description}
+          </Text>
+        )}
+      </View>
+      <View style={[styles.settingControl, horizontal && styles.settingControlHorizontal]}>
+        {children}
+      </View>
+    </View>
+    {!isLast && (
+      <View
+        style={[
+          styles.divider,
+          {backgroundColor: themeColors.border || 'rgba(0,0,0,0.1)'},
+        ]}
+      />
+    )}
+  </View>
+);
+
 // Animated Toggle Component with spring animation
 const AnimatedToggle = ({isOn, onToggle, themeColors}) => {
-  const translateX = useRef(new Animated.Value(isOn ? 20 : 2)).current;
+  const translateX = useRef(new Animated.Value(isOn ? 18 : 2)).current;
   const bgOpacity = useRef(new Animated.Value(isOn ? 1 : 0)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.spring(translateX, {
-        toValue: isOn ? 20 : 2,
-        bounciness: 10,
-        speed: 14,
+        toValue: isOn ? 18 : 2,
+        bounciness: 12,
+        speed: 16,
         useNativeDriver: true,
       }),
       Animated.timing(bgOpacity, {
         toValue: isOn ? 1 : 0,
-        duration: 150,
+        duration: 200,
         easing: Easing.out(Easing.quad),
         useNativeDriver: false,
       }),
@@ -107,16 +158,16 @@ const AnimatedToggle = ({isOn, onToggle, themeColors}) => {
 
   const backgroundColor = bgOpacity.interpolate({
     inputRange: [0, 1],
-    outputRange: ['transparent', themeColors.primary],
+    outputRange: [themeColors.cardBackground, themeColors.primary],
   });
 
   const borderColor = bgOpacity.interpolate({
     inputRange: [0, 1],
-    outputRange: ['#444', themeColors.primary],
+    outputRange: [themeColors.textSecondary, themeColors.primary],
   });
 
   return (
-    <TouchableOpacity onPress={onToggle} activeOpacity={0.8}>
+    <TouchableOpacity onPress={onToggle} activeOpacity={0.9}>
       <Animated.View
         style={[
           styles.toggleButton,
@@ -131,6 +182,11 @@ const AnimatedToggle = ({isOn, onToggle, themeColors}) => {
             {
               backgroundColor: '#fff',
               transform: [{translateX}],
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: 1},
+              shadowOpacity: 0.2,
+              shadowRadius: 1.5,
+              elevation: 2,
             },
           ]}
         />
@@ -143,7 +199,7 @@ const Settings = () => {
   const {fontSize, changeFontSize} = useContext(FontSizeContext);
   const {themePreference, setThemePreference, themeColors} =
     useContext(ThemeContext);
-  const {language, setLanguage, languageName} = useContext(LanguageContext);
+  const {language, setLanguage} = useContext(LanguageContext);
   const {isSingerMode, toggleSingerMode} = useSingerMode();
 
   const handleThemeChange = useCallback(
@@ -160,7 +216,7 @@ const Settings = () => {
     [setLanguage],
   );
 
-  // Memoized option components to avoid unnecessary re-renders
+  // Memoized option components
   const ThemeOption = useCallback(
     ({theme, label, icon}) => (
       <AnimatedOption
@@ -172,12 +228,15 @@ const Settings = () => {
           {
             backgroundColor:
               themePreference === theme ? themeColors.primary : 'transparent',
-            borderColor: themeColors.border || '#444',
+            borderColor:
+              themePreference === theme
+                ? themeColors.primary
+                : themeColors.border || 'rgba(0,0,0,0.1)',
           },
         ]}>
         <MaterialCommunityIcons
           name={icon}
-          size={20}
+          size={18}
           color={themePreference === theme ? '#fff' : themeColors.text}
           style={styles.icon}
         />
@@ -204,7 +263,10 @@ const Settings = () => {
           {
             backgroundColor:
               language === langValue ? themeColors.primary : 'transparent',
-            borderColor: themeColors.border || '#444',
+            borderColor:
+              language === langValue
+                ? themeColors.primary
+                : themeColors.border || 'rgba(0,0,0,0.1)',
           },
         ]}>
         <Text
@@ -222,106 +284,108 @@ const Settings = () => {
   return (
     <SafeAreaView
       style={[styles.container, {backgroundColor: themeColors.background}]}>
-      <ScrollView>
-        {/* Font Size Settings */}
-        <View
-          style={[
-            styles.listItem,
-            {borderBottomColor: themeColors.border || '#444'},
-          ]}>
-          <Text style={[styles.title, {color: themeColors.text}]}>
-            Font Size
-          </Text>
-          <View style={styles.controls}>
-            <TouchableOpacity
-              onPress={() => changeFontSize(Math.max(12, fontSize - 2))}
-              style={styles.button}>
-              <MaterialCommunityIcons
-                name="minus"
-                size={20}
-                color={themeColors.primary}
+    
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}>
+        {/* Appearance Section */}
+        <Section title="Appearance" themeColors={themeColors}>
+          <SettingRow
+            label="Theme"
+            description="Customize how the app looks"
+            themeColors={themeColors}>
+            <View style={styles.optionContainer}>
+              <ThemeOption
+                theme="light"
+                label="Light"
+                icon="white-balance-sunny"
               />
-            </TouchableOpacity>
-            <Text style={[styles.fontValue, {color: themeColors.text}]}>
-              {fontSize}
-            </Text>
-            <TouchableOpacity
-              onPress={() => changeFontSize(Math.min(24, fontSize + 2))}
-              style={styles.button}>
-              <MaterialCommunityIcons
-                name="plus"
-                size={20}
-                color={themeColors.primary}
+              <ThemeOption
+                theme="dark"
+                label="Dark"
+                icon="moon-waning-crescent"
               />
-            </TouchableOpacity>
-          </View>
-        </View>
+              <ThemeOption
+                theme="system"
+                label="System"
+                icon="theme-light-dark"
+              />
+            </View>
+          </SettingRow>
 
-        {/* Language Settings */}
-        <View
-          style={[
-            styles.listItem,
-            {borderBottomColor: themeColors.border || '#444'},
-          ]}>
-          <Text style={[styles.title, {color: themeColors.text}]}>
-            Language
-          </Text>
+          <SettingRow
+            label="Font Size"
+            description="Adjust the lyrics reading size"
+            themeColors={themeColors}
+            isLast={true}>
+            <View style={styles.controls}>
+              <TouchableOpacity
+                onPress={() => changeFontSize(Math.max(12, fontSize - 2))}
+                style={[
+                  styles.button,
+                  {backgroundColor: themeColors.cardBackground},
+                ]}>
+                <MaterialCommunityIcons
+                  name="minus"
+                  size={18}
+                  color={themeColors.primary}
+                />
+              </TouchableOpacity>
+              <Text style={[styles.fontValue, {color: themeColors.text}]}>
+                {fontSize}
+              </Text>
+              <TouchableOpacity
+                onPress={() => changeFontSize(Math.min(24, fontSize + 2))}
+                style={[
+                  styles.button,
+                  {backgroundColor: themeColors.cardBackground},
+                ]}>
+                <MaterialCommunityIcons
+                  name="plus"
+                  size={18}
+                  color={themeColors.primary}
+                />
+              </TouchableOpacity>
+            </View>
+          </SettingRow>
+        </Section>
 
-          <View style={styles.optionContainer}>
-            <LanguageOption
-              langValue={LANGUAGES.GUJARATI}
-              label={LANGUAGE_NAMES[LANGUAGES.GUJARATI]}
-            />
-            <LanguageOption
-              langValue={LANGUAGES.HINDI}
-              label={LANGUAGE_NAMES[LANGUAGES.HINDI]}
-            />
-          </View>
-        </View>
+        {/* Localization Section */}
+        <Section title="Localization" themeColors={themeColors}>
+          <SettingRow
+            label="Language"
+            description="Choose your preferred language"
+            themeColors={themeColors}
+            isLast={true}>
+            <View style={styles.optionContainer}>
+              <LanguageOption
+                langValue={LANGUAGES.GUJARATI}
+                label={LANGUAGE_NAMES[LANGUAGES.GUJARATI]}
+              />
+              <LanguageOption
+                langValue={LANGUAGES.HINDI}
+                label={LANGUAGE_NAMES[LANGUAGES.HINDI]}
+              />
+            </View>
+          </SettingRow>
+        </Section>
 
-        {/* Theme Settings */}
-        <View
-          style={[
-            styles.listItem,
-            {borderBottomColor: themeColors.border || '#444'},
-          ]}>
-          <Text style={[styles.title, {color: themeColors.text}]}>Theme</Text>
-          <View style={styles.optionContainer}>
-            <ThemeOption
-              theme="light"
-              label="Light"
-              icon="white-balance-sunny"
-            />
-            <ThemeOption
-              theme="dark"
-              label="Dark"
-              icon="moon-waning-crescent"
-            />
-            <ThemeOption
-              theme="system"
-              label="System"
-              icon="theme-light-dark"
-            />
-          </View>
-        </View>
-
-        {/* Singer Mode Settings */}
-        <View
-          style={[
-            styles.listItem,
-            {borderBottomColor: themeColors.border || '#444'},
-          ]}>
-          <Text style={[styles.title, {color: themeColors.text}]}>
-            Singer Mode
-          </Text>
-          <View style={styles.optionContainer}>
+        {/* Advanced Section */}
+        <Section title="Advanced" themeColors={themeColors}>
+          <SettingRow
+            label="Singer Mode"
+            description="Optimized layout for singers"
+            themeColors={themeColors}
+            isLast={true}
+            horizontal={true}>
             <AnimatedToggle
               isOn={isSingerMode}
               onToggle={toggleSingerMode}
               themeColors={themeColors}
             />
-          </View>
-        </View>
+          </SettingRow>
+        </Section>
       </ScrollView>
     </SafeAreaView>
   );
@@ -331,63 +395,114 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  listItem: {
-    flexDirection: 'column',
-    paddingVertical: 12,
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  section: {
+    marginTop: 24,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    marginBottom: 8,
   },
-  title: {
-    fontSize: 16,
-    fontWeight: 'bold',
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 10,
+    marginLeft: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    opacity: 0.8,
   },
-  subtitle: {
+  sectionCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  settingRow: {
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+  },
+  settingRowHorizontal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  settingInfo: {
+    flex: 1,
+  },
+  settingLabel: {
+    fontSize: 17,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  settingDescription: {
     fontSize: 14,
     marginTop: 4,
+    opacity: 0.7,
+    lineHeight: 18,
+    paddingRight: 10,
+  },
+  settingControl: {
+    marginTop: 12,
+  },
+  settingControlHorizontal: {
+    marginTop: 0,
+    marginLeft: 10,
+  },
+  divider: {
+    height: 1,
+    marginHorizontal: 16,
   },
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
+    gap: 15,
   },
   button: {
-    padding: 6,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   fontValue: {
-    marginHorizontal: 10,
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '700',
+    minWidth: 24,
+    textAlign: 'center',
   },
   optionContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 8,
     gap: 10,
   },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    borderWidth: 1,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
   },
   optionText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   icon: {
     marginRight: 6,
   },
-  settingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   toggleButton: {
-    width: 46,
-    height: 28,
-    borderRadius: 14,
+    width: 44,
+    height: 26,
+    borderRadius: 13,
     borderWidth: 1,
     justifyContent: 'center',
   },

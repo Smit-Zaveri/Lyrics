@@ -402,7 +402,7 @@ const AddSong = () => {
           <TouchableOpacity
             style={styles.closeButton}
             onPress={() => setFullScreen(false)}>
-            <Icon name="close" size={30} color="#FFFFFF" />
+            <Icon name="close" size={28} color="#FFFFFF" />
           </TouchableOpacity>
 
           <FlatList
@@ -562,16 +562,19 @@ const AddSong = () => {
         contentContainerStyle={styles.scrollViewContent}
         keyboardShouldPersistTaps="handled">
         <View style={styles.formGroup}>
-          <Text style={[styles.label, {color: themeColors.text}]}>
-            Song Title*
-          </Text>
+          <View style={styles.labelContainer}>
+            <Icon name="title" size={16} color={themeColors.primary} style={styles.labelIcon} />
+            <Text style={[styles.label, {color: themeColors.text}]}>
+              Song Title*
+            </Text>
+          </View>
           <TextInput
             style={[
               styles.input,
               {
                 backgroundColor: themeColors.surface,
                 color: themeColors.text,
-                borderColor: themeColors.border,
+                borderColor: themeColors.primary + '20',
               },
             ]}
             value={title}
@@ -582,9 +585,12 @@ const AddSong = () => {
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={[styles.label, {color: themeColors.text}]}>
-            Tags (Optional)
-          </Text>
+          <View style={styles.labelContainer}>
+            <Icon name="local-offer" size={16} color={themeColors.primary} style={styles.labelIcon} />
+            <Text style={[styles.label, {color: themeColors.text}]}>
+              Tags (Optional)
+            </Text>
+          </View>
 
           <ScrollView
             horizontal
@@ -599,9 +605,11 @@ const AddSong = () => {
                   styles.tagChip,
                   {
                     backgroundColor: selectedTags.includes(tag.name)
-                      ? themeColors.primary
+                      ? themeColors.primary + '15'
                       : themeColors.surface,
-                    borderColor: themeColors.border,
+                    borderColor: selectedTags.includes(tag.name)
+                      ? themeColors.primary
+                      : themeColors.primary + '25',
                   },
                 ]}>
                 <Text
@@ -609,7 +617,7 @@ const AddSong = () => {
                     styles.tagChipText,
                     {
                       color: selectedTags.includes(tag.name)
-                        ? '#fff'
+                        ? themeColors.primary
                         : themeColors.text,
                     },
                   ]}>
@@ -625,7 +633,7 @@ const AddSong = () => {
               {
                 backgroundColor: themeColors.surface,
                 color: themeColors.text,
-                borderColor: themeColors.border,
+                borderColor: themeColors.primary + '20',
                 marginTop: 8,
               },
             ]}
@@ -637,16 +645,19 @@ const AddSong = () => {
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={[styles.label, {color: themeColors.text}]}>
-            Lyrics/Content
-          </Text>
+          <View style={styles.labelContainer}>
+            <Icon name="lyrics" size={16} color={themeColors.primary} style={styles.labelIcon} />
+            <Text style={[styles.label, {color: themeColors.text}]}>
+              Lyrics/Content
+            </Text>
+          </View>
           <TextInput
             style={[
               styles.textArea,
               {
                 backgroundColor: themeColors.surface,
                 color: themeColors.text,
-                borderColor: themeColors.border,
+                borderColor: themeColors.primary + '20',
               },
             ]}
             value={content}
@@ -659,7 +670,10 @@ const AddSong = () => {
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={[styles.label, {color: themeColors.text}]}>Images</Text>
+          <View style={styles.labelContainer}>
+            <Icon name="image" size={16} color={themeColors.primary} style={styles.labelIcon} />
+            <Text style={[styles.label, {color: themeColors.text}]}>Images</Text>
+          </View>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -675,7 +689,7 @@ const AddSong = () => {
                 <TouchableOpacity
                   style={styles.removeImageButton}
                   onPress={() => removeImage(index)}>
-                  <Icon name="close" size={20} color="#fff" />
+                  <Icon name="close" size={18} color="#fff" />
                 </TouchableOpacity>
               </View>
             ))}
@@ -691,7 +705,7 @@ const AddSong = () => {
               onPress={handleMediaPicker}>
               <Icon
                 name="add-photo-alternate"
-                size={20}
+                size={18}
                 color="#fff"
                 style={styles.buttonIcon}
               />
@@ -732,7 +746,7 @@ const AddSong = () => {
                   setShowMediaOptions(false);
                   handleCameraCapture();
                 }}>
-                <Icon name="camera-alt" size={24} color={themeColors.primary} />
+                <Icon name="camera-alt" size={22} color={themeColors.primary} />
                 <Text
                   style={[styles.modalOptionText, {color: themeColors.text}]}>
                   Take Photo
@@ -750,7 +764,7 @@ const AddSong = () => {
                 }}>
                 <Icon
                   name="photo-library"
-                  size={24}
+                  size={22}
                   color={themeColors.primary}
                 />
                 <Text
@@ -796,7 +810,7 @@ const AddSong = () => {
               <>
                 <Icon
                   name="save"
-                  size={20}
+                  size={18}
                   color="#fff"
                   style={styles.buttonIcon}
                 />
@@ -820,175 +834,217 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollViewContent: {
-    padding: 20,
+    padding: 16,
   },
   formGroup: {
-    marginBottom: 10,
+    marginBottom: 18,
+  },
+  labelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  labelIcon: {
+    marginRight: 6,
   },
   label: {
-    fontWeight: '600',
-    marginBottom: 10,
-    fontSize: 16,
+    fontWeight: '700',
+    fontSize: 14,
+    letterSpacing: 0.3,
   },
   input: {
-    height: 45,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    fontSize: 16,
+    height: 44,
+    borderRadius: 10,
+    paddingHorizontal: 13,
+    fontSize: 15,
+    borderWidth: 1,
+    borderStyle: 'solid',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   textArea: {
-    height: 200,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingTop: 14,
-    fontSize: 16,
+    height: 180,
+    borderRadius: 10,
+    paddingHorizontal: 13,
+    paddingTop: 13,
+    fontSize: 15,
     textAlignVertical: 'top',
+    borderWidth: 1,
+    borderStyle: 'solid',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   saveButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: 8,
   },
   saveButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+    fontWeight: '700',
+    fontSize: 15,
   },
   buttonContainer: {
-    marginVertical: 10,
+    marginVertical: 8,
+    marginTop: 12,
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 54,
-    borderRadius: 12,
+    height: 48,
+    borderRadius: 10,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   buttonIcon: {
-    marginRight: 10,
+    marginRight: 8,
   },
   tagsContainer: {
-    maxHeight: 44,
+    maxHeight: 40,
+    marginBottom: 8,
   },
   tagsScrollContent: {
     alignItems: 'center',
   },
   tagChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 7,
-    // borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 18,
+    marginRight: 6,
+    borderWidth: 1.5,
+    borderStyle: 'solid',
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-    elevation: 1,
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
   },
   tagChipText: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '600',
   },
   imageContainer: {
-    maxHeight: 110,
+    maxHeight: 100,
+    marginBottom: 8,
   },
   imageScrollContent: {
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: 3,
   },
   imageWrapper: {
     position: 'relative',
-    marginRight: 12,
-    borderRadius: 12,
+    marginRight: 10,
+    borderRadius: 10,
     overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'transparent',
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.15,
-    shadowRadius: 3,
+    shadowRadius: 4,
     elevation: 3,
   },
   image: {
-    width: 100,
-    height: 100,
+    width: 90,
+    height: 90,
     borderRadius: 8,
   },
   removeImageButton: {
     position: 'absolute',
-    top: 6,
-    right: 6,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
+    top: 5,
+    right: 5,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    borderRadius: 14,
+    width: 28,
+    height: 28,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
   mediaButtonsContainer: {
     flexDirection: 'row',
-    marginTop: 12,
+    marginTop: 10,
     justifyContent: 'center',
   },
   mediaButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 50,
-    borderRadius: 12,
+    height: 44,
+    borderRadius: 10,
     flex: 1,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.15,
-    shadowRadius: 3,
+    shadowRadius: 4,
     elevation: 3,
   },
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
   },
   modalContent: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    // padding: 24,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: -3},
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 5,
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginVertical: 20,
+    fontSize: 18,
+    fontWeight: '700',
+    marginVertical: 18,
     textAlign: 'center',
+    letterSpacing: 0.3,
   },
   modalOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderBottomWidth: 1,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 0.5,
   },
   modalOptionText: {
-    fontSize: 16,
-    marginLeft: 18,
-    fontWeight: '500',
+    fontSize: 15,
+    marginLeft: 16,
+    fontWeight: '600',
   },
   cancelButton: {
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 10,
+    padding: 14,
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 20,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   cancelButtonText: {
-    // color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '700',
   },
   fullScreenWrapper: {
     flex: 1,
@@ -1001,12 +1057,14 @@ const styles = StyleSheet.create({
     top: 40,
     right: 20,
     zIndex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   fullscreenImageContainer: {
     width: screenWidth,
@@ -1020,13 +1078,15 @@ const styles = StyleSheet.create({
   imageCounter: {
     position: 'absolute',
     bottom: 30,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 18,
     color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '700',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
 });
 
