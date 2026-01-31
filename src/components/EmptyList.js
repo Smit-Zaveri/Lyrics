@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { ThemeContext } from '../../App';
 
@@ -23,7 +23,6 @@ const EmptyList = () => {
       Animated.timing(iconOpacity, {
         toValue: 1,
         duration: 300,
-        easing: Easing.out(Easing.quad),
         useNativeDriver: true,
       }),
       Animated.spring(iconScale, {
@@ -40,13 +39,11 @@ const EmptyList = () => {
         Animated.timing(textOpacity, {
           toValue: 1,
           duration: 250,
-          easing: Easing.out(Easing.quad),
           useNativeDriver: true,
         }),
         Animated.timing(textTranslateY, {
           toValue: 0,
           duration: 250,
-          easing: Easing.out(Easing.back(1.5)),
           useNativeDriver: true,
         }),
       ]).start();
@@ -58,13 +55,11 @@ const EmptyList = () => {
         Animated.timing(subtextOpacity, {
           toValue: 1,
           duration: 250,
-          easing: Easing.out(Easing.quad),
           useNativeDriver: true,
         }),
         Animated.timing(subtextTranslateY, {
           toValue: 0,
           duration: 250,
-          easing: Easing.out(Easing.back(1.5)),
           useNativeDriver: true,
         }),
       ]).start();
@@ -76,13 +71,11 @@ const EmptyList = () => {
         Animated.timing(pulseScale, {
           toValue: 1.08,
           duration: 800,
-          easing: Easing.inOut(Easing.sine),
           useNativeDriver: true,
         }),
         Animated.timing(pulseScale, {
           toValue: 1,
           duration: 800,
-          easing: Easing.inOut(Easing.sine),
           useNativeDriver: true,
         }),
       ]),
