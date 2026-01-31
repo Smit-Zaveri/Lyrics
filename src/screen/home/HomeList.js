@@ -266,7 +266,7 @@ const HomeList = () => {
     </View>
   );
 
-  if (isLoading) {
+  if (isLoading || refreshing) {
     return (
       <SafeAreaView
         style={[styles.flex, {backgroundColor: themeColors.background}]}>

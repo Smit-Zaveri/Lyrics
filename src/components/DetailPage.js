@@ -1,3 +1,19 @@
+/**
+ * DetailPage Component
+ *
+ * Displays detailed view of a song including lyrics, media content,
+ * collections management, and navigation between songs. Supports singer mode with
+ * related songs based on numeric tags.
+ *
+ * Features:
+ * - Song lyrics display with localization support
+ * - Swipe navigation between songs
+ * - Collections management (add/remove songs)
+ * - Edit and delete functionality for user-added songs
+ * - Media content display (images/videos)
+ * - Related songs in singer mode
+ * - Smooth animations for transitions
+ */
 import React, {
   useState,
   useEffect,
@@ -15,26 +31,18 @@ import {
   PanResponder,
   ScrollView,
   Alert,
-  TouchableOpacity,
-  Modal,
-  Pressable,
-  Image,
-  Dimensions,
   StyleSheet,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Sound from 'react-native-sound';
 import CustomMaterialMenu from './CustomMaterialMenu';
 import {ThemeContext} from '../../App';
 import {LanguageContext} from '../context/LanguageContext';
 import {FontSizeContext} from '../context/FontSizeContext';
 import {Linking} from 'react-native';
 import {useSingerMode} from '../context/SingerModeContext';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 
 // Import sub-components
 import {
-  AudioPlayer,
   CollectionsModal,
   ActionButtons,
   NavigationHandler,
@@ -42,6 +50,8 @@ import {
   MediaContent,
   DeleteConfirmationModal,
 } from './DetailPageComponents';
+
+// ==================== Helper Functions ====================
 
 // Helper function: Seeded random generator (Mulberry32)
 function seededRandom(seed) {
@@ -71,13 +81,56 @@ const shuffleArray = (array, seedStr) => {
   return shuffled;
 };
 
+// Helper function to find related songs in singer mode
+const findRelatedSongs = (song, Lyrics, getString) => {
+  const findNumericTag = tags => {
+    if (!tags || !Array.isArray(tags)) return null;
+
+    for (const tag of tags) {
+      const tagValue = Array.isArray(tag) ? getString(tag) : tag;
+      if (/^[1-9]$/.test(tagValue)) {
+        return tagValue;
+      }
+    }
+    return null;
+  };
+
+  const songNumericTag = findNumericTag(song.tags);
+
+  if (songNumericTag) {
+    const matchingSongs = Lyrics.filter(
+      item =>
+        item.id !== song.id &&
+        Array.isArray(item.tags) &&
+        item.tags.some(tag => {
+          const tagValue = Array.isArray(tag) ? getString(tag) : tag;
+          return tagValue === songNumericTag;
+        }),
+    );
+
+    // Use seeded shuffle for consistency
+    const now = new Date();
+    const hour = now.getHours();
+    const songOrder =
+      song.filteredIndex || song.order || song.numbering || 1;
+    const seedStr = `${hour}-${songOrder}`;
+    return shuffleArray(matchingSongs, seedStr).slice(0, 5);
+  }
+
+  return [];
+};
+
+// ==================== Main Component ====================
+
 const DetailPage = ({navigation, route}) => {
+  // ==================== Contexts and Hooks ====================
   const {themeColors} = useContext(ThemeContext);
   const {getString} = useContext(LanguageContext);
   const {fontSize} = useContext(FontSizeContext);
   const {isSingerMode} = useSingerMode();
   const {itemNumberingparas, Lyrics} = route.params;
 
+  // ==================== State Variables ====================
   // Main state
   const [itemNumbering, setItemNumbering] = useState(itemNumberingparas);
   const [song, setSong] = useState(null);
@@ -92,17 +145,7 @@ const DetailPage = ({navigation, route}) => {
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Audio playback state
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [sound, setSound] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [audioError, setAudioError] = useState(null);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [isSeeking, setIsSeeking] = useState(false);
-  const [seekValue, setSeekValue] = useState(0);
-
-  // Animation values
+  // ==================== Animation Values ====================
   const [slideAnim] = useState(new Animated.Value(0));
   const [opacityAnim] = useState(new Animated.Value(1));
   const [scaleAnim] = useState(new Animated.Value(1));
@@ -111,17 +154,17 @@ const DetailPage = ({navigation, route}) => {
   const [editFabAnim] = useState(new Animated.Value(1));
   const [deleteFabAnim] = useState(new Animated.Value(1));
 
-  // Refs
+  // ==================== Refs ====================
   const scrollViewRef = useRef(null);
-  const progressIntervalRef = useRef(null);
-
-  // Add state to track updates
-  const [refreshKey, setRefreshKey] = useState(0);
 
   // Add new state for delete modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // Function to refresh song data
+  // ==================== Effects ====================
+
+  /**
+   * Refreshes the current song data from AsyncStorage and updates related songs if in singer mode.
+   */
   const refreshSongData = useCallback(async () => {
     if (!song || !song.id) return;
 
@@ -152,44 +195,8 @@ const DetailPage = ({navigation, route}) => {
         );
 
         if (isSingerMode) {
-          const findNumericTag = tags => {
-            if (!tags || !Array.isArray(tags)) return null;
-
-            for (const tag of tags) {
-              const tagValue = Array.isArray(tag) ? getString(tag) : tag;
-              if (/^[1-9]$/.test(tagValue)) {
-                return tagValue;
-              }
-            }
-            return null;
-          };
-
-          const songNumericTag = findNumericTag(updatedSong.tags);
-
-          if (songNumericTag) {
-            const matchingSongs = updatedLyrics.filter(
-              item =>
-                item.id !== updatedSong.id &&
-                Array.isArray(item.tags) &&
-                item.tags.some(tag => {
-                  const tagValue = Array.isArray(tag) ? getString(tag) : tag;
-                  return tagValue === songNumericTag;
-                }),
-            );
-
-            // Use seeded shuffle for consistency
-            const now = new Date();
-            const hour = now.getHours();
-            const songOrder =
-              updatedSong.filteredIndex ||
-              updatedSong.order ||
-              updatedSong.numbering ||
-              1;
-            const seedStr = `${hour}-${songOrder}`;
-            const related = shuffleArray(matchingSongs, seedStr).slice(0, 5);
-
-            setRelatedSongs(related);
-          }
+          const related = findRelatedSongs(updatedSong, updatedLyrics, getString);
+          setRelatedSongs(related);
         }
       }
     } catch (error) {
@@ -213,23 +220,7 @@ const DetailPage = ({navigation, route}) => {
     return unsubscribe;
   }, [navigation, refreshSongData, route.params?.songUpdated, song]);
 
-  useEffect(() => {
-    try {
-      Sound.setCategory('Playback');
-    } catch (error) {
-      console.error('Error setting sound category:', error);
-    }
-    return () => {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-      if (sound) {
-        sound.stop();
-        sound.release();
-        setSound(null);
-      }
-    };
-  }, []);
+  // ==================== Helper Functions ====================
 
   const panResponder = useMemo(
     () =>
@@ -332,6 +323,8 @@ const DetailPage = ({navigation, route}) => {
     );
   };
 
+  // ==================== Event Handlers ====================
+
   useEffect(() => {
     loadCollections();
   }, []);
@@ -381,46 +374,8 @@ const DetailPage = ({navigation, route}) => {
     setSong(foundSong);
 
     if (foundSong && isSingerMode) {
-      const findNumericTag = tags => {
-        if (!tags || !Array.isArray(tags)) return null;
-
-        for (const tag of tags) {
-          const tagValue = Array.isArray(tag) ? getString(tag) : tag;
-          if (/^[1-9]$/.test(tagValue)) {
-            return tagValue;
-          }
-        }
-        return null;
-      };
-
-      const songNumericTag = findNumericTag(foundSong.tags);
-
-      if (songNumericTag) {
-        const matchingSongs = Lyrics.filter(
-          item =>
-            item.id !== foundSong.id &&
-            Array.isArray(item.tags) &&
-            item.tags.some(tag => {
-              const tagValue = Array.isArray(tag) ? getString(tag) : tag;
-              return tagValue === songNumericTag;
-            }),
-        );
-
-        // Use seeded shuffle for consistency
-        const now = new Date();
-        const hour = now.getHours();
-        const songOrder =
-          foundSong.filteredIndex ||
-          foundSong.order ||
-          foundSong.numbering ||
-          1;
-        const seedStr = `${hour}-${songOrder}`;
-        const related = shuffleArray(matchingSongs, seedStr).slice(0, 5);
-
-        setRelatedSongs(related);
-      } else {
-        setRelatedSongs([]);
-      }
+      const related = findRelatedSongs(foundSong, Lyrics, getString);
+      setRelatedSongs(related);
     } else {
       setRelatedSongs([]);
     }
@@ -485,6 +440,10 @@ const DetailPage = ({navigation, route}) => {
     return unsubscribe;
   }, [navigation, itemNumbering, opacityAnim, scaleAnim, route.params, song]);
 
+  /**
+   * Navigates to the next or previous song with smooth animations.
+   * @param {string} direction - 'next' or 'prev'
+   */
   const navigateSong = direction => {
     if (Lyrics.length <= 1) return;
     try {
@@ -506,13 +465,6 @@ const DetailPage = ({navigation, route}) => {
           useNativeDriver: true,
         }),
       ]).start();
-
-      if (sound && isPlaying) {
-        sound.stop();
-        sound.release();
-        setSound(null);
-        setIsPlaying(false);
-      }
 
       const toValue = direction === 'next' ? 1 : -1;
 
@@ -720,74 +672,6 @@ const DetailPage = ({navigation, route}) => {
     }).start(() => setShowCollectionsModal(false));
   };
 
-  const togglePlayback = async () => {
-    if (!song?.audio) return;
-
-    try {
-      if (sound) {
-        if (isPlaying) {
-          sound.pause();
-          setIsPlaying(false);
-        } else {
-          sound.play(success => {
-            if (!success) {
-              setAudioError('Playback failed');
-              setIsPlaying(false);
-            }
-          });
-          setIsPlaying(true);
-        }
-      } else {
-        setIsLoading(true);
-        const newSound = new Sound(song.audio, null, error => {
-          setIsLoading(false);
-          if (error) {
-            setAudioError('Error loading audio');
-            return;
-          }
-          setDuration(newSound.getDuration());
-          newSound.play(success => {
-            if (!success) {
-              setAudioError('Playback failed');
-              setIsPlaying(false);
-            }
-          });
-          setSound(newSound);
-          setIsPlaying(true);
-
-          if (progressIntervalRef.current) {
-            clearInterval(progressIntervalRef.current);
-          }
-          progressIntervalRef.current = setInterval(() => {
-            newSound.getCurrentTime(seconds => {
-              if (!isSeeking) {
-                setProgress(seconds);
-                setSeekValue(seconds);
-              }
-            });
-          }, 100);
-        });
-      }
-    } catch (error) {
-      console.error('Error handling playback:', error);
-      setAudioError('Error playing audio');
-      setIsLoading(false);
-    }
-  };
-
-  const handleSeekValueChange = value => {
-    setIsSeeking(true);
-    setSeekValue(value);
-  };
-
-  const handleSeekComplete = async value => {
-    setIsSeeking(false);
-    if (sound) {
-      sound.setCurrentTime(value);
-      setProgress(value);
-    }
-  };
-
   const openYouTubeApp = async () => {
     if (!song?.youtube) return;
 
@@ -834,6 +718,8 @@ const DetailPage = ({navigation, route}) => {
       setLoading(false);
     }
   };
+
+  // ==================== Render ====================
 
   if (!song) {
     return (
@@ -922,21 +808,6 @@ const DetailPage = ({navigation, route}) => {
           </ScrollView>
         </Animated.View>
 
-        <AudioPlayer
-          song={song}
-          sound={sound}
-          isPlaying={isPlaying}
-          isLoading={isLoading}
-          audioError={audioError}
-          progress={progress}
-          duration={duration}
-          seekValue={seekValue}
-          themeColors={themeColors}
-          onTogglePlayback={togglePlayback}
-          onSeekValueChange={handleSeekValueChange}
-          onSeekComplete={handleSeekComplete}
-        />
-
         <ActionButtons
           song={song}
           collections={collections}
@@ -1022,6 +893,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   contentText: {
+    marginTop: 12,
     lineHeight: 32,
   },
   relatedSongsContainer: {
