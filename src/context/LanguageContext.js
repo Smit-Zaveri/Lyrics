@@ -1,24 +1,24 @@
-import React, { createContext, useState, useEffect, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createContext, useEffect, useMemo, useState } from 'react';
 
-// Supported languages
+// Supported languages with numeric identifiers
 export const LANGUAGES = {
   GUJARATI: 0,
   HINDI: 1,
   ENGLISH: 2,
 };
 
-// Language names for display
+// Display names for languages in their native scripts
 export const LANGUAGE_NAMES = {
   [LANGUAGES.GUJARATI]: 'ગુજરાતી',
   [LANGUAGES.HINDI]: 'हिन्दी',
   [LANGUAGES.ENGLISH]: 'English',
 };
 
-// Default language
-const DEFAULT_LANGUAGE = LANGUAGES.ENGLISH;
+// Default language for the app
+const DEFAULT_LANGUAGE = LANGUAGES.GUJARATI;
 
-// Create Language Context
+// Context for managing app language state
 export const LanguageContext = createContext({
   language: DEFAULT_LANGUAGE,
   setLanguage: () => {},
@@ -31,6 +31,7 @@ export const LanguageProvider = ({ children }) => {
   const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
   const [isLanguageSelected, setIsLanguageSelected] = useState(false);
 
+  // Load saved language preference on component mount
   useEffect(() => {
     const loadLanguagePreference = async () => {
       try {
@@ -47,26 +48,27 @@ export const LanguageProvider = ({ children }) => {
     loadLanguagePreference();
   }, []);
 
-  // Helper function to get strings in selected language
+  // Get localized string based on current language
   const getString = (stringArray) => {
     if (!stringArray || !Array.isArray(stringArray)) {
       return '';
     }
-    
+
     if (language >= 0 && language < stringArray.length) {
       return stringArray[language];
     }
-    
-    // Fallback to the first available language if the selected language is not available
+
+    // Fallback to first available language
     for (let i = 0; i < stringArray.length; i++) {
       if (stringArray[i]) return stringArray[i];
     }
-    
+
     return '';
   };
 
   const languageName = LANGUAGE_NAMES[language];
 
+  // Save language preference and update state
   const setAndSaveLanguage = async (newLanguage) => {
     try {
       await AsyncStorage.setItem('languagePreference', newLanguage.toString());
@@ -77,6 +79,7 @@ export const LanguageProvider = ({ children }) => {
     }
   };
 
+  // Memoized context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
     language,
     setLanguage: setAndSaveLanguage,
