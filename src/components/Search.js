@@ -728,7 +728,7 @@ const Search = ({route}) => {
 		  <Animated.View
 			style={[
 			  styles.suggestionsContainer,
-			  {backgroundColor: themeColors.card},
+			  {backgroundColor: themeColors.cardBackground, borderColor: `${themeColors.text}15`},
 			  {
 				opacity: suggestionsAnim,
 				transform: [
@@ -747,7 +747,7 @@ const Search = ({route}) => {
 				],
 			  },
 			]}>
-			<Text style={[styles.suggestionsHeader, {color: themeColors.text}]}>
+			<Text style={[styles.suggestionsHeader, {color: themeColors.text, borderBottomColor: `${themeColors.text}15`, opacity: 0.8}]}>
 			  Suggestions
 			</Text>
 			<FlatList
@@ -763,9 +763,9 @@ const Search = ({route}) => {
 				  )}
 				  titleStyle={[
 					styles.suggestionItem,
-					{color: themeColors.primary},
+					{color: themeColors.text, lineHeight: 22},
 				  ]}
-				  style={styles.suggestionItemContainer}
+				  style={[styles.suggestionItemContainer, {backgroundColor: themeColors.surface, borderColor: `${themeColors.primary}40`}]}
 				  rippleColor={`${themeColors.primary}30`}
 				  accessibilityLabel={`Search suggestion: ${item}`}
 				  accessibilityHint="Tap to use this term in your search"
@@ -864,7 +864,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.08)',
     overflow: 'hidden',
   },
   suggestionsList: {
@@ -879,9 +878,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     textTransform: 'uppercase',
-    opacity: 0.6,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
   },
   suggestionItem: {
     fontSize: 15,
@@ -1030,6 +1027,7 @@ const styles = StyleSheet.create({
 	fontSize: 17,
 	fontWeight: '700',
 	letterSpacing: 0.2,
+	lineHeight: 24,
   },
   searchingContainer: {
 	flexDirection: 'row',
