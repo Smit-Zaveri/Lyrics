@@ -145,6 +145,7 @@ const Search = ({route}) => {
   const [fuzzyResults, setFuzzyResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [suggestionsCollapsed, setSuggestionsCollapsed] = useState(false);
 
   // Snackbar state
   const [snackbarVisible, setSnackbarVisible] = useState(false);
@@ -154,6 +155,7 @@ const Search = ({route}) => {
   const focusAnim = useRef(new Animated.Value(0)).current;
   const suggestionsAnim = useRef(new Animated.Value(0)).current;
   const didYouMeanAnim = useRef(new Animated.Value(0)).current;
+  const collapseAnim = useRef(new Animated.Value(0)).current;
   
   const handleFocus = useCallback(() => {
 	setIsFocused(true);
@@ -554,6 +556,19 @@ const Search = ({route}) => {
 	setSearchQuery(suggestion);
   };
 
+  const toggleSuggestionsCollapse = useCallback(() => {
+	setSuggestionsCollapsed(prev => {
+	  const newCollapsed = !prev;
+	  Animated.timing(collapseAnim, {
+		toValue: newCollapsed ? 0 : 1,
+		duration: 300,
+		easing: Easing.out(Easing.quad),
+		useNativeDriver: true,
+	  }).start();
+	  return newCollapsed;
+	});
+  }, [collapseAnim]);
+
   const handleDidYouMeanClick = () => {
 	if (didYouMean) {
 	  setSearchQuery(didYouMean);
@@ -641,6 +656,11 @@ const Search = ({route}) => {
 	  }).start();
 	}
   }, [didYouMean, searchQuery, filteredLyrics.length, didYouMeanAnim]);
+
+  // Initialize collapse animation
+  useEffect(() => {
+	collapseAnim.setValue(suggestionsCollapsed ? 0 : 1);
+  }, []);
 
   return (
 	<Provider>
@@ -747,37 +767,70 @@ const Search = ({route}) => {
 				],
 			  },
 			]}>
-			<Text style={[styles.suggestionsHeader, {color: themeColors.text, borderBottomColor: `${themeColors.text}15`, opacity: 0.8}]}>
-			  Suggestions
-			</Text>
-			<FlatList
-			  data={filteredSuggestions}
-			  renderItem={({item}) => (
-				<List.Item
-				  title={item}
-				  onPress={() => handleSuggestionClick(item)}
-				  left={() => (
-					<View style={[styles.leftIconContainer, {backgroundColor: `${themeColors.primary}20`}]}>
-					  <List.Icon icon="magnify" color={themeColors.primary} />
-					</View>
+			<TouchableOpacity
+			  onPress={toggleSuggestionsCollapse}
+			  style={[styles.suggestionsHeaderTouchable, ]}
+			  accessibilityLabel="Toggle suggestions"
+			  accessibilityHint="Tap to collapse or expand suggestions"
+			  accessibilityRole="button"
+			  activeOpacity={0.7}>
+			  <Text style={[styles.suggestionsHeader, {color: themeColors.text}]}>
+				Suggestions
+			  </Text>
+			  <Animated.View style={{
+				transform: [{
+				  rotate: collapseAnim.interpolate({
+					inputRange: [0, 1],
+					outputRange: ['0deg', '180deg'],
+				  })
+				}, ], 
+			  }}>
+				<List.Icon icon="chevron-down" color={themeColors.textSecondary} size={20} />
+			  </Animated.View>
+			</TouchableOpacity>
+			{!suggestionsCollapsed && (
+			  <Animated.View
+				style={{
+				  opacity: collapseAnim,
+				  transform: [{
+					scaleY: collapseAnim.interpolate({
+					  inputRange: [0, 1],
+					  outputRange: [0, 1],
+					}),
+				  }], borderTopColor: `${themeColors.text}15`, borderTopWidth: 1
+				}}>
+				<FlatList
+				  data={filteredSuggestions}
+				  renderItem={({item}) => (
+					<List.Item
+					  title={item}
+					  onPress={() => handleSuggestionClick(item)}
+					  left={() => (
+						<View style={[styles.leftIconContainer, {backgroundColor: `${themeColors.primary}20`}]}>
+						  <List.Icon icon="magnify" color={themeColors.primary} />
+						</View>
+					  )}
+					  titleStyle={[
+						styles.suggestionItem,
+						{color: themeColors.text, lineHeight: 22},
+					  ]}
+					  style={[styles.suggestionItemContainer, {backgroundColor: themeColors.surface, borderColor: `${themeColors.primary}40`}]}
+					  rippleColor={`${themeColors.primary}30`}
+					  accessibilityLabel={`Search suggestion: ${item}`}
+					  accessibilityHint="Tap to use this term in your search"
+					  accessibilityRole="button"
+					/>
 				  )}
-				  titleStyle={[
-					styles.suggestionItem,
-					{color: themeColors.text, lineHeight: 22},
-				  ]}
-				  style={[styles.suggestionItemContainer, {backgroundColor: themeColors.surface, borderColor: `${themeColors.primary}40`}]}
-				  rippleColor={`${themeColors.primary}30`}
-				  accessibilityLabel={`Search suggestion: ${item}`}
-				  accessibilityHint="Tap to use this term in your search"
-				  accessibilityRole="button"
+				  keyExtractor={(item, index) => index.toString()}
+				  style={styles.suggestionsList}
+				  contentContainerStyle={{paddingBottom: 45}}
+				  showsVerticalScrollIndicator={true}
+				  indicatorStyle="default"
+				  nestedScrollEnabled={true}
+				  ItemSeparatorComponent={() => <View style={{height: 2}} />}
 				/>
-			  )}
-			  keyExtractor={(item, index) => index.toString()}
-			  style={styles.suggestionsList}
-			  showsVerticalScrollIndicator={true}
-			  indicatorStyle="default"
-			  ItemSeparatorComponent={() => <View style={{height: 2}} />}
-			/>
+			  </Animated.View>
+			)}
 		  </Animated.View>
 		)}
 
@@ -846,6 +899,8 @@ const styles = StyleSheet.create({
 	// marginVertical: 12,
 	// borderRadius: 25,
 	// paddingVertical: 10,
+    marginHorizontal: 8,
+    borderRadius: 26,
 	paddingHorizontal: 16,
 	borderWidth: 0,
 	shadowColor: '#000',
@@ -878,7 +933,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     textTransform: 'uppercase',
-    borderBottomWidth: 1,
+  },
+  suggestionsHeaderTouchable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingRight: 16,
   },
   suggestionItem: {
     fontSize: 15,
