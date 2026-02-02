@@ -152,6 +152,8 @@ const Search = ({route}) => {
 
   // Focus animation for search bar
   const focusAnim = useRef(new Animated.Value(0)).current;
+  const suggestionsAnim = useRef(new Animated.Value(0)).current;
+  const didYouMeanAnim = useRef(new Animated.Value(0)).current;
   
   const handleFocus = useCallback(() => {
 	setIsFocused(true);
@@ -602,6 +604,44 @@ const Search = ({route}) => {
 	[suggestions, searchQuery],
   );
 
+  // Animate suggestions box appearance
+  useEffect(() => {
+	if (searchQuery.trim() && filteredSuggestions.length > 0) {
+	  Animated.timing(suggestionsAnim, {
+		toValue: 1,
+		duration: 200,
+		easing: Easing.out(Easing.quad),
+		useNativeDriver: true,
+	  }).start();
+	} else {
+	  Animated.timing(suggestionsAnim, {
+		toValue: 0,
+		duration: 150,
+		easing: Easing.in(Easing.quad),
+		useNativeDriver: true,
+	  }).start();
+	}
+  }, [searchQuery, filteredSuggestions.length, suggestionsAnim]);
+
+  // Animate "Did you mean" appearance
+  useEffect(() => {
+	if (didYouMean && searchQuery.trim() && filteredLyrics.length === 0) {
+	  Animated.spring(didYouMeanAnim, {
+		toValue: 1,
+		friction: 8,
+		tension: 40,
+		useNativeDriver: true,
+	  }).start();
+	} else {
+	  Animated.timing(didYouMeanAnim, {
+		toValue: 0,
+		duration: 150,
+		easing: Easing.in(Easing.quad),
+		useNativeDriver: true,
+	  }).start();
+	}
+  }, [didYouMean, searchQuery, filteredLyrics.length, didYouMeanAnim]);
+
   return (
 	<Provider>
 	  <Portal>
@@ -637,39 +677,96 @@ const Search = ({route}) => {
 
 		{/* Did you mean suggestion */}
 		{didYouMean && searchQuery.trim() && filteredLyrics.length === 0 && (
-		  <TouchableOpacity onPress={handleDidYouMeanClick}
-			accessibilityLabel="Did you mean suggestion"
-			accessibilityHint="Tap to use this suggested search term"
-			accessibilityRole="button">
-			<View style={styles.didYouMeanContainer}>
-			  <Text style={[styles.didYouMeanText, {color: themeColors.text}]}>
-				Did you mean:{' '}
-				<Text style={{color: themeColors.primary, fontWeight: 'bold'}}>
-				  {didYouMean}
-				</Text>
-				?
-			  </Text>
-			</View>
-		  </TouchableOpacity>
+		  <Animated.View
+			style={[
+			  {
+				opacity: didYouMeanAnim,
+				transform: [
+				  {
+					translateY: didYouMeanAnim.interpolate({
+					  inputRange: [0, 1],
+					  outputRange: [-10, 0],
+					}),
+				  },
+				  {
+					scale: didYouMeanAnim.interpolate({
+					  inputRange: [0, 1],
+					  outputRange: [0.9, 1],
+					}),
+				  },
+				],
+			  },
+			]}>
+			<TouchableOpacity
+			  onPress={handleDidYouMeanClick}
+			  accessibilityLabel="Did you mean suggestion"
+			  accessibilityHint="Tap to use this suggested search term"
+			  accessibilityRole="button"
+			  activeOpacity={0.7}>
+			  <View
+				style={[
+				  styles.didYouMeanContainer,
+				  {backgroundColor: `${themeColors.primary}15`, borderColor: `${themeColors.primary}40`},
+				]}>
+				<View style={[styles.didYouMeanIconContainer, {backgroundColor: `${themeColors.primary}25`}]}>
+				  <List.Icon icon="lightbulb-on-outline" color={themeColors.primary} size={20} />
+				</View>
+				<View style={styles.didYouMeanTextContainer}>
+				  <Text style={[styles.didYouMeanLabel, {color: themeColors.text}]}>Did you mean?</Text>
+				  <Text style={[styles.didYouMeanSuggestion, {color: themeColors.primary}]}>
+					{didYouMean}
+				  </Text>
+				</View>
+				<List.Icon icon="chevron-right" color={themeColors.primary} size={24} />
+			  </View>
+			</TouchableOpacity>
+		  </Animated.View>
 		)}
 
 		{/* Suggestions */}
 		{!!searchQuery.trim() && filteredSuggestions.length > 0 && (
-		  <View
+		  <Animated.View
 			style={[
 			  styles.suggestionsContainer,
 			  {backgroundColor: themeColors.card},
+			  {
+				opacity: suggestionsAnim,
+				transform: [
+				  {
+					translateY: suggestionsAnim.interpolate({
+					  inputRange: [0, 1],
+					  outputRange: [-10, 0],
+					}),
+				  },
+				  {
+					scale: suggestionsAnim.interpolate({
+					  inputRange: [0, 1],
+					  outputRange: [0.95, 1],
+					}),
+				  },
+				],
+			  },
 			]}>
+			<Text style={[styles.suggestionsHeader, {color: themeColors.text}]}>
+			  Suggestions
+			</Text>
 			<FlatList
 			  data={filteredSuggestions}
 			  renderItem={({item}) => (
 				<List.Item
 				  title={item}
 				  onPress={() => handleSuggestionClick(item)}
+				  left={() => (
+					<View style={[styles.leftIconContainer, {backgroundColor: `${themeColors.primary}20`}]}>
+					  <List.Icon icon="magnify" color={themeColors.primary} />
+					</View>
+				  )}
 				  titleStyle={[
 					styles.suggestionItem,
 					{color: themeColors.primary},
 				  ]}
+				  style={styles.suggestionItemContainer}
+				  rippleColor={`${themeColors.primary}30`}
 				  accessibilityLabel={`Search suggestion: ${item}`}
 				  accessibilityHint="Tap to use this term in your search"
 				  accessibilityRole="button"
@@ -677,8 +774,11 @@ const Search = ({route}) => {
 			  )}
 			  keyExtractor={(item, index) => index.toString()}
 			  style={styles.suggestionsList}
+			  showsVerticalScrollIndicator={true}
+			  indicatorStyle="default"
+			  ItemSeparatorComponent={() => <View style={{height: 2}} />}
 			/>
-		  </View>
+		  </Animated.View>
 		)}
 
 		{/* No results message */}
@@ -743,9 +843,9 @@ const styles = StyleSheet.create({
 	paddingBottom: 10,
   },
   searchbar: {
-	marginVertical: 12,
-	borderRadius: 25,
-	paddingVertical: 10,
+	// marginVertical: 12,
+	// borderRadius: 25,
+	// paddingVertical: 10,
 	paddingHorizontal: 16,
 	borderWidth: 0,
 	elevation: 4,
@@ -755,34 +855,67 @@ const styles = StyleSheet.create({
 	shadowRadius: 12,
   },
   suggestionsContainer: {
-	maxHeight: 240,
-	marginTop: 10,
-	borderRadius: 18,
-	borderWidth: 1,
-	elevation: 5,
-	shadowColor: '#000',
-	shadowOffset: {width: 0, height: 3},
-	shadowOpacity: 0.15,
-	shadowRadius: 10,
+    maxHeight: 280,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 3},
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    marginHorizontal: 8,
+    marginTop: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.08)',
+    overflow: 'hidden',
   },
   suggestionsList: {
-	paddingVertical: 4,
-	paddingHorizontal: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+  },
+  suggestionsHeader: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    textTransform: 'uppercase',
+    opacity: 0.6,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
   },
   suggestionItem: {
-	fontSize: 16,
-	paddingVertical: 14,
-	paddingHorizontal: 18,
-	fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  suggestionItemContainer: {
+    backgroundColor: 'transparent',
+    borderRadius: 12,
+    marginVertical: 4,
+    paddingVertical: 2,
+    elevation: 0,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.06)',
+  },
+  leftIconContainer: {
+    marginLeft: 8,
+    marginRight: 0,
+    padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 24,
+    width: 40,
+    height: 40,
   },
   itemContainer: {
 	flexDirection: 'row',
 	alignItems: 'center',
 	padding: 18,
-	marginVertical: 8,
+	marginVertical: 4,
 	borderRadius: 16,
 	borderWidth: 1,
-	elevation: 2,
+	// elevation: 2,
 	shadowColor: '#000',
 	shadowOffset: {width: 0, height: 2},
 	shadowOpacity: 0.08,
@@ -862,17 +995,44 @@ const styles = StyleSheet.create({
 	textAlign: 'center',
   },
   didYouMeanContainer: {
-	marginHorizontal: 12,
-	marginVertical: 14,
-	padding: 18,
+	flexDirection: 'row',
+	alignItems: 'center',
+	marginHorizontal: 8,
+	marginTop: 12,
+	marginBottom: 8,
+	paddingVertical: 16,
+	paddingHorizontal: 16,
 	borderRadius: 16,
-	borderWidth: 1,
-	backgroundColor: 'rgba(103, 59, 183, 0.1)',
+	borderWidth: 1.5,
+	shadowColor: '#000',
+	shadowOffset: {width: 0, height: 2},
+	shadowOpacity: 0.1,
+	shadowRadius: 4,
   },
-  didYouMeanText: {
-	fontSize: 15,
-	textAlign: 'center',
-	lineHeight: 20,
+  didYouMeanIconContainer: {
+	width: 36,
+	height: 36,
+	borderRadius: 18,
+	justifyContent: 'center',
+	alignItems: 'center',
+	marginRight: 12,
+  },
+  didYouMeanTextContainer: {
+	flex: 1,
+	flexDirection: 'column',
+  },
+  didYouMeanLabel: {
+	fontSize: 12,
+	fontWeight: '600',
+	letterSpacing: 0.3,
+	opacity: 0.7,
+	marginBottom: 4,
+	textTransform: 'uppercase',
+  },
+  didYouMeanSuggestion: {
+	fontSize: 17,
+	fontWeight: '700',
+	letterSpacing: 0.2,
   },
   searchingContainer: {
 	flexDirection: 'row',
