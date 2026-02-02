@@ -26,7 +26,6 @@
 ![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF.svg?style=flat&logo=Kotlin&logoColor=white)
 ![Podman](https://img.shields.io/badge/Podman-892CA0.svg?style=flat&logo=Podman&logoColor=white)
 ![React Hook Form](https://img.shields.io/badge/React%20Hook%20Form-EC5990.svg?style=flat&logo=React-Hook-Form&logoColor=white)
-![Jest](https://img.shields.io/badge/Jest-C21325.svg?style=flat&logo=Jest&logoColor=white)
 
 </div>
 
@@ -155,23 +154,6 @@ src/
 
 * React Navigation (Stack + Tab)
 * Dynamic headers and route configs
-
----
-
-## Testing
-
-Lyrics uses Jest for testing:
-
-```bash
-npm test
-```
-
-Or other test runners if needed:
-
-```bash
-bundle exec rspec
-gradle test
-```
 
 ---
 

@@ -29,7 +29,7 @@ import ListItem from './ListItem';
 import EmptyList from './EmptyList';
 import SkeletonItem from './SkeletonItem';
 import {ThemeContext} from '../../App';
-import {LanguageContext} from '../context/LanguageContext';
+import {LanguageContext, LANGUAGES} from '../context/LanguageContext';
 import {useSingerMode} from '../context/SingerModeContext';
 
 // Enable layout animations on iOS for smooth UI transitions
@@ -105,6 +105,14 @@ const List = ({route}) => {
 
       const filteredItems = lyrics.filter(item => {
         if (!item) return false;
+
+        // Language availability check
+        const titleArray = Array.isArray(item.title) ? item.title : [];
+        const contentArray = Array.isArray(item.content) ? item.content : [];
+        const hasSelectedLanguage = (titleArray[language] && titleArray[language].trim()) || (contentArray[language] && contentArray[language].trim());
+        const hasEnglish = (titleArray[LANGUAGES.ENGLISH] && titleArray[LANGUAGES.ENGLISH].trim()) || (contentArray[LANGUAGES.ENGLISH] && contentArray[LANGUAGES.ENGLISH].trim());
+        if (!hasSelectedLanguage && !hasEnglish) return false;
+
         if (tags.length === 0) return true;
 
         return tags.every(selectedTag => {
@@ -146,7 +154,7 @@ const List = ({route}) => {
         stableId: item.id || `item-${item.numbering || index}`,
       }));
     },
-    [getString],
+    [getString, language],
   );
 
   // Load lyrics and tags from storage or use custom data
