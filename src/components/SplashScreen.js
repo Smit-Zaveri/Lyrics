@@ -31,6 +31,10 @@ const SplashScreen = () => {
   // Use direct theme colors based on system only
   const themeColors = isDarkMode ? colors.dark : colors.light;
 
+  // Glassy background for footer
+  const glassyBackground = isDarkMode ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.25)';
+  const glassyBorder = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.15)';
+
   // Choose logo based on system dark/light mode
   const logoSource = isDarkMode
     ? require('../assets/logo.png')
@@ -187,24 +191,27 @@ const styles = StyleSheet.create({
   },
   footer: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 30,
+    width: '20%',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        shadowOffset: {width: 0, height: 6},
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
       },
       android: {
-        elevation: 2,
+        elevation: 6,
       },
     }),
   },
   footerText: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '500',
   },
 });

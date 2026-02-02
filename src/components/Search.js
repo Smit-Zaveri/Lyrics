@@ -1,39 +1,33 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
+import { useNavigation } from '@react-navigation/native';
+import Fuse from 'fuse.js';
+import {
   useCallback,
-  useMemo,
   useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from 'react';
 import {
-  SafeAreaView,
-  FlatList,
   ActivityIndicator,
-  RefreshControl,
-  View,
-  Text,
-  Modal,
-  StyleSheet,
-  Pressable,
-  TouchableOpacity,
   Animated,
   Easing,
+  FlatList,
+  Modal,
+  RefreshControl,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {Searchbar, List, Portal, Provider, Chip, Snackbar} from 'react-native-paper';
-import {getFromAsyncStorage} from '../config/dataService';
-import {colors} from '../theme/theme';
+import { List, Portal, Provider, Searchbar, Snackbar } from 'react-native-paper';
+import { transliterate } from 'transliteration';
+import { ThemeContext } from '../../App';
+import { getFromAsyncStorage } from '../config/dataService';
+import { LanguageContext } from '../context/LanguageContext';
 import EmptyList from './EmptyList';
 import ListItem from './ListItem';
-import {ThemeContext} from '../../App';
-import {LanguageContext} from '../context/LanguageContext';
-import Fuse from 'fuse.js';
-import {transliterate} from 'transliteration';
-
-// Precompiled regex patterns for suggestion fixes
-const camelCaseRegex = /([a-z])([A-Z])/g;
-const devanagariRegex = /([a-zA-Z])([\u0A80-\u0AFF])/g;
 
 // Helper function to escape regex special characters in search terms
 const escapeRegex = term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -50,9 +44,25 @@ const hasIndicChars = text => {
 // Function to attempt converting Latin to approximate Indic script sounds
 // This is a very simple approximation - won't be perfect but helps with search
 const latinToIndic = text => {
-  // Simple mapping for common sounds with both Gujarati and Hindi equivalents
-  const indicSounds = {
-    // Gujarati vowels
+  // Simple syllable-based mapping for Gujarati
+  const gujaratiSyllables = {
+    ka: 'ક',
+    ga: 'ગ',
+    cha: 'ચ',
+    ja: 'જ',
+    ta: 'ત',
+    da: 'દ',
+    na: 'ન',
+    pa: 'પ',
+    ba: 'બ',
+    ma: 'મ',
+    ya: 'ય',
+    ra: 'ર',
+    la: 'લ',
+    va: 'વ',
+    sa: 'સ',
+    ha: 'હ',
+    sha: 'શ',
     aa: 'આ',
     ee: 'ઈ',
     oo: 'ઉ',
@@ -61,103 +71,50 @@ const latinToIndic = text => {
     i: 'ઇ',
     o: 'ઓ',
     u: 'ઉ',
-
-    // Hindi vowels
-    'aa-h': 'आ',
-    'ee-h': 'ई',
-    'oo-h': 'ऊ',
-    'a-h': 'अ',
-    'e-h': 'ए',
-    'i-h': 'इ',
-    'o-h': 'ओ',
-    'u-h': 'उ',
-
-    // Gujarati consonants
-    k: 'ક',
-    g: 'ગ',
-    ch: 'ચ',
-    j: 'જ',
-    t: 'ત',
-    d: 'દ',
-    n: 'ન',
-    p: 'પ',
-    b: 'બ',
-    m: 'મ',
-    y: 'ય',
-    r: 'ર',
-    l: 'લ',
-    v: 'વ',
-    s: 'સ',
-    h: 'હ',
-    sh: 'શ',
-
-    // Hindi consonants
-    'k-h': 'क',
-    'g-h': 'ग',
-    'ch-h': 'च',
-    'j-h': 'ज',
-    't-h': 'त',
-    'd-h': 'द',
-    'n-h': 'न',
-    'p-h': 'प',
-    'b-h': 'ब',
-    'm-h': 'म',
-    'y-h': 'य',
-    'r-h': 'र',
-    'l-h': 'ल',
-    'v-h': 'व',
-    's-h': 'स',
-    'h-h': 'ह',
-    'sh-h': 'श',
   };
 
-  // This is just a simple approximation
-  let result = text.toLowerCase();
-
-  // First try specific Hindi mappings (with -h suffix)
-  Object.keys(indicSounds).forEach(sound => {
-    result = result.replace(new RegExp(sound, 'g'), indicSounds[sound]);
-  });
-
-  // Create a combined result with both scripts for better search matching
-  let hindiResult = '';
-  let gujaratiResult = '';
-
-  // Basic conversion for simple characters to both scripts
-  // This helps with searching when language is not specified
-  const basicConversions = {
-    a: ['अ', 'અ'],
-    e: ['ए', 'એ'],
-    i: ['इ', 'ઇ'],
-    o: ['ओ', 'ઓ'],
-    u: ['उ', 'ઉ'],
-    k: ['क', 'ક'],
-    g: ['ग', 'ગ'],
-    ch: ['च', 'ચ'],
-    j: ['ज', 'જ'],
-    t: ['त', 'ત'],
-    d: ['द', 'દ'],
-    n: ['न', 'ન'],
-    p: ['प', 'પ'],
-    b: ['ब', 'બ'],
-    m: ['म', 'મ'],
-    r: ['र', 'ર'],
+  // Simple syllable-based mapping for Hindi
+  const hindiSyllables = {
+    ka: 'क',
+    ga: 'ग',
+    cha: 'च',
+    ja: 'ज',
+    ta: 'त',
+    da: 'द',
+    na: 'न',
+    pa: 'प',
+    ba: 'ब',
+    ma: 'म',
+    ya: 'य',
+    ra: 'र',
+    la: 'ल',
+    va: 'व',
+    sa: 'स',
+    ha: 'ह',
+    sha: 'श',
+    aa: 'आ',
+    ee: 'ई',
+    oo: 'ऊ',
+    a: 'अ',
+    e: 'ए',
+    i: 'इ',
+    o: 'ओ',
+    u: 'उ',
   };
 
-  // Apply basic conversions to generate results in both scripts
-  const chars = text.toLowerCase().split('');
-  chars.forEach(char => {
-    if (basicConversions[char]) {
-      hindiResult += basicConversions[char][0];
-      gujaratiResult += basicConversions[char][1];
-    } else {
-      hindiResult += char;
-      gujaratiResult += char;
-    }
+  let gujaratiResult = text.toLowerCase();
+  let hindiResult = text.toLowerCase();
+
+  // Apply syllable replacements
+  Object.keys(gujaratiSyllables).sort((a, b) => b.length - a.length).forEach(syllable => {
+    gujaratiResult = gujaratiResult.replace(new RegExp(syllable, 'g'), gujaratiSyllables[syllable]);
   });
 
-  // Return the original mapping plus additional Hindi and Gujarati approximations
-  return result + ' ' + hindiResult + ' ' + gujaratiResult;
+  Object.keys(hindiSyllables).sort((a, b) => b.length - a.length).forEach(syllable => {
+    hindiResult = hindiResult.replace(new RegExp(syllable, 'g'), hindiSyllables[syllable]);
+  });
+
+  return gujaratiResult + ' ' + hindiResult;
 };
 
 // Debounce function to limit how often a function is called
@@ -362,7 +319,7 @@ const Search = ({route}) => {
 
       return Array.from(suggestions);
     },
-    [getString],
+    [],
   );
 
   const loadData = useCallback(async () => {
@@ -469,6 +426,10 @@ const Search = ({route}) => {
         displayNumbering:
           result.item.order || result.item.numbering || index + 1,
         filteredIndex: index + 1,
+        stableId:
+          result.item.stableId ||
+          result.item.id ||
+          `item-${result.item.numbering || index}`,
         score: result.score,
       }));
 
@@ -552,6 +513,7 @@ const Search = ({route}) => {
         ...item,
         displayNumbering: item.order || item.numbering || index + 1,
         filteredIndex: index + 1,
+        stableId: item.stableId || item.id || `item-${item.numbering || index}`,
       }));
   }, [searchQuery, lyrics, fuzzyResults, isSearching]);
 
@@ -599,7 +561,7 @@ const Search = ({route}) => {
   const handleItemPress = item => {
     navigation.navigate('Details', {
       Lyrics: filteredLyrics,
-      itemNumberingparas: item.filteredIndex,
+      itemNumbering: item.filteredIndex,
       previousScreen: 'Search',
     });
   };

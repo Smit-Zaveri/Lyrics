@@ -128,11 +128,21 @@ const DetailPage = ({navigation, route}) => {
   const {getString} = useContext(LanguageContext);
   const {fontSize} = useContext(FontSizeContext);
   const {isSingerMode} = useSingerMode();
-  const {itemNumberingparas, Lyrics} = route.params;
+  const {
+    itemNumbering: routeItemNumbering,
+    itemNumberingparas,
+    Lyrics,
+  } = route.params || {};
+  const initialItemNumbering =
+    routeItemNumbering !== undefined && routeItemNumbering !== null
+      ? routeItemNumbering
+      : itemNumberingparas;
 
   // ==================== State Variables ====================
   // Main state
-  const [itemNumbering, setItemNumbering] = useState(itemNumberingparas);
+  const [itemNumbering, setItemNumbering] = useState(
+    initialItemNumbering || 1,
+  );
   const [song, setSong] = useState(null);
   const [relatedSongs, setRelatedSongs] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -364,7 +374,9 @@ const DetailPage = ({navigation, route}) => {
 
   const setSongByNumbering = useCallback(
     number => {
-      return Lyrics.find(item => item.filteredIndex === number);
+      const targetNumber = parseInt(number, 10);
+      if (!Lyrics || !Array.isArray(Lyrics)) return undefined;
+      return Lyrics.find(item => item.filteredIndex === targetNumber);
     },
     [Lyrics],
   );
@@ -494,9 +506,19 @@ const DetailPage = ({navigation, route}) => {
             item => item.filteredIndex === currentIndex,
           );
 
-          const currentPosition = currentSong
-            ? Lyrics.findIndex(item => item.stableId === currentSong.stableId)
-            : -1;
+          let currentPosition = -1;
+          if (currentSong) {
+            if (currentSong.stableId) {
+              currentPosition = Lyrics.findIndex(
+                item => item.stableId === currentSong.stableId,
+              );
+            }
+            if (currentPosition === -1) {
+              currentPosition = Lyrics.findIndex(
+                item => item.filteredIndex === currentSong.filteredIndex,
+              );
+            }
+          }
 
           if (currentPosition === -1) {
             let newIndex = currentIndex + toValue;
