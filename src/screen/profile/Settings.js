@@ -186,7 +186,6 @@ const AnimatedToggle = ({isOn, onToggle, themeColors}) => {
 			  shadowOffset: {width: 0, height: 1},
 			  shadowOpacity: 0.2,
 			  shadowRadius: 1.5,
-			  elevation: 2,
 			},
 		  ]}
 		/>

@@ -108,7 +108,6 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 5,
   },
   logo: {
     width: 120,
@@ -133,7 +132,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
     marginVertical: 8,
-    elevation: 2,
     width: '100%',
     alignItems: 'center',
   },

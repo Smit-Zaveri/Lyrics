@@ -107,16 +107,22 @@ const List = ({route}) => {
 		if (!item) return false;
 
 		// Language availability check
-		const titleArray = Array.isArray(item.title) ? item.title : [];
-		const contentArray = Array.isArray(item.content) ? item.content : [];
-		const hasSelectedLanguage =
-		  (titleArray[language] && titleArray[language].trim()) ||
-		  (contentArray[language] && contentArray[language].trim());
-		const hasEnglish =
-		  (titleArray[LANGUAGES.ENGLISH] &&
-			titleArray[LANGUAGES.ENGLISH].trim()) ||
-		  (contentArray[LANGUAGES.ENGLISH] &&
-			contentArray[LANGUAGES.ENGLISH].trim());
+		let hasSelectedLanguage = false;
+		let hasEnglish = false;
+
+		if (Array.isArray(item.title)) {
+		  hasSelectedLanguage =
+			(item.title[language] && item.title[language].trim()) ||
+			(item.content[language] && item.content[language].trim());
+		  hasEnglish =
+			(item.title[LANGUAGES.ENGLISH] && item.title[LANGUAGES.ENGLISH].trim()) ||
+			(item.content[LANGUAGES.ENGLISH] && item.content[LANGUAGES.ENGLISH].trim());
+		} else {
+		  // For string titles (user-added songs), assume it's in the selected language
+		  const titleContent = (item.title && item.title.trim()) || (item.content && item.content.trim());
+		  hasSelectedLanguage = !!titleContent;
+		  hasEnglish = language === LANGUAGES.ENGLISH && !!titleContent;
+		}
 		if (!hasSelectedLanguage && !hasEnglish) return false;
 
 		if (tags.length === 0) return true;
@@ -834,7 +840,6 @@ const styles = StyleSheet.create({
 	paddingHorizontal: 20,
 	paddingVertical: 12,
 	borderRadius: 24,
-	elevation: 2,
 	shadowColor: '#000',
 	shadowOffset: {width: 0, height: 2},
 	shadowOpacity: 0.1,
@@ -867,7 +872,6 @@ const styles = StyleSheet.create({
 	bottom: 20,
 	justifyContent: 'center',
 	alignItems: 'center',
-	elevation: 4,
 	shadowColor: '#000',
 	shadowOffset: {width: 0, height: 2},
 	shadowOpacity: 0.2,

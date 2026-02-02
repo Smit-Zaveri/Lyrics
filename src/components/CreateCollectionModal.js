@@ -244,18 +244,7 @@ const styles = StyleSheet.create({
 		paddingTop: 36,
 		paddingHorizontal: 28,
 		paddingBottom: 32,
-		alignItems: 'center',
-		...Platform.select({
-			ios: {
-				shadowColor: '#000',
-				shadowOffset: {width: 0, height: 12},
-				shadowOpacity: 0.25,
-				shadowRadius: 24,
-			},
-			android: {
-				elevation: 16,
-			},
-		}),
+		alignItems: 'center'
 	},
 	iconContainer: {
 		width: 76,
@@ -307,16 +296,6 @@ const styles = StyleSheet.create({
 		paddingVertical: 16,
 		fontSize: 15,
 		fontWeight: '500',
-		...Platform.select({
-			ios: {
-				shadowOffset: {width: 0, height: 2},
-				shadowOpacity: 0.08,
-				shadowRadius: 8,
-			},
-			android: {
-				elevation: 3,
-			},
-		}),
 	},
 	errorContainer: {
 		flexDirection: 'row',
@@ -362,16 +341,6 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		alignItems: 'center',
 		flexDirection: 'row',
-		...Platform.select({
-			ios: {
-				shadowOffset: {width: 0, height: 4},
-				shadowOpacity: 0.1,
-				shadowRadius: 8,
-			},
-			android: {
-				elevation: 4,
-			},
-		}),
 	},
 	cancelButton: {
 		marginRight: 12,
@@ -379,15 +348,6 @@ const styles = StyleSheet.create({
 	},
 	createButton: {
 		marginLeft: 12,
-		...Platform.select({
-			ios: {
-				shadowOpacity: 0.2,
-				shadowRadius: 12,
-			},
-			android: {
-				elevation: 6,
-			},
-		}),
 	},
 	buttonText: {
 		fontSize: 15,

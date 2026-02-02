@@ -335,7 +335,6 @@ const CustomMaterialMenu = ({isIcon, menuText, textStyle, item}) => {
               backgroundColor: themeColors.surface,
               borderRadius: 20,
               padding: 20,
-              elevation: 5,
               shadowColor: '#000',
               shadowOffset: {width: 0, height: 2},
               shadowOpacity: 0.25,

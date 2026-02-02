@@ -248,7 +248,6 @@ const Suggestion = () => {
               backgroundColor: themeColors.surface,
               borderColor: themeColors.primary + '20',
               borderRadius: 12,
-              elevation: 3,
               shadowColor: '#000',
               shadowOffset: {width: 0, height: 2},
               shadowOpacity: 0.08,
@@ -419,7 +418,6 @@ const styles = StyleSheet.create({
   formCard: {
     borderRadius: 16,
     padding: 20,
-    elevation: 2,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.08,
@@ -484,7 +482,6 @@ const styles = StyleSheet.create({
     maxWidth: 300,
     borderRadius: 20,
     padding: 28,
-    elevation: 5,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,

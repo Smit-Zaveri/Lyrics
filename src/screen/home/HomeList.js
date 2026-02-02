@@ -144,15 +144,6 @@ const HomeList = () => {
 						backgroundColor: themeColors.surface,
 						opacity: pressed ? 0.85 : 1,
 						transform: [{scale: pressed ? 0.98 : 1}],
-						...Platform.select({
-							ios: {
-								shadowColor: '#000',
-								shadowOffset: {width: 0, height: pressed ? 1 : 2},
-								shadowOpacity: pressed ? 0.05 : 0.08,
-								shadowRadius: pressed ? 2 : 3,
-							},
-							android: {elevation: pressed ? 1 : 2},
-						}),
 					},
 				]}>
 				<View style={styles.leftContainer}>
@@ -361,17 +352,6 @@ const styles = StyleSheet.create({
 		paddingVertical: 12,
 		paddingHorizontal: 30,
 		borderRadius: 8,
-		...Platform.select({
-			ios: {
-				shadowColor: '#000',
-				shadowOffset: {width: 0, height: 2},
-				shadowOpacity: 0.1,
-				shadowRadius: 4,
-			},
-			android: {
-				elevation: 3,
-			},
-		}),
 	},
 	retryButtonPressed: {
 		opacity: 0.7,
@@ -394,17 +374,6 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 24,
 		borderRadius: 20,
 		alignItems: 'center',
-		...Platform.select({
-			ios: {
-				shadowColor: '#000',
-				shadowOffset: {width: 0, height: 4},
-				shadowOpacity: 0.12,
-				shadowRadius: 14,
-			},
-			android: {
-				elevation: 7,
-			},
-		}),
 	},
 	noConnectionIconWrap: {
 		width: 64,
@@ -434,7 +403,6 @@ const styles = StyleSheet.create({
 		borderRadius: 28,
 		justifyContent: 'center',
 		alignItems: 'center',
-		elevation: 4,
 	},
 });
 

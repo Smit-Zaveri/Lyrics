@@ -666,7 +666,7 @@ const Search = ({route}) => {
 			style={[
 			  styles.searchbar,
 			  {backgroundColor: themeColors.cardBackground},
-			  isFocused && {elevation: 6, shadowRadius: 16, shadowOpacity: 0.2},
+			  isFocused && {shadowRadius: 16, shadowOpacity: 0.2},
 			]}
 			inputStyle={{fontSize: 16, color: themeColors.text, paddingLeft: 8}}
 			placeholderTextColor={`${themeColors.text}80`}
@@ -848,7 +848,6 @@ const styles = StyleSheet.create({
 	// paddingVertical: 10,
 	paddingHorizontal: 16,
 	borderWidth: 0,
-	elevation: 4,
 	shadowColor: '#000',
 	shadowOffset: {width: 0, height: 4},
 	shadowOpacity: 0.15,
@@ -894,7 +893,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginVertical: 4,
     paddingVertical: 2,
-    elevation: 0,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.06)',
   },
@@ -915,7 +913,6 @@ const styles = StyleSheet.create({
 	marginVertical: 4,
 	borderRadius: 16,
 	borderWidth: 1,
-	// elevation: 2,
 	shadowColor: '#000',
 	shadowOffset: {width: 0, height: 2},
 	shadowOpacity: 0.08,

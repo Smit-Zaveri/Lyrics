@@ -733,57 +733,74 @@ const AddSong = () => {
 			  // Prevent touch events from propagating to parent
 			  onStartShouldSetResponder={() => true}
 			  onTouchEnd={e => e.stopPropagation()}>
-			  <Text style={[styles.modalTitle, {color: themeColors.text}]}>
-				Choose Media Option
-			  </Text>
+			  <View style={styles.modalHeader}>
+				<View style={[styles.modalHandle, {backgroundColor: themeColors.border}]} />
+				<View style={styles.headerContent}>
+				  <Text style={[styles.modalTitle, {color: themeColors.text}]}>
+					Choose Media Option
+				  </Text>
+				  <TouchableOpacity
+					style={styles.modalCloseButton}
+					onPress={() => setShowMediaOptions(false)}>
+					<Icon name="close" size={16} color={themeColors.textSecondary} />
+				  </TouchableOpacity>
+				</View>
+			  </View>
 
-			  <TouchableOpacity
-				style={[
-				  styles.modalOption,
-				  {borderBottomColor: themeColors.border},
-				]}
-				onPress={() => {
-				  setShowMediaOptions(false);
-				  handleCameraCapture();
-				}}>
-				<Icon name="camera-alt" size={22} color={themeColors.primary} />
-				<Text
-				  style={[styles.modalOptionText, {color: themeColors.text}]}>
-				  Take Photo
-				</Text>
-			  </TouchableOpacity>
+			  <View style={styles.optionsContainer}>
+				<TouchableOpacity
+				  style={[
+					styles.modalOption,
+					{borderBottomColor: themeColors.border},
+				  ]}
+				  onPress={() => {
+					setShowMediaOptions(false);
+					handleCameraCapture();
+				  }}>
+				  <View style={[styles.optionIconContainer, {backgroundColor: themeColors.primary + '15'}]}>
+					<Icon name="camera-alt" size={24} color={themeColors.primary} />
+				  </View>
+				  <View style={styles.optionTextContainer}>
+					<Text
+					  style={[styles.modalOptionText, {color: themeColors.text}]}>
+					  Take Photo
+					</Text>
+					<Text style={[styles.modalOptionSubtext, {color: themeColors.textSecondary}]}>
+					  Open camera to capture new image
+					</Text>
+				  </View>
+				  <Icon name="chevron-right" size={20} color={themeColors.textSecondary} />
+				</TouchableOpacity>
 
-			  <TouchableOpacity
-				style={[
-				  styles.modalOption,
-				  {borderBottomColor: themeColors.border},
-				]}
-				onPress={() => {
-				  setShowMediaOptions(false);
-				  handleImagePicker();
-				}}>
-				<Icon
-				  name="photo-library"
-				  size={22}
-				  color={themeColors.primary}
-				/>
-				<Text
-				  style={[styles.modalOptionText, {color: themeColors.text}]}>
-				  Choose from Gallery
-				</Text>
-			  </TouchableOpacity>
+				<TouchableOpacity
+				  style={[
+					styles.modalOption,
+					{borderBottomColor: themeColors.border},
+				  ]}
+				  onPress={() => {
+					setShowMediaOptions(false);
+					handleImagePicker();
+				  }}>
+				  <View style={[styles.optionIconContainer, {backgroundColor: themeColors.primary + '15'}]}>
+					<Icon
+					  name="photo-library"
+					  size={24}
+					  color={themeColors.primary}
+					/>
+				  </View>
+				  <View style={styles.optionTextContainer}>
+					<Text
+					  style={[styles.modalOptionText, {color: themeColors.text}]}>
+					  Choose from Gallery
+					</Text>
+					<Text style={[styles.modalOptionSubtext, {color: themeColors.textSecondary}]}>
+					  Select existing photos from device
+					</Text>
+				  </View>
+				  <Icon name="chevron-right" size={20} color={themeColors.textSecondary} />
+				</TouchableOpacity>
+			  </View>
 
-			  <TouchableOpacity
-				style={[
-				  styles.cancelButton,
-				  {backgroundColor: themeColors.error},
-				]}
-				onPress={() => setShowMediaOptions(false)}>
-				<Text
-				  style={[{color: themeColors.text}, styles.cancelButtonText]}>
-				  Cancel
-				</Text>
-			  </TouchableOpacity>
 			</View>
 		  </TouchableOpacity>
 		</Modal>
@@ -859,7 +876,6 @@ const styles = StyleSheet.create({
 	fontSize: 15,
 	borderWidth: 1,
 	borderStyle: 'solid',
-	elevation: 1,
 	shadowColor: '#000',
 	shadowOffset: {width: 0, height: 1},
 	shadowOpacity: 0.05,
@@ -874,7 +890,6 @@ const styles = StyleSheet.create({
 	textAlignVertical: 'top',
 	borderWidth: 1,
 	borderStyle: 'solid',
-	elevation: 1,
 	shadowColor: '#000',
 	shadowOffset: {width: 0, height: 1},
 	shadowOpacity: 0.05,
@@ -900,7 +915,6 @@ const styles = StyleSheet.create({
 	justifyContent: 'center',
 	height: 48,
 	borderRadius: 10,
-	elevation: 4,
 	shadowColor: '#000',
 	shadowOffset: {width: 0, height: 2},
 	shadowOpacity: 0.15,
@@ -933,7 +947,6 @@ const styles = StyleSheet.create({
 	shadowOffset: {width: 0, height: 1},
 	shadowOpacity: 0.08,
 	shadowRadius: 2,
-	elevation: 2,
   },
   tagChipText: {
 	fontSize: 13,
@@ -958,7 +971,6 @@ const styles = StyleSheet.create({
 	shadowOffset: {width: 0, height: 2},
 	shadowOpacity: 0.15,
 	shadowRadius: 4,
-	elevation: 3,
   },
   image: {
 	width: 90,
@@ -994,7 +1006,6 @@ const styles = StyleSheet.create({
 	shadowOffset: {width: 0, height: 2},
 	shadowOpacity: 0.15,
 	shadowRadius: 4,
-	elevation: 3,
   },
   modalOverlay: {
 	flex: 1,
@@ -1004,46 +1015,93 @@ const styles = StyleSheet.create({
   modalContent: {
 	borderTopLeftRadius: 20,
 	borderTopRightRadius: 20,
+	paddingBottom: 20,
 	shadowColor: '#000',
 	shadowOffset: {width: 0, height: -3},
 	shadowOpacity: 0.25,
 	shadowRadius: 8,
-	elevation: 8,
+  },
+  modalHeader: {
+	paddingTop: 20,
+	paddingBottom: 10,
+	paddingHorizontal: 20,
+  },
+  modalHandle: {
+	width: 40,
+	height: 4,
+	borderRadius: 2,
+	marginBottom: 15,
+	alignSelf: 'center',
+  },
+  headerContent: {
+	flexDirection: 'row',
+	alignItems: 'center',
+	justifyContent: 'center',
+	position: 'relative',
+  },
+  modalCloseButton: {
+	position: 'absolute',
+	right: -10,
+	top: -30,
+	padding: 8,
+	borderRadius: 20,
+	backgroundColor: 'rgba(0,0,0,0.05)',
   },
   modalTitle: {
 	fontSize: 18,
 	fontWeight: '700',
-	marginVertical: 18,
 	textAlign: 'center',
 	letterSpacing: 0.3,
+  },
+  optionsContainer: {
+	paddingHorizontal: 20,
   },
   modalOption: {
 	flexDirection: 'row',
 	alignItems: 'center',
-	paddingVertical: 15,
-	paddingHorizontal: 20,
+	paddingVertical: 16,
+	paddingHorizontal: 0,
 	borderBottomWidth: 0.5,
   },
+  optionIconContainer: {
+	width: 48,
+	height: 48,
+	borderRadius: 12,
+	justifyContent: 'center',
+	alignItems: 'center',
+	marginRight: 16,
+  },
+  optionTextContainer: {
+	flex: 1,
+  },
   modalOptionText: {
-	fontSize: 15,
-	marginLeft: 16,
+	fontSize: 16,
 	fontWeight: '600',
+	marginBottom: 2,
+  },
+  modalOptionSubtext: {
+	fontSize: 13,
+	fontWeight: '400',
   },
   cancelButton: {
-	borderRadius: 10,
-	padding: 14,
+	flexDirection: 'row',
 	alignItems: 'center',
+	justifyContent: 'center',
+	borderRadius: 12,
+	padding: 16,
 	marginTop: 20,
 	marginHorizontal: 20,
-	marginBottom: 20,
-	elevation: 2,
 	shadowColor: '#000',
 	shadowOffset: {width: 0, height: 1},
 	shadowOpacity: 0.1,
 	shadowRadius: 3,
   },
+  cancelButtonIcon: {
+	marginRight: 8,
+	color: '#000',
+  },
   cancelButtonText: {
-	fontSize: 15,
+	fontSize: 16,
 	fontWeight: '700',
   },
   fullScreenWrapper: {

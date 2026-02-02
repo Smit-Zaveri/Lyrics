@@ -284,7 +284,6 @@ const styles = StyleSheet.create({
   menuCard: {
     borderRadius: 16,
     overflow: 'hidden',
-    elevation: 2,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
@@ -348,7 +347,6 @@ const styles = StyleSheet.create({
     maxWidth: 320,
     borderRadius: 24,
     padding: 32,
-    elevation: 8,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.3,
@@ -374,7 +372,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 24,
-    elevation: 1,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.05,
