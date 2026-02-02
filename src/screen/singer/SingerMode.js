@@ -20,7 +20,9 @@ const SingerMode = () => {
 	const navigation = useNavigation();
 	const {themeColors} = useContext(ThemeContext);
 	const {getString} = useContext(LanguageContext);
-	const [scaleAnim] = useState(new Animated.Value(1));
+	const [scaleAnim1] = useState(new Animated.Value(1));
+	const [scaleAnim2] = useState(new Animated.Value(1));
+	const [fadeAnim] = useState(new Animated.Value(0));
 	const windowWidth = Dimensions.get('window').width;
 
 	useEffect(() => {
@@ -35,9 +37,16 @@ const SingerMode = () => {
 				fontWeight: 'bold',
 			},
 		});
-	}, [navigation, themeColors, getString]);
 
-	const animatePress = pressed => {
+		// Fade in animation
+		Animated.timing(fadeAnim, {
+			toValue: 1,
+			duration: 600,
+			useNativeDriver: true,
+		}).start();
+	}, [navigation, themeColors, getString, fadeAnim]);
+
+	const animatePress = (scaleAnim, pressed) => {
 		Animated.spring(scaleAnim, {
 			toValue: pressed ? 0.95 : 1,
 			friction: 5,
@@ -74,10 +83,11 @@ const SingerMode = () => {
 	};
 
 	return (
-		<ScrollView
-			style={[styles.container, {backgroundColor: themeColors.background}]}
-			contentContainerStyle={styles.contentContainer}
-			showsVerticalScrollIndicator={false}>
+		<Animated.View style={{flex: 1, opacity: fadeAnim}}>
+			<ScrollView
+				style={[styles.container, {backgroundColor: themeColors.background}]}
+				contentContainerStyle={styles.contentContainer}
+				showsVerticalScrollIndicator={false}>
 			<View
 				style={[
 					styles.headerWrapper,
@@ -108,8 +118,8 @@ const SingerMode = () => {
 			<View style={styles.cardsContainer}>
 				<TouchableOpacity
 					activeOpacity={0.9}
-					onPressIn={() => animatePress(true)}
-					onPressOut={() => animatePress(false)}
+					onPressIn={() => animatePress(scaleAnim1, true)}
+					onPressOut={() => animatePress(scaleAnim1, false)}
 					onPress={handleAddSong}>
 					<Animated.View
 						style={[
@@ -119,7 +129,7 @@ const SingerMode = () => {
 								borderColor: themeColors.primary + '12',
 								borderWidth: 1,
 								shadowColor: themeColors.primary,
-								transform: [{scale: scaleAnim}],
+								transform: [{scale: scaleAnim1}],
 							},
 						]}>
 						<View
@@ -166,8 +176,8 @@ const SingerMode = () => {
 
 				<TouchableOpacity
 					activeOpacity={0.9}
-					onPressIn={() => animatePress(true)}
-					onPressOut={() => animatePress(false)}
+					onPressIn={() => animatePress(scaleAnim2, true)}
+					onPressOut={() => animatePress(scaleAnim2, false)}
 					onPress={handleViewSongs}>
 					<Animated.View
 						style={[
@@ -177,7 +187,7 @@ const SingerMode = () => {
 								borderColor: themeColors.primary + '12',
 								borderWidth: 1,
 								shadowColor: themeColors.primary,
-								transform: [{scale: scaleAnim}],
+								transform: [{scale: scaleAnim2}],
 							},
 						]}>
 						<View
@@ -253,7 +263,8 @@ const SingerMode = () => {
 					</Text>
 				</View>
 			</View>
-		</ScrollView>
+			</ScrollView>
+		</Animated.View>
 	);
 };
 
@@ -262,129 +273,136 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	contentContainer: {
-		paddingBottom: 20,
+		paddingBottom: 30,
 	},
 	headerWrapper: {
-		paddingVertical: 20,
-		paddingHorizontal: 16,
-		borderBottomLeftRadius: 20,
-		borderBottomRightRadius: 20,
+		paddingVertical: 30,
+		paddingHorizontal: 20,
+		borderBottomLeftRadius: 25,
+		borderBottomRightRadius: 25,
+		marginBottom: 10,
 	},
 	headerContainer: {
 		alignItems: 'center',
-		marginVertical: 10,
+		marginVertical: 15,
 	},
 	iconCircle: {
-		width: 68,
-		height: 68,
-		borderRadius: 34,
+		width: 80,
+		height: 80,
+		borderRadius: 40,
 		justifyContent: 'center',
 		alignItems: 'center',
-		marginBottom: 10,
-		elevation: 4,
+		marginBottom: 15,
 		shadowColor: '#000',
-		shadowOffset: {width: 0, height: 2},
-		shadowOpacity: 0.12,
-		shadowRadius: 6,
+		shadowOffset: {width: 0, height: 3},
+		shadowOpacity: 0.15,
+		shadowRadius: 8,
 	},
 	headerText: {
-		fontSize: 24,
-		fontWeight: '700',
-		marginTop: 4,
+		fontSize: 28,
+		fontWeight: '800',
+		marginTop: 8,
 		textAlign: 'center',
 		letterSpacing: 0.5,
 	},
 	subHeaderText: {
-		fontSize: 13,
-		marginTop: 5,
+		fontSize: 15,
+		marginTop: 8,
 		textAlign: 'center',
-		opacity: 0.72,
-		fontWeight: '400',
+		opacity: 0.75,
+		fontWeight: '500',
+		lineHeight: 20,
 	},
 	cardsContainer: {
-		marginVertical: 12,
-		paddingHorizontal: 16,
+		marginVertical: 20,
+		paddingHorizontal: 20,
 	},
 	card: {
-		borderRadius: 12,
-		marginBottom: 12,
+		borderRadius: 16,
+		marginBottom: 16,
 		overflow: 'hidden',
 		position: 'relative',
-		elevation: 3,
 		shadowColor: '#000',
-		shadowOffset: {width: 0, height: 1},
-		shadowOpacity: 0.1,
-		shadowRadius: 6,
+		shadowOffset: {width: 0, height: 2},
+		shadowOpacity: 0.12,
+		shadowRadius: 8,
 	},
 	cardHighlight: {
 		position: 'absolute',
 		left: 0,
 		top: 0,
-		width: 3,
+		width: 4,
 		height: '100%',
+		borderTopRightRadius: 4,
+		borderBottomRightRadius: 4,
 	},
 	cardContent: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		padding: 13,
-		paddingLeft: 15,
+		padding: 16,
+		paddingLeft: 20,
 	},
 	cardIconContainer: {
-		width: 46,
-		height: 46,
-		borderRadius: 23,
+		width: 50,
+		height: 50,
+		borderRadius: 25,
 		justifyContent: 'center',
 		alignItems: 'center',
-		marginRight: 13,
+		marginRight: 16,
 	},
 	cardTextContainer: {
 		flex: 1,
 	},
 	cardTitle: {
-		fontSize: 15,
+		fontSize: 17,
 		fontWeight: '700',
-		marginBottom: 3,
+		marginBottom: 4,
 		letterSpacing: 0.3,
 	},
 	cardDescription: {
-		fontSize: 12,
-		opacity: 0.68,
-		lineHeight: 17,
+		fontSize: 13,
+		opacity: 0.7,
+		lineHeight: 18,
 		fontWeight: '400',
 	},
 	chevronContainer: {
-		width: 28,
-		height: 28,
-		borderRadius: 14,
+		width: 32,
+		height: 32,
+		borderRadius: 16,
 		justifyContent: 'center',
 		alignItems: 'center',
-		marginLeft: 6,
+		marginLeft: 8,
+		backgroundColor: 'rgba(0,0,0,0.05)',
 	},
 	infoContainer: {
-		marginVertical: 6,
-		paddingHorizontal: 16,
+		marginVertical: 10,
+		paddingHorizontal: 20,
 	},
 	infoBox: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		padding: 11,
-		borderRadius: 10,
+		padding: 14,
+		borderRadius: 12,
 		borderWidth: 1,
 		borderStyle: 'solid',
+		shadowColor: '#000',
+		shadowOffset: {width: 0, height: 1},
+		shadowOpacity: 0.08,
+		shadowRadius: 4,
 	},
 	infoIconContainer: {
-		width: 30,
-		height: 30,
-		borderRadius: 15,
+		width: 32,
+		height: 32,
+		borderRadius: 16,
 		justifyContent: 'center',
 		alignItems: 'center',
-		marginRight: 11,
+		marginRight: 12,
 	},
 	infoText: {
 		flex: 1,
-		fontSize: 12,
-		lineHeight: 17,
-		opacity: 0.78,
+		fontSize: 13,
+		lineHeight: 18,
+		opacity: 0.8,
 		fontWeight: '400',
 	},
 });
